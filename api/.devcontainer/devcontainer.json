@@ -1,0 +1,40 @@
+{
+    "name": "tunetrail-api",
+    "dockerComposeFile": [
+        "../../docker-compose.yml"
+    ],
+    "service": "api",
+    "shutdownAction": "none",
+    "workspaceFolder": "/workspace/api",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "/bin/bash",
+                        "icon": "terminal-bash"
+                    }
+                },
+                "go.toolsManagement.checkForUpdates": "off",
+                "go.gopath": "/go",
+                "go.gocodeAutoBuild": true,
+                "go.formatTool": "gofmt",
+                "go.useLanguageServer": true,
+                "editor.formatOnSave": false,
+                "[go]": {
+                    "editor.formatOnSave": true
+                }
+            },
+            "extensions": [
+                "golang.go",
+                "oderwat.indent-rainbow",
+                "eamodio.gitlens",
+                "ms-vscode.makefile-tools",
+                "bungcip.better-toml",
+                "wmaurer.vscode-jumpy",
+                "yzhang.markdown-all-in-one"
+            ]
+        }
+    }
+}
