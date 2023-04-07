@@ -8,13 +8,13 @@ services:
       target: dev
       dockerfile: ./api/Dockerfile
     environment:
-      TODO_ENV: dev
+      TUNETRAIL_ENV: dev
       PORT: 8080
-      TODO_DB_HOST: tunetrail-db
-      TODO_DB_PORT: 5432
-      TODO_DB_USER: tunetrail
-      TODO_DB_PASSWORD: tunetrail
-      TODO_DB_NAME: tunetrail
+      TUNETRAIL_DB_HOST: tunetrail-db
+      TUNETRAIL_DB_PORT: 5432
+      TUNETRAIL_DB_USER: tunetrail
+      TUNETRAIL_DB_PASSWORD: tunetrail
+      TUNETRAIL_DB_NAME: tunetrail
     volumes:
       # .gitを含むルートディレクトリを指定する
       - .:/workspace:cached
