@@ -14,8 +14,10 @@ import (
 
 // storeパッケージで用いるエラー
 var (
-	ErrNotFound     = errors.New("not found")
-	ErrAlreadyEntry = errors.New("duplicate entry")
+	// DBとの疎通が取れない
+	ErrCannotCommunicateWithDB = errors.New("cannot communicate with db")
+	ErrNotFound                = errors.New("not found")
+	ErrAlreadyEntry            = errors.New("duplicate entry")
 )
 
 type Repository struct {
