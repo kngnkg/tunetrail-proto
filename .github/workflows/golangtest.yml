@@ -1,10 +1,5 @@
 name: golang-test
 
-defaults:
-  run:
-    shell: bash
-    working-directory: ./api
-
 on:
   push:
     branches:
@@ -12,7 +7,12 @@ on:
   pull_request:
     paths:
       - "**.go"
-      - ./../.github/workflows/golangtest.yml
+      - ./.github/workflows/golangtest.yml
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./api
 
 jobs:
   test:
@@ -41,7 +41,7 @@ jobs:
       - name: migrate DB
         run: |
           go install github.com/k0kubun/sqldef/cmd/psqldef@latest
-          psqldef --host=127.0.0.1 --port=5432 --user=tunetrail --password=tunetrail tunetrail < ./api/_tools/postgres/schema.sql
+          psqldef --host=127.0.0.1 --port=5432 --user=tunetrail --password=tunetrail tunetrail < ./_tools/postgres/schema.sql
       - name: run tests
         run: go test ./... -coverprofile=coverage.out
       - name: report coverage
