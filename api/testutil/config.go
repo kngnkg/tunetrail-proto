@@ -15,9 +15,8 @@ func CreateConfigForTest(t *testing.T) *config.Config {
 		t.Fatalf("cannot parse env: %v", err)
 	}
 	cfg.Port = 8081
-	// CI環境ならポート番号を変更
 	if _, defined := os.LookupEnv("CI"); defined {
-		cfg.DBPort = 5432
+		cfg.DBHost = "127.0.0.1"
 	}
 	return cfg
 }

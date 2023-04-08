@@ -6,7 +6,7 @@ import (
 
 type Config struct {
 	Env        string `env:"TUNETRAIL_ENV" envDefault:"dev"`
-	Port       int    `env:"PORT" envDefault:"80"`
+	Port       int    `env:"PORT" envDefault:"8080"`
 	DBHost     string `env:"TUNETRAIL_DB_HOST" envDefault:"tunetrail-db"`
 	DBPort     int    `env:"TUNETRAIL_DB_PORT" envDefault:"5432"`
 	DBUser     string `env:"TUNETRAIL_DB_USER" envDefault:"tunetrail"`
