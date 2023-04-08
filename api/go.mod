@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/caarlos0/env/v6 v6.10.1
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.7
