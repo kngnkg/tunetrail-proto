@@ -1,12 +1,13 @@
+repository: kwtryo/tunetrail/api
 coverage:
   paths:
-    - coverage.out
+    - ./api/coverage.out
 codeToTestRatio:
   code:
-    - './api/**/*.go'
-    - '!/api/**/*_test.go'
+    - '**/*.go'
+    - '!**/*_test.go'
   test:
-    - './api/**/*_test.go'
+    - '**/*_test.go'
 testExecutionTime:
   if: true
 diff:
