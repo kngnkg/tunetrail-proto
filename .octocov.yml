@@ -3,10 +3,10 @@ coverage:
     - coverage.out
 codeToTestRatio:
   code:
-    - '**/*.go'
-    - '!**/*_test.go'
+    - './api/**/*.go'
+    - '!/api/**/*_test.go'
   test:
-    - '**/*_test.go'
+    - './api/**/*_test.go'
 testExecutionTime:
   if: true
 diff:
