@@ -37,5 +37,10 @@ docker-composeで各コンテナを起動します。
 ```
 docker compose up
 ```
+### バックエンド
 
-VSCodeのコマンドパレットで**Dev Containers: Open Folder in Container...**を実行し、`api`ディレクトリを選択します。
+VSCodeのコマンドパレットで**Dev Containers: Open Folder in Container**を実行し、`api`ディレクトリを選択します。
+
+### フロントエンド
+
+VSCodeのコマンドパレットで**Dev Containers: Open Folder in Container**を実行し、`frontend`ディレクトリを選択します。
