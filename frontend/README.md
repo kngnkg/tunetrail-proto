@@ -25,3 +25,19 @@ mv tmp/* . && mv tmp/.* . && rm -r tmp
 ```
 rm .gitignore
 ```
+
+ESLint/Prettierの設定 (ESLintは既にインストールされている)
+
+```
+npm install --save-dev prettier
+```
+
+`.prettierrc`を作成
+
+lintを実行
+
+```
+npm run lint
+```
+
+`.eslintrc.json`が作成される。
