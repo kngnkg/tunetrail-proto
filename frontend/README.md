@@ -41,3 +41,10 @@ npm run lint
 ```
 
 `.eslintrc.json`が作成される。
+
+MUIとその関連ライブラリをインストール
+
+```
+npm install @mui/material @emotion/react @emotion/styled @mui/icons-material @emotion/servers
+```
+
