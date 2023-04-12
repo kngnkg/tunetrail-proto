@@ -1,0 +1,23 @@
+name: next-test
+on:
+  pull_request:
+    paths:
+      - "**.js"
+      - "**.jsx"
+      - "**.ts"
+      - "**.tsx"
+      - ./.github/workflows/next-test.yml
+
+jobs:
+  nextci-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+      - name: execute ESLint
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          eslint_flags: './frontend/src/**'
+          fail_on_error: true
