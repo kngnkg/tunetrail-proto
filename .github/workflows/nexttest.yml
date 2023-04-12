@@ -30,8 +30,8 @@ jobs:
         with:
           node-version: 19
 
-      - name: install npm
-        run: npm install
+      - name: install dependencies
+        run: npm ci
 
       - name: execute ESLint
         uses: reviewdog/action-eslint@v1
