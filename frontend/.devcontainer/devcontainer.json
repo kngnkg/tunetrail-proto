@@ -1,0 +1,30 @@
+{
+    "name": "tunetrail-frontend",
+    "dockerComposeFile": [
+        "../../docker-compose.yml"
+    ],
+    "service": "frontend",
+    "workspaceFolder": "/workspace/frontend",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "/bin/bash",
+                        "icon": "terminal-bash"
+                    }
+                }
+            },
+            "extensions": [
+                "xabikos.JavaScriptSnippets",
+                "oderwat.indent-rainbow",
+                "eamodio.gitlens",
+                "wmaurer.vscode-jumpy",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "yzhang.markdown-all-in-one"
+            ]
+        }
+    }
+}

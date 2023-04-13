@@ -43,6 +43,26 @@ services:
     networks:
       - tunetrail-internal
 
+  frontend:
+    container_name: tunetrail-frontend
+    hostname: tunetrail-frontend
+    build:
+      context: .
+      target: dev
+      dockerfile: ./frontend/Dockerfile
+    environment:
+      TODO_ENV: dev
+      TODO_API_HOST: tunetrail-api
+      TODO_API_PORT: 8080
+    tty: true
+    volumes:
+      # .gitを含むルートディレクトリを指定する
+      - .:/workspace:cached
+    ports:
+      - '3000:3000'
+    networks:
+      - tunetrail-external
+
 networks:
   # 内部ネットワーク
   tunetrail-internal:
