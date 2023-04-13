@@ -2,8 +2,8 @@ name: next-ci
 on:
   pull_request:
     paths:
-      - "frontend/**/*.ts"
-      - "frontend/**/*.tsx"
+      - "**/*.ts"
+      - "**/*.tsx"
       - ./.github/workflows/next-test.yml
 
 jobs:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: './frontend'
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -24,7 +24,8 @@ jobs:
       - name: execute ESLint
         uses: reviewdog/action-eslint@v1
         with:
+          workdir: './frontend'
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
-          eslint_flags: './src/**'
+          eslint_flags: 'src/**'
           fail_on_error: true
