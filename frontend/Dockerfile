@@ -22,9 +22,6 @@ WORKDIR /workspace
 
 RUN apt-get update
 
-# Gitの補完を設定
-RUN echo "source /usr/share/bash-completion/completions/git" >> ~/.bashrc
-
 COPY ./ ./
 
 RUN npm install -g npm@latest && npm install create-next-app

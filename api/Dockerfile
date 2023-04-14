@@ -27,9 +27,6 @@ FROM golang:1.20.3 as dev
 
 RUN apt update
 
-# Gitの補完を設定
-RUN echo "source /usr/share/bash-completion/completions/git" >> ~/.bashrc
-
 # GoのModule ModeをONにする
 ENV GO111MODULE on
 
