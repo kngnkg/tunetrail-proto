@@ -2,7 +2,13 @@ import useSWR from 'swr';
 jest.mock('swr');
 
 import { renderHook } from '@testing-library/react';
-import useHealth, { Health } from './use-health';
+import useHealth from './use-health';
+import { Health } from '@/types/health';
+import { ApiContext } from '@/types/apiContext';
+
+const context: ApiContext = {
+  apiRoot: 'http://mock:8080',
+};
 
 describe('useHealth', () => {
   it('fetchが成功した場合useHealthがdataを返す。エラーがfalseになる。', async () => {
@@ -13,7 +19,7 @@ describe('useHealth', () => {
       error: null,
     });
 
-    const { result } = renderHook(() => useHealth());
+    const { result } = renderHook(() => useHealth(context));
 
     expect(result.current.isLoading).toBe(false);
     expect(result.current.isError).toBe(false);
@@ -30,7 +36,7 @@ describe('useHealth', () => {
       error: mockError,
     });
 
-    const { result } = renderHook(() => useHealth());
+    const { result } = renderHook(() => useHealth(context));
 
     expect(result.current.isLoading).toBe(false);
     expect(result.current.isError).toBe(true);
