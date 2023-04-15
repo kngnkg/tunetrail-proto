@@ -1,25 +1,18 @@
+import { ApiContext } from '@/types/apiContext';
+import { Health } from '@/types/health';
+import { fetcher } from '@/utils';
 import useSWR from 'swr';
-
-// APIの稼働状態を表す
-export interface Health {
-  health: string;
-  database: string;
-}
 
 export interface UseHealth {
   health?: Health;
-  /**
-   * ロードフラグ
-   */
+  // ロードフラグ
   isLoading: boolean;
-  /**
-   * エラーフラグ
-   */
+  // エラーフラグ
   isError: boolean;
 }
 
-const useHealth = (): UseHealth => {
-  const { data, error } = useSWR<Health>('http://localhost:8080/health');
+const useHealth = (context: ApiContext): UseHealth => {
+  const { data, error } = useSWR<Health>(`${context.apiRoot}/health`, fetcher);
 
   return {
     health: data,
