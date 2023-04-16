@@ -7,7 +7,7 @@ import { Health } from '@/types/health';
 import { ApiContext } from '@/types/apiContext';
 
 const context: ApiContext = {
-  apiRoot: 'http://mock:8080',
+  apiRoot: 'ttp://mock:8080',
 };
 
 describe('useHealth', () => {
