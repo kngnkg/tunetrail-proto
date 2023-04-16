@@ -35,7 +35,7 @@ users {
     string name "名前"
     string password "パスワード"
     string email "メールアドレス"
-    string icon_image_url "アイコンのURL"
+    string icon_url "アイコンのURL"
     string bio "プロフィール"
     timestamp created_at
     timestamp updated_at
@@ -57,10 +57,10 @@ post_images {
 
 replies {
     int post_id PK,FK "継承元の投稿のID"
-    int dest_post_id FK "宛先の投稿のID"
+    int dest_post_id PK,FK "宛先の投稿のID"
 }
 
-reply_destinations {
+reply_destination_users {
     int post_id PK,FK "リプライが継承している投稿のID"
     int dest_user_id "宛先のユーザーのID"
 }
@@ -68,6 +68,8 @@ reply_destinations {
 likes {
     int post_id PK,FK "投稿のID"
     int user_id PK,FK "いいねしたユーザーのID"
+    timestamp created_at
+    timestamp updated_at
 }
 
 post_tag {
@@ -78,6 +80,8 @@ post_tag {
 tags {
     int id PK
     string name "タグ名"
+    timestamp created_at
+    timestamp updated_at
 }
 
 users ||--o{ posts : "1人のユーザーは0以上の投稿を持つ"
@@ -87,8 +91,8 @@ posts ||--|| replies : "1つのリプライは1つの投稿を継承する"
 posts ||--o{ likes : "1つの投稿は0以上のいいねを持つ"
 posts ||--o{ post_tag : "1つの投稿は0以上の`post_tag`を持つ"
 tags ||--o{ post_tag : "1つのタグは0以上の`post_tag`を持つ"
-replies ||--o{ reply_destinations: "1つのリプライは1以上の`reply_destinations`を持つ"
-users ||--o{ reply_destinations: "1人のユーザーは0以上の`reply_destinations`を持つ"
+replies ||--o{ reply_destination_users: "1つのリプライは1以上の`reply_destination_users`を持つ"
+users ||--o{ reply_destination_users: "1人のユーザーは0以上の`reply_destination_users`を持つ"
 
 ```
 
