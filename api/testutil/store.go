@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -10,7 +11,7 @@ import (
 )
 
 // OpenDbForTestはテスト用のDBオブジェクトを返す。
-func OpenDbForTest(t *testing.T) *sqlx.DB {
+func OpenDbForTest(t *testing.T, ctx context.Context) *sqlx.DB {
 	t.Helper()
 
 	cfg := CreateConfigForTest(t)
@@ -30,4 +31,13 @@ func OpenDbForTest(t *testing.T) *sqlx.DB {
 		func() { _ = db.Close() },
 	)
 	return sqlx.NewDb(db, driver)
+}
+
+// DeleteUserAllはテスト用のDBから全てのユーザーを削除する。
+func DeleteUserAll(t *testing.T, ctx context.Context, tx *sqlx.Tx) {
+	t.Helper()
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM users"); err != nil {
+		t.Fatal(err)
+	}
 }

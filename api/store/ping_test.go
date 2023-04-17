@@ -9,6 +9,8 @@ import (
 )
 
 func TestRepository_Ping(t *testing.T) {
+	t.Parallel()
+
 	type fields struct {
 		Clocker clock.Clocker
 	}
@@ -18,11 +20,15 @@ func TestRepository_Ping(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	db := testutil.OpenDbForTest(t)
-	tx, _ := db.BeginTxx(ctx, nil)
+	db := testutil.OpenDbForTest(t, ctx)
+	// トランザクションを開始する
+	tx, err := db.BeginTxx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() { _ = tx.Rollback() })
-	cl := clock.FixedClocker{}
 
+	cl := clock.FixedClocker{}
 	tests := []struct {
 		name    string
 		fields  fields
