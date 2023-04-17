@@ -12,12 +12,21 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Postgresのエラーコード
+const (
+	// 重複エラーコード
+	ErrCodePostgresDuplicate = "23505"
+)
+
 // storeパッケージで用いるエラー
 var (
 	// DBとの疎通が取れない
 	ErrCannotCommunicateWithDB = errors.New("cannot communicate with db")
-	ErrNotFound                = errors.New("not found")
-	ErrAlreadyEntry            = errors.New("duplicate entry")
+	ErrUserNotFound            = errors.New("user not found")
+	// ユーザー名が既に存在する
+	ErrUserNameAlreadyExists = errors.New("user name already exists")
+	// メールアドレスが既に存在する
+	ErrEmailAlreadyExists = errors.New("email already exists")
 )
 
 type Repository struct {
@@ -72,4 +81,5 @@ var (
 	_ Execer   = (*sqlx.DB)(nil)
 	_ Execer   = (*sqlx.Tx)(nil)
 	_ Queryer  = (*sqlx.DB)(nil)
+	_ Queryer  = (*sqlx.Tx)(nil)
 )
