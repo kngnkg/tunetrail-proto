@@ -12,6 +12,8 @@ import (
 )
 
 func TestSetupRouter(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		cfg *config.Config
 	}
