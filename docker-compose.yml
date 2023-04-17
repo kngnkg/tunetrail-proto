@@ -38,10 +38,13 @@ services:
       - postgres-data:/var/lib/postgresql/data
       # dockerコンテナ起動時に自動で実行される.sqlファイル
       - ./api/_tools/postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./api/_tools/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
     ports:
       - "5555:5432"
     networks:
       - tunetrail-internal
+    # 設定ファイルを読み込む
+    command: -c 'config_file=/etc/postgresql/postgresql.conf'
 
   frontend:
     container_name: tunetrail-frontend
