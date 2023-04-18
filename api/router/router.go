@@ -26,10 +26,17 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	hh := &handler.HealthHandler{
 		Service: &service.HealthService{DB: db, Repo: r},
 	}
+	uh := &handler.UserHandler{
+		Service: &service.UserService{DB: db, Repo: r},
+	}
 
 	router.Use(CorsMiddleware())
 
 	router.GET("/health", hh.HealthCheck)
+	user := router.Group("/user")
+	{
+		user.POST("/register", uh.RegisterUser)
+	}
 
 	return router, cleanup, nil
 }

@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -62,12 +63,15 @@ func SendGetRequest(t *testing.T, url string) *http.Response {
 // reqMethod: リクエストメソッド
 // url: リクエストを送信する対象のURL
 // body: リクエストボディ
-func SendRequest(t *testing.T, reqMethod string, url string, body io.Reader) *http.Response {
+func SendRequest(t *testing.T, reqMethod string, url string, body []byte) *http.Response {
 	t.Helper()
 	t.Logf("try request to %q", url)
 
+	// []byteをio.Readerに変換
+	reader := bytes.NewReader(body)
+
 	client := &http.Client{}
-	req, err := http.NewRequest(reqMethod, url, nil)
+	req, err := http.NewRequest(reqMethod, url, reader)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
