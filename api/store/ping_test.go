@@ -16,7 +16,7 @@ func TestRepository_Ping(t *testing.T) {
 	}
 	type args struct {
 		ctx context.Context
-		db  Execer
+		db  Queryer
 	}
 
 	ctx := context.Background()
