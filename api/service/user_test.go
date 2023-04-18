@@ -73,6 +73,26 @@ func TestUserServiceTestSuite(t *testing.T) {
 			return false, nil
 		}
 
+	moqRepo.GetUserByUserNameFunc =
+		func(ctx context.Context, db store.Queryer, userName string) (*model.User, error) {
+			if userName == "dummy" {
+				u := fixture.User(&model.User{
+					Id:       1,
+					UserName: "dummy",
+					Name:     "dummy",
+					Password: "dummy",
+					Email:    "dummy@example.com",
+					IconUrl:  "https://example.com/icon.png",
+					Bio:      "dummy",
+					// タイムスタンプを固定する
+					CreatedAt: fc.Now(),
+					UpdatedAt: fc.Now(),
+				})
+				return u, nil
+			}
+			return nil, errors.New("user not found")
+		}
+
 	suite.Run(t, &UserServiceTestSuite{
 		us: &UserService{
 			DB:   moqDB,
@@ -177,6 +197,62 @@ func (s *UserServiceTestSuite) TestRegisterUser() {
 			)
 			if !errors.Is(err, tt.wantErr) {
 				s.T().Errorf("UserService.RegisterUser() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr == nil {
+				assert.Equal(s.T(), tt.wantUser, got)
+			}
+		})
+	}
+}
+
+func (s *UserServiceTestSuite) TestGetUserByUserName() {
+	type args struct {
+		ctx      context.Context
+		userName string
+	}
+
+	tests := []struct {
+		name     string
+		args     args
+		wantUser *model.User
+		wantErr  error
+	}{
+		{
+			"ok",
+			args{
+				ctx:      context.Background(),
+				userName: "dummy",
+			},
+			&model.User{
+				Id:        1,
+				UserName:  "dummy",
+				Name:      "dummy",
+				Password:  "dummy",
+				Email:     "dummy@example.com",
+				IconUrl:   "https://example.com/icon.png",
+				Bio:       "dummy",
+				CreatedAt: s.fc.Now(),
+				UpdatedAt: s.fc.Now(),
+			},
+			nil,
+		},
+		{
+			// 存在しないユーザー名の場合
+			"errUserNotFound",
+			args{
+				ctx:      context.Background(),
+				userName: "notfound",
+			},
+			nil,
+			ErrUserNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, err := s.us.GetUserByUserName(tt.args.ctx, tt.args.userName)
+			if !errors.Is(err, tt.wantErr) {
+				s.T().Errorf("UserService.GetUserByUserName() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr == nil {
 				assert.Equal(s.T(), tt.wantUser, got)

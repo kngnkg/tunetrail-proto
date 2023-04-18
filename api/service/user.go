@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/kwtryo/tunetrail/api/model"
@@ -14,6 +15,8 @@ var (
 	ErrUserNameAlreadyExists = errors.New("user name already exists")
 	// メールアドレスが既に存在する
 	ErrEmailAlreadyExists = errors.New("email already exists")
+	// ユーザーが存在しない
+	ErrUserNotFound = errors.New("user not found")
 )
 
 type UserRepository interface {
@@ -25,6 +28,8 @@ type UserRepository interface {
 	UserExistsByUserName(ctx context.Context, db store.Queryer, userName string) (bool, error)
 	// UserExistsByEmailはメールアドレスが既に存在するかどうかを返す
 	UserExistsByEmail(ctx context.Context, db store.Queryer, email string) (bool, error)
+	// GetUserByUserNameはユーザー名からユーザーを取得する
+	GetUserByUserName(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
 }
 
 type UserService struct {
@@ -75,4 +80,21 @@ func (us *UserService) RegisterUser(
 	}
 
 	return registeredUser, nil
+}
+
+// GetUserByUserNameはユーザー名からユーザーを取得する
+func (us *UserService) GetUserByUserName(ctx context.Context, userName string) (*model.User, error) {
+	var u *model.User
+	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
+		got, err := us.Repo.GetUserByUserName(ctx, tx, userName)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrUserNotFound, err)
+		}
+		u = got
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
 }
