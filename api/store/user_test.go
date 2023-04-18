@@ -16,11 +16,11 @@ import (
 
 type UserStoreTestSuite struct {
 	suite.Suite
-	r     *Repository
-	ctx   context.Context
-	db    *sqlx.DB
-	fc    *clock.FixedClocker
-	dummy *model.User
+	r     *Repository         // テスト対象のリポジトリ
+	ctx   context.Context     // テスト用のコンテキスト
+	db    *sqlx.DB            // テスト用のDB
+	fc    *clock.FixedClocker // テスト用の時刻を固定する
+	dummy *model.User         // テスト用のダミーユーザー
 }
 
 func TestUserStoreTestSuite(t *testing.T) {
@@ -114,7 +114,12 @@ func (s *UserStoreTestSuite) TestRegisterUser() {
 				s.T().Errorf("Repository.RegisterUser() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr == nil {
-				assert.Equal(s.T(), s.dummy.Id+1, tt.user.Id)
+				// ユーザーが登録されているか確認する
+				got, err := s.r.GetUserByUserName(s.ctx, tx, tt.user.Name)
+				if err != nil {
+					s.T().Fatal(err)
+				}
+				assert.Equal(s.T(), tt.user, got)
 			}
 		})
 	}
@@ -264,6 +269,47 @@ func (s *UserStoreTestSuite) TestGetUserByEmail() {
 				s.T().Errorf("Repository.GetUserByEmail() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			assert.Equal(s.T(), tt.want, got)
+		})
+	}
+}
+
+func (s *UserStoreTestSuite) TestDeleteUserByUserName() {
+	tests := []struct {
+		name        string
+		userName    string
+		dummyExists bool // ダミーユーザーが存在するかどうか
+		wantErr     error
+	}{
+		{
+			"ok",
+			// ダミーユーザーのユーザー名を設定する
+			"dummy",
+			false,
+			nil,
+		},
+		{
+			// ユーザー名が存在しない場合はエラーを返す
+			"errNotExists",
+			// 存在しないユーザー名を設定する
+			"notExists",
+			true,
+			ErrUserNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			tx := initUserStoreTest(s.T(), s.ctx, s.db, s.r, s.dummy)
+			err := s.r.DeleteUserByUserName(s.ctx, tx, tt.userName)
+			if !errors.Is(err, tt.wantErr) {
+				s.T().Errorf("Repository.UserExistsByUserName() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			// ダミーユーザーが削除されているか確認する
+			exists, err := s.r.UserExistsByUserName(s.ctx, tx, "dummy")
+			if err != nil {
+				s.T().Fatal(err)
+			}
+			assert.Equal(s.T(), tt.dummyExists, exists)
 		})
 	}
 }

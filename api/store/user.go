@@ -106,3 +106,23 @@ func (r *Repository) GetUserByEmail(ctx context.Context, db Queryer, email strin
 	u.UpdatedAt = u.UpdatedAt.UTC()
 	return u, nil
 }
+
+// DeleteUserByUserName はユーザー名からユーザーを削除する
+func (r *Repository) DeleteUserByUserName(ctx context.Context, db Queryer, userName string) error {
+	query := `DELETE FROM users WHERE user_name = $1;`
+
+	row, err := db.ExecContext(ctx, query, userName)
+	if err != nil {
+		return err
+	}
+	// 削除された行数を取得
+	affected, err := row.RowsAffected()
+	if err != nil {
+		return err
+	}
+	// 削除された行数が0の場合はエラーを返す
+	if affected == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
