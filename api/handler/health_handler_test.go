@@ -11,6 +11,8 @@ import (
 )
 
 func TestHealthHandler_HealthCheck(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name         string
 		wantStatus   int    // ステータスコード

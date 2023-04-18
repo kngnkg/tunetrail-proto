@@ -11,6 +11,8 @@ import (
 )
 
 func TestHealthService_HealthCheck(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ctx context.Context
 	}
@@ -43,9 +45,9 @@ func TestHealthService_HealthCheck(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			moqDB := &ExecerMock{}
+			moqDB := &QueryerMock{}
 			moqRepo := &HealthRepositoryMock{}
-			moqRepo.PingFunc = func(ctx context.Context, db store.Execer) error {
+			moqRepo.PingFunc = func(ctx context.Context, db store.Queryer) error {
 				if tt.name == "errCannotCommunicateWithDB" {
 					return store.ErrCannotCommunicateWithDB
 				}

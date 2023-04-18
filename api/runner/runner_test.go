@@ -15,6 +15,8 @@ import (
 )
 
 func TestRun(t *testing.T) {
+	t.Parallel()
+
 	cfg := testutil.CreateConfigForTest(t)
 
 	ctx, cancel := context.WithCancel(context.Background())

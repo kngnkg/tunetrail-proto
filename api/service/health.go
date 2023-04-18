@@ -10,11 +10,11 @@ import (
 )
 
 type HealthRepository interface {
-	Ping(ctx context.Context, db store.Execer) error
+	Ping(ctx context.Context, db store.Queryer) error
 }
 
 type HealthService struct {
-	DB   store.Execer
+	DB   store.Queryer
 	Repo HealthRepository
 }
 

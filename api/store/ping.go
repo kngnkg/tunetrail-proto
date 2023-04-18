@@ -9,7 +9,7 @@ import (
 )
 
 // PingはRDBとの疎通を確認する
-func (r *Repository) Ping(ctx context.Context, db Execer) error {
+func (r *Repository) Ping(ctx context.Context, db Queryer) error {
 	xdb, ok := db.(*sqlx.DB)
 	if !ok {
 		return errors.New("invalid args")

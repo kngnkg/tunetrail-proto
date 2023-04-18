@@ -12,12 +12,28 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Postgresのエラーコード
+const (
+	// 重複エラーコード
+	ErrCodePostgresDuplicate = "23505"
+)
+
 // storeパッケージで用いるエラー
 var (
 	// DBとの疎通が取れない
 	ErrCannotCommunicateWithDB = errors.New("cannot communicate with db")
-	ErrNotFound                = errors.New("not found")
-	ErrAlreadyEntry            = errors.New("duplicate entry")
+	// トランザクション開始に失敗
+	ErrBeginTxFailed = errors.New("begin tx failed")
+	// ロールバックに失敗
+	ErrRollbackFailed = errors.New("rollback failed")
+	// コミットに失敗
+	ErrCommitFailed = errors.New("commit failed")
+	// ユーザーが見つからない
+	ErrUserNotFound = errors.New("user not found")
+	// ユーザー名が既に存在する
+	ErrUserNameAlreadyExists = errors.New("user name already exists")
+	// メールアドレスが既に存在する
+	ErrEmailAlreadyExists = errors.New("email already exists")
 )
 
 type Repository struct {
@@ -44,21 +60,20 @@ func New(cfg *config.Config) (*sqlx.DB, func(), error) {
 	return xdb, func() { _ = db.Close() }, nil
 }
 
+// トランザクションを実行するためのインターフェース
 type Beginner interface {
-	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
+	BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error)
 }
 
 type Preparer interface {
 	PreparexContext(ctx context.Context, query string) (*sqlx.Stmt, error)
 }
 
-type Execer interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
-}
-
+// Queryerはsqlx.DBとsqlx.Txのインターフェースを統一するためのインターフェース
 type Queryer interface {
 	Preparer
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
 	QueryxContext(ctx context.Context, query string, args ...any) (*sqlx.Rows, error)
 	QueryRowxContext(ctx context.Context, query string, args ...any) *sqlx.Row
 	GetContext(ctx context.Context, dest interface{}, query string, args ...any) error
@@ -69,7 +84,41 @@ type Queryer interface {
 var (
 	_ Beginner = (*sqlx.DB)(nil)
 	_ Preparer = (*sqlx.DB)(nil)
-	_ Execer   = (*sqlx.DB)(nil)
-	_ Execer   = (*sqlx.Tx)(nil)
 	_ Queryer  = (*sqlx.DB)(nil)
+	_ Queryer  = (*sqlx.Tx)(nil)
 )
+
+// WithTransactionはトランザクションを実行する
+func (r *Repository) WithTransaction(ctx context.Context, db Beginner, f func(tx *sqlx.Tx) error) error {
+	tx, err := db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrBeginTxFailed, err)
+	}
+
+	defer func() {
+		// トランザクション内でpanicが発生した場合はRollbackを実行する
+		if p := recover(); p != nil {
+			if err := tx.Rollback(); err != nil {
+				panic(fmt.Errorf("%w: %w", ErrRollbackFailed, err))
+			}
+			panic(p)
+		}
+	}()
+
+	// トランザクション内で実行する処理
+	err = f(tx)
+	// トランザクション内でエラーが発生した場合はRollbackを実行する
+	if err != nil {
+		if err := tx.Rollback(); err != nil {
+			return fmt.Errorf("%w: %w", ErrRollbackFailed, err)
+		}
+		return err
+	}
+
+	// トランザクションをコミットする
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("%w: %w", ErrCommitFailed, err)
+	}
+
+	return nil
+}

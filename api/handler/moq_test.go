@@ -74,3 +74,105 @@ func (mock *HealthServiceMock) HealthCheckCalls() []struct {
 	mock.lockHealthCheck.RUnlock()
 	return calls
 }
+
+// Ensure, that UserServiceMock does implement UserService.
+// If this is not the case, regenerate this file with moq.
+var _ UserService = &UserServiceMock{}
+
+// UserServiceMock is a mock implementation of UserService.
+//
+//	func TestSomethingThatUsesUserService(t *testing.T) {
+//
+//		// make and configure a mocked UserService
+//		mockedUserService := &UserServiceMock{
+//			RegisterUserFunc: func(ctx context.Context, userName string, name string, password string, email string, iconUrl string, Bio string) (*model.User, error) {
+//				panic("mock out the RegisterUser method")
+//			},
+//		}
+//
+//		// use mockedUserService in code that requires UserService
+//		// and then make assertions.
+//
+//	}
+type UserServiceMock struct {
+	// RegisterUserFunc mocks the RegisterUser method.
+	RegisterUserFunc func(ctx context.Context, userName string, name string, password string, email string, iconUrl string, Bio string) (*model.User, error)
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// RegisterUser holds details about calls to the RegisterUser method.
+		RegisterUser []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserName is the userName argument value.
+			UserName string
+			// Name is the name argument value.
+			Name string
+			// Password is the password argument value.
+			Password string
+			// Email is the email argument value.
+			Email string
+			// IconUrl is the iconUrl argument value.
+			IconUrl string
+			// Bio is the Bio argument value.
+			Bio string
+		}
+	}
+	lockRegisterUser sync.RWMutex
+}
+
+// RegisterUser calls RegisterUserFunc.
+func (mock *UserServiceMock) RegisterUser(ctx context.Context, userName string, name string, password string, email string, iconUrl string, Bio string) (*model.User, error) {
+	if mock.RegisterUserFunc == nil {
+		panic("UserServiceMock.RegisterUserFunc: method is nil but UserService.RegisterUser was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		UserName string
+		Name     string
+		Password string
+		Email    string
+		IconUrl  string
+		Bio      string
+	}{
+		Ctx:      ctx,
+		UserName: userName,
+		Name:     name,
+		Password: password,
+		Email:    email,
+		IconUrl:  iconUrl,
+		Bio:      Bio,
+	}
+	mock.lockRegisterUser.Lock()
+	mock.calls.RegisterUser = append(mock.calls.RegisterUser, callInfo)
+	mock.lockRegisterUser.Unlock()
+	return mock.RegisterUserFunc(ctx, userName, name, password, email, iconUrl, Bio)
+}
+
+// RegisterUserCalls gets all the calls that were made to RegisterUser.
+// Check the length with:
+//
+//	len(mockedUserService.RegisterUserCalls())
+func (mock *UserServiceMock) RegisterUserCalls() []struct {
+	Ctx      context.Context
+	UserName string
+	Name     string
+	Password string
+	Email    string
+	IconUrl  string
+	Bio      string
+} {
+	var calls []struct {
+		Ctx      context.Context
+		UserName string
+		Name     string
+		Password string
+		Email    string
+		IconUrl  string
+		Bio      string
+	}
+	mock.lockRegisterUser.RLock()
+	calls = mock.calls.RegisterUser
+	mock.lockRegisterUser.RUnlock()
+	return calls
+}
