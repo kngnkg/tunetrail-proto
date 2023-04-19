@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,15 +11,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/kwtryo/tunetrail/api/model"
 	"github.com/kwtryo/tunetrail/api/service"
-)
-
-// レスポンスメッセージ
-const (
-	BadRequestMessage           = "不正なリクエストです。"
-	ServerErrorMessage          = "サーバー内部でエラーが発生しました。"
-	UserNotFoundMessage         = "ユーザーが存在しません。"
-	UserNameAlreadyEntryMessage = "ユーザー名が既に登録されています。"
-	EmailAlreadyEntryMessage    = "メールアドレスが既に登録されています。"
 )
 
 type UserService interface {
@@ -42,26 +32,26 @@ func (uh *UserHandler) RegisterUser(c *gin.Context) {
 
 	var req model.UserRegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("ERROR: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"msg": BadRequestMessage})
+		c.Error(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": BadRequestMessage})
 		return
 	}
 	u, err := uh.Service.RegisterUser(
 		c.Request.Context(), req.UserName, req.Name, req.Password, req.Email, req.IconUrl, req.Bio,
 	)
 	if err != nil {
-		log.Printf("ERROR: %v", err)
+		c.Error(err)
 		// ユーザー名が既に登録されている場合
 		if errors.Is(err, service.ErrUserNameAlreadyExists) {
-			c.JSON(http.StatusBadRequest, gin.H{"msg": UserNameAlreadyEntryMessage})
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": UserNameAlreadyEntryMessage})
 			return
 		}
 		// メールアドレスが既に登録されている場合
 		if err == service.ErrEmailAlreadyExists {
-			c.JSON(http.StatusBadRequest, gin.H{"msg": EmailAlreadyEntryMessage})
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": EmailAlreadyEntryMessage})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
 		return
 	}
 	// ユーザーIDを返す
