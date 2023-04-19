@@ -54,7 +54,7 @@ func TestHealthHandler_HealthCheck(t *testing.T) {
 				Service: moqService,
 			}
 
-			url := testutil.RunTestServer(t, "GET", hh.HealthCheck)
+			url := testutil.RunTestServer(t, "GET", "/health", hh.HealthCheck)
 			resp := testutil.SendGetRequest(t, url)
 			// 期待するレスポンスボディのファイルをロードする
 			wantResp := testutil.LoadFile(t, tt.wantRespFile)

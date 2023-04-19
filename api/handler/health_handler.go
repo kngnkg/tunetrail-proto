@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +21,9 @@ type HealthHandler struct {
 func (hh *HealthHandler) HealthCheck(c *gin.Context) {
 	h, err := hh.Service.HealthCheck(c.Request.Context())
 	if err != nil {
-		log.Printf("ERROR: %v", err)
+		// エラーをコンテキストにセットする
+		c.Error(err)
+		// エラーが発生した場合は500エラーを返す
 		c.JSON(http.StatusInternalServerError, h)
 		return
 	}

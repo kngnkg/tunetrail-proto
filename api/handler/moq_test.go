@@ -85,6 +85,9 @@ var _ UserService = &UserServiceMock{}
 //
 //		// make and configure a mocked UserService
 //		mockedUserService := &UserServiceMock{
+//			GetUserByUserNameFunc: func(ctx context.Context, userName string) (*model.User, error) {
+//				panic("mock out the GetUserByUserName method")
+//			},
 //			RegisterUserFunc: func(ctx context.Context, userName string, name string, password string, email string, iconUrl string, Bio string) (*model.User, error) {
 //				panic("mock out the RegisterUser method")
 //			},
@@ -95,11 +98,21 @@ var _ UserService = &UserServiceMock{}
 //
 //	}
 type UserServiceMock struct {
+	// GetUserByUserNameFunc mocks the GetUserByUserName method.
+	GetUserByUserNameFunc func(ctx context.Context, userName string) (*model.User, error)
+
 	// RegisterUserFunc mocks the RegisterUser method.
 	RegisterUserFunc func(ctx context.Context, userName string, name string, password string, email string, iconUrl string, Bio string) (*model.User, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// GetUserByUserName holds details about calls to the GetUserByUserName method.
+		GetUserByUserName []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserName is the userName argument value.
+			UserName string
+		}
 		// RegisterUser holds details about calls to the RegisterUser method.
 		RegisterUser []struct {
 			// Ctx is the ctx argument value.
@@ -118,7 +131,44 @@ type UserServiceMock struct {
 			Bio string
 		}
 	}
-	lockRegisterUser sync.RWMutex
+	lockGetUserByUserName sync.RWMutex
+	lockRegisterUser      sync.RWMutex
+}
+
+// GetUserByUserName calls GetUserByUserNameFunc.
+func (mock *UserServiceMock) GetUserByUserName(ctx context.Context, userName string) (*model.User, error) {
+	if mock.GetUserByUserNameFunc == nil {
+		panic("UserServiceMock.GetUserByUserNameFunc: method is nil but UserService.GetUserByUserName was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		UserName string
+	}{
+		Ctx:      ctx,
+		UserName: userName,
+	}
+	mock.lockGetUserByUserName.Lock()
+	mock.calls.GetUserByUserName = append(mock.calls.GetUserByUserName, callInfo)
+	mock.lockGetUserByUserName.Unlock()
+	return mock.GetUserByUserNameFunc(ctx, userName)
+}
+
+// GetUserByUserNameCalls gets all the calls that were made to GetUserByUserName.
+// Check the length with:
+//
+//	len(mockedUserService.GetUserByUserNameCalls())
+func (mock *UserServiceMock) GetUserByUserNameCalls() []struct {
+	Ctx      context.Context
+	UserName string
+} {
+	var calls []struct {
+		Ctx      context.Context
+		UserName string
+	}
+	mock.lockGetUserByUserName.RLock()
+	calls = mock.calls.GetUserByUserName
+	mock.lockGetUserByUserName.RUnlock()
+	return calls
 }
 
 // RegisterUser calls RegisterUserFunc.
