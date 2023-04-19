@@ -9,10 +9,14 @@ import (
 	"github.com/kwtryo/tunetrail/api/model"
 	"github.com/kwtryo/tunetrail/api/service"
 	"github.com/kwtryo/tunetrail/api/testutil"
+	"github.com/kwtryo/tunetrail/api/validate"
 )
 
-func setupMockFuncForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
+func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
 	t.Helper()
+
+	// バリデーションの初期化
+	validate.InitValidation()
 
 	fc := &clock.FixedClocker{}
 	moqService.RegisterUserFunc =
@@ -83,7 +87,7 @@ func TestRegisterUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			moqService := &UserServiceMock{}
-			setupMockFuncForUserHandlerTest(t, moqService)
+			setupForUserHandlerTest(t, moqService)
 			uh := &UserHandler{
 				Service: moqService,
 			}
