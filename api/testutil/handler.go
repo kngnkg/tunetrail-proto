@@ -17,22 +17,22 @@ import (
 // テスト用のサーバーを起動し、URLを返す。
 // t: テスト
 // reqMethod: 登録したいリクエストメソッド
+// endpoint: 登録したいエンドポイント
 // handler: 検証したいハンドラ
-func RunTestServer(t *testing.T, reqMethod string, handler gin.HandlerFunc) string {
+func RunTestServer(t *testing.T, reqMethod string, endpoint string, handler gin.HandlerFunc) string {
 	t.Helper()
 	router := gin.Default()
-	end := "/test"
 
 	// ハンドラの登録
 	switch reqMethod {
 	case "GET":
-		router.GET(end, handler)
+		router.GET(endpoint, handler)
 	case "POST":
-		router.POST(end, handler)
+		router.POST(endpoint, handler)
 	case "PUT":
-		router.PUT(end, handler)
+		router.PUT(endpoint, handler)
 	case "DELETE":
-		router.DELETE(end, handler)
+		router.DELETE(endpoint, handler)
 	default:
 		t.Fatalf("invalid request method")
 	}
@@ -40,7 +40,7 @@ func RunTestServer(t *testing.T, reqMethod string, handler gin.HandlerFunc) stri
 	testServer := httptest.NewServer(router) // サーバを立てる
 	t.Cleanup(func() { testServer.Close() })
 
-	return fmt.Sprintf(testServer.URL + end)
+	return fmt.Sprintf(testServer.URL + endpoint)
 }
 
 // リクエストを送信し、レスポンスを返す。
