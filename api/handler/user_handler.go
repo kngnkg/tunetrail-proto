@@ -14,6 +14,7 @@ type UserService interface {
 	RegisterUser(
 		ctx context.Context, userName, name, password, email, iconUrl, Bio string,
 	) (*model.User, error)
+	GetUserByUserName(ctx context.Context, userName string) (*model.User, error)
 }
 
 type UserHandler struct {
@@ -50,4 +51,22 @@ func (uh *UserHandler) RegisterUser(c *gin.Context) {
 	}
 	// ユーザーIDを返す
 	c.JSON(http.StatusOK, gin.H{"id": u.Id})
+}
+
+// GET /user/:user_name
+// ユーザー名からユーザーを取得する
+func (uh *UserHandler) GetUserByUserName(c *gin.Context) {
+	userName := c.Param("user_name")
+	u, err := uh.Service.GetUserByUserName(c.Request.Context(), userName)
+	if err != nil {
+		c.Error(err)
+		// ユーザーが存在しない場合
+		if err == service.ErrUserNotFound {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": UserNotFoundMessage})
+			return
+		}
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
+		return
+	}
+	c.JSON(http.StatusOK, u)
 }
