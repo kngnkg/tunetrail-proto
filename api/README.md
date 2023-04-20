@@ -7,6 +7,7 @@
 | GET | `/health` | 疎通を確認する |
 | POST | `/user/register` | ユーザーを登録する |
 | GET | `/user/hoge` | ユーザー名が`hoge`のユーザーを取得する |
+| DELETE | `/user/hoge` | ユーザー名が`hoge`のユーザーを削除する |
 
 ## 環境構築
 ### Go Modulesの初期化

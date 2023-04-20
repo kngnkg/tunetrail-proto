@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 	"testing"
@@ -15,9 +16,6 @@ import (
 
 func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
 	t.Helper()
-
-	// バリデーションの初期化
-	validate.InitValidation()
 
 	fc := &clock.FixedClocker{}
 	moqService.RegisterUserFunc =
@@ -63,11 +61,25 @@ func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
 			}
 			return u, nil
 		}
+
+	moqService.DeleteUserByUserNameFunc =
+		func(ctx context.Context, userName string) error {
+			switch userName {
+			case "notFound":
+				return service.ErrUserNotFound
+			case "dummy":
+				return nil
+			default:
+				return errors.New("unexpected error")
+			}
+		}
 }
 
 func TestRegisterUser(t *testing.T) {
 	t.Parallel()
 
+	// バリデーションの初期化
+	validate.InitValidation()
 	tests := []struct {
 		name         string
 		reqFile      string // リクエストのファイルパス
@@ -160,6 +172,49 @@ func TestGetUserByUserName(t *testing.T) {
 			url = strings.Replace(url, ":user_name", tt.userName, 1)
 			resp := testutil.SendGetRequest(t, url)
 			// 期待するレスポンスボディのファイルをロードする
+			wantResp := testutil.LoadFile(t, tt.wantRespFile)
+			testutil.AssertResponse(t, resp, tt.wantStatus, wantResp)
+		})
+	}
+}
+
+func TestDeleteUserByUserName(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		userName     string // ユーザー名
+		wantStatus   int    // ステータスコード
+		wantRespFile string // レスポンスのファイルパス
+	}{
+		// 正常系
+		{
+			"ok",
+			"dummy",
+			http.StatusOK,
+			"testdata/user/delete_by_username/ok_response.json.golden",
+		},
+		// ユーザー名が存在しない場合
+		{
+			"notFound",
+			"notFound",
+			http.StatusBadRequest,
+			"testdata/user/delete_by_username/not_found_response.json.golden",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("userName: %s", tt.userName)
+			moqService := &UserServiceMock{}
+			setupForUserHandlerTest(t, moqService)
+			uh := &UserHandler{
+				Service: moqService,
+			}
+
+			url := testutil.RunTestServer(t, "DELETE", "/user/:user_name", uh.DeleteUserByUserName)
+			url = strings.Replace(url, ":user_name", tt.userName, 1)
+			resp := testutil.SendRequest(t, "DELETE", url, nil)
 			wantResp := testutil.LoadFile(t, tt.wantRespFile)
 			testutil.AssertResponse(t, resp, tt.wantStatus, wantResp)
 		})

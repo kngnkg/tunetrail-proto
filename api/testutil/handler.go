@@ -68,7 +68,12 @@ func SendRequest(t *testing.T, reqMethod string, url string, body []byte) *http.
 	t.Logf("try request to %q", url)
 
 	// []byteをio.Readerに変換
-	reader := bytes.NewReader(body)
+	var reader io.Reader
+	if body == nil {
+		reader = nil
+	} else {
+		reader = bytes.NewReader(body)
+	}
 
 	client := &http.Client{}
 	req, err := http.NewRequest(reqMethod, url, reader)

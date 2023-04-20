@@ -12,11 +12,11 @@ import (
 
 var (
 	// ユーザー名が既に存在する
-	ErrUserNameAlreadyExists = errors.New("user name already exists")
+	ErrUserNameAlreadyExists = errors.New("service: user name already exists")
 	// メールアドレスが既に存在する
-	ErrEmailAlreadyExists = errors.New("email already exists")
+	ErrEmailAlreadyExists = errors.New("service: email already exists")
 	// ユーザーが存在しない
-	ErrUserNotFound = errors.New("user not found")
+	ErrUserNotFound = errors.New("service: user not found")
 )
 
 type UserRepository interface {
@@ -91,7 +91,7 @@ func (us *UserService) GetUserByUserName(ctx context.Context, userName string) (
 		got, err := us.Repo.GetUserByUserName(ctx, tx, userName)
 		if err != nil {
 			if errors.Is(err, store.ErrUserNotFound) {
-				return fmt.Errorf("%w: %w", ErrUserNotFound, err)
+				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, userName, err)
 			}
 			return err
 		}
@@ -109,7 +109,7 @@ func (us *UserService) DeleteUserByUserName(ctx context.Context, userName string
 	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
 		if err := us.Repo.DeleteUserByUserName(ctx, tx, userName); err != nil {
 			if errors.Is(err, store.ErrUserNotFound) {
-				return fmt.Errorf("%w: %w", ErrUserNotFound, err)
+				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, userName, err)
 			}
 			return err
 		}

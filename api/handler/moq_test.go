@@ -85,6 +85,9 @@ var _ UserService = &UserServiceMock{}
 //
 //		// make and configure a mocked UserService
 //		mockedUserService := &UserServiceMock{
+//			DeleteUserByUserNameFunc: func(ctx context.Context, userName string) error {
+//				panic("mock out the DeleteUserByUserName method")
+//			},
 //			GetUserByUserNameFunc: func(ctx context.Context, userName string) (*model.User, error) {
 //				panic("mock out the GetUserByUserName method")
 //			},
@@ -98,6 +101,9 @@ var _ UserService = &UserServiceMock{}
 //
 //	}
 type UserServiceMock struct {
+	// DeleteUserByUserNameFunc mocks the DeleteUserByUserName method.
+	DeleteUserByUserNameFunc func(ctx context.Context, userName string) error
+
 	// GetUserByUserNameFunc mocks the GetUserByUserName method.
 	GetUserByUserNameFunc func(ctx context.Context, userName string) (*model.User, error)
 
@@ -106,6 +112,13 @@ type UserServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// DeleteUserByUserName holds details about calls to the DeleteUserByUserName method.
+		DeleteUserByUserName []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserName is the userName argument value.
+			UserName string
+		}
 		// GetUserByUserName holds details about calls to the GetUserByUserName method.
 		GetUserByUserName []struct {
 			// Ctx is the ctx argument value.
@@ -131,8 +144,45 @@ type UserServiceMock struct {
 			Bio string
 		}
 	}
-	lockGetUserByUserName sync.RWMutex
-	lockRegisterUser      sync.RWMutex
+	lockDeleteUserByUserName sync.RWMutex
+	lockGetUserByUserName    sync.RWMutex
+	lockRegisterUser         sync.RWMutex
+}
+
+// DeleteUserByUserName calls DeleteUserByUserNameFunc.
+func (mock *UserServiceMock) DeleteUserByUserName(ctx context.Context, userName string) error {
+	if mock.DeleteUserByUserNameFunc == nil {
+		panic("UserServiceMock.DeleteUserByUserNameFunc: method is nil but UserService.DeleteUserByUserName was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		UserName string
+	}{
+		Ctx:      ctx,
+		UserName: userName,
+	}
+	mock.lockDeleteUserByUserName.Lock()
+	mock.calls.DeleteUserByUserName = append(mock.calls.DeleteUserByUserName, callInfo)
+	mock.lockDeleteUserByUserName.Unlock()
+	return mock.DeleteUserByUserNameFunc(ctx, userName)
+}
+
+// DeleteUserByUserNameCalls gets all the calls that were made to DeleteUserByUserName.
+// Check the length with:
+//
+//	len(mockedUserService.DeleteUserByUserNameCalls())
+func (mock *UserServiceMock) DeleteUserByUserNameCalls() []struct {
+	Ctx      context.Context
+	UserName string
+} {
+	var calls []struct {
+		Ctx      context.Context
+		UserName string
+	}
+	mock.lockDeleteUserByUserName.RLock()
+	calls = mock.calls.DeleteUserByUserName
+	mock.lockDeleteUserByUserName.RUnlock()
+	return calls
 }
 
 // GetUserByUserName calls GetUserByUserNameFunc.
