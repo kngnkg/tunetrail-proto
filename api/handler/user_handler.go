@@ -15,6 +15,7 @@ type UserService interface {
 		ctx context.Context, userName, name, password, email, iconUrl, Bio string,
 	) (*model.User, error)
 	GetUserByUserName(ctx context.Context, userName string) (*model.User, error)
+	DeleteUserByUserName(ctx context.Context, userName string) error
 }
 
 type UserHandler struct {
@@ -42,7 +43,7 @@ func (uh *UserHandler) RegisterUser(c *gin.Context) {
 			return
 		}
 		// メールアドレスが既に登録されている場合
-		if err == service.ErrEmailAlreadyExists {
+		if errors.Is(err, service.ErrEmailAlreadyExists) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": EmailAlreadyEntryMessage})
 			return
 		}
@@ -61,7 +62,7 @@ func (uh *UserHandler) GetUserByUserName(c *gin.Context) {
 	if err != nil {
 		c.Error(err)
 		// ユーザーが存在しない場合
-		if err == service.ErrUserNotFound {
+		if errors.Is(err, service.ErrUserNotFound) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": UserNotFoundMessage})
 			return
 		}
@@ -69,4 +70,22 @@ func (uh *UserHandler) GetUserByUserName(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, u)
+}
+
+// DELETE /user/:user_name
+// ユーザーを削除する
+func (uh *UserHandler) DeleteUserByUserName(c *gin.Context) {
+	userName := c.Param("user_name")
+	err := uh.Service.DeleteUserByUserName(c.Request.Context(), userName)
+	if err != nil {
+		c.Error(err)
+		// ユーザーが存在しない場合
+		if errors.Is(err, service.ErrUserNotFound) {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": UserNotFoundMessage})
+			return
+		}
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"msg": SuccessMessage})
 }

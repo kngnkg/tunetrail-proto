@@ -12,11 +12,11 @@ import (
 
 var (
 	// ユーザー名が既に存在する
-	ErrUserNameAlreadyExists = errors.New("user name already exists")
+	ErrUserNameAlreadyExists = errors.New("service: user name already exists")
 	// メールアドレスが既に存在する
-	ErrEmailAlreadyExists = errors.New("email already exists")
+	ErrEmailAlreadyExists = errors.New("service: email already exists")
 	// ユーザーが存在しない
-	ErrUserNotFound = errors.New("user not found")
+	ErrUserNotFound = errors.New("service: user not found")
 )
 
 type UserRepository interface {
@@ -30,6 +30,8 @@ type UserRepository interface {
 	UserExistsByEmail(ctx context.Context, db store.Queryer, email string) (bool, error)
 	// GetUserByUserNameはユーザー名からユーザーを取得する
 	GetUserByUserName(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
+	// DeleteUserByUserNameはユーザー名からユーザーを削除する
+	DeleteUserByUserName(ctx context.Context, db store.Queryer, userName string) error
 }
 
 type UserService struct {
@@ -88,7 +90,10 @@ func (us *UserService) GetUserByUserName(ctx context.Context, userName string) (
 	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
 		got, err := us.Repo.GetUserByUserName(ctx, tx, userName)
 		if err != nil {
-			return fmt.Errorf("%w: %w", ErrUserNotFound, err)
+			if errors.Is(err, store.ErrUserNotFound) {
+				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, userName, err)
+			}
+			return err
 		}
 		u = got
 		return nil
@@ -97,4 +102,21 @@ func (us *UserService) GetUserByUserName(ctx context.Context, userName string) (
 		return nil, err
 	}
 	return u, nil
+}
+
+// DeleteUserByUserNameはユーザー名からユーザーを削除する
+func (us *UserService) DeleteUserByUserName(ctx context.Context, userName string) error {
+	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
+		if err := us.Repo.DeleteUserByUserName(ctx, tx, userName); err != nil {
+			if errors.Is(err, store.ErrUserNotFound) {
+				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, userName, err)
+			}
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

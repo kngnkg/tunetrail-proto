@@ -37,6 +37,7 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	{
 		user.POST("/register", uh.RegisterUser)
 		user.GET("/:user_name", uh.GetUserByUserName)
+		user.DELETE("/:user_name", uh.DeleteUserByUserName)
 	}
 
 	return router, cleanup, nil

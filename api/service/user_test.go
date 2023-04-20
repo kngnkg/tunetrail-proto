@@ -90,7 +90,15 @@ func TestUserServiceTestSuite(t *testing.T) {
 				})
 				return u, nil
 			}
-			return nil, errors.New("user not found")
+			return nil, store.ErrUserNotFound
+		}
+
+	moqRepo.DeleteUserByUserNameFunc =
+		func(ctx context.Context, db store.Queryer, userName string) error {
+			if userName == "dummy" {
+				return nil
+			}
+			return store.ErrUserNotFound
 		}
 
 	suite.Run(t, &UserServiceTestSuite{
@@ -256,6 +264,46 @@ func (s *UserServiceTestSuite) TestGetUserByUserName() {
 			}
 			if tt.wantErr == nil {
 				assert.Equal(s.T(), tt.wantUser, got)
+			}
+		})
+	}
+}
+
+func (s *UserServiceTestSuite) TestDeleteUserByUserName() {
+	type args struct {
+		ctx      context.Context
+		userName string
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			"ok",
+			args{
+				ctx:      context.Background(),
+				userName: "dummy",
+			},
+			nil,
+		},
+		{
+			// 存在しないユーザー名の場合
+			"errUserNotFound",
+			args{
+				ctx:      context.Background(),
+				userName: "notfound",
+			},
+			ErrUserNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := s.us.DeleteUserByUserName(tt.args.ctx, tt.args.userName)
+			if !errors.Is(err, tt.wantErr) {
+				s.T().Errorf("UserService.DeleteUserByUserName() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
