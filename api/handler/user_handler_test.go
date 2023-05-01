@@ -62,6 +62,20 @@ func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
 			return u, nil
 		}
 
+	moqService.UpdateUserFunc =
+		func(ctx context.Context, u *model.User) error {
+			if u.Id != 1 {
+				return service.ErrUserNotFound
+			}
+			if u.UserName == "exists" {
+				return service.ErrUserNameAlreadyExists
+			}
+			if u.Email == "exists@example.com" {
+				return service.ErrEmailAlreadyExists
+			}
+			return nil
+		}
+
 	moqService.DeleteUserByUserNameFunc =
 		func(ctx context.Context, userName string) error {
 			switch userName {
@@ -171,6 +185,72 @@ func TestGetUserByUserName(t *testing.T) {
 			url := testutil.RunTestServer(t, "GET", "/user/:user_name", uh.GetUserByUserName)
 			url = strings.Replace(url, ":user_name", tt.userName, 1)
 			resp := testutil.SendGetRequest(t, url)
+			// 期待するレスポンスボディのファイルをロードする
+			wantResp := testutil.LoadFile(t, tt.wantRespFile)
+			testutil.AssertResponse(t, resp, tt.wantStatus, wantResp)
+		})
+	}
+}
+
+func TestUpdateUser(t *testing.T) {
+	t.Parallel()
+
+	// バリデーションの初期化
+	validate.InitValidation()
+	tests := []struct {
+		name         string
+		reqFile      string // リクエストのファイルパス
+		wantStatus   int    // ステータスコード
+		wantRespFile string // レスポンスのファイルパス
+	}{
+		// 正常系
+		{
+			"ok",
+			"testdata/user/update/ok_request.json.golden",
+			http.StatusOK,
+			"testdata/user/update/ok_response.json.golden",
+		},
+		// フィールドの値が不正な場合
+		{
+			"emptyUserName",
+			"testdata/user/update/empty_user_name_request.json.golden",
+			http.StatusBadRequest,
+			"testdata/user/update/empty_user_name_response.json.golden",
+		},
+		// ユーザーが存在しない場合
+		{
+			"notFound",
+			"testdata/user/update/not_found_request.json.golden",
+			http.StatusBadRequest,
+			"testdata/user/update/not_found_response.json.golden",
+		},
+		// ユーザー名が既に存在する場合
+		{
+			"alreadyExistsUserName",
+			"testdata/user/update/user_name_exists_request.json.golden",
+			http.StatusBadRequest,
+			"testdata/user/update/user_name_exists_response.json.golden",
+		},
+		// メールアドレスが既に存在する場合
+		{
+			"alreadyExistsEmail",
+			"testdata/user/update/email_exists_request.json.golden",
+			http.StatusBadRequest,
+			"testdata/user/update/email_exists_response.json.golden",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			moqService := &UserServiceMock{}
+			setupForUserHandlerTest(t, moqService)
+			uh := &UserHandler{
+				Service: moqService,
+			}
+
+			url := testutil.RunTestServer(t, "PUT", "/user/update", uh.UpdateUser)
+			reqBody := testutil.LoadFile(t, tt.reqFile)
+			resp := testutil.SendRequest(t, "PUT", url, reqBody)
 			// 期待するレスポンスボディのファイルをロードする
 			wantResp := testutil.LoadFile(t, tt.wantRespFile)
 			testutil.AssertResponse(t, resp, tt.wantStatus, wantResp)

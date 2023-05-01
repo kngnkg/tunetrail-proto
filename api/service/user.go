@@ -30,6 +30,8 @@ type UserRepository interface {
 	UserExistsByEmail(ctx context.Context, db store.Queryer, email string) (bool, error)
 	// GetUserByUserNameはユーザー名からユーザーを取得する
 	GetUserByUserName(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
+	// UpdateUserはユーザーを更新する
+	UpdateUser(ctx context.Context, db store.Queryer, u *model.User) error
 	// DeleteUserByUserNameはユーザー名からユーザーを削除する
 	DeleteUserByUserName(ctx context.Context, db store.Queryer, userName string) error
 }
@@ -102,6 +104,42 @@ func (us *UserService) GetUserByUserName(ctx context.Context, userName string) (
 		return nil, err
 	}
 	return u, nil
+}
+
+// UpdateUserはユーザーを更新する
+func (us *UserService) UpdateUser(ctx context.Context, u *model.User) error {
+	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
+		// ユーザー名が既に存在するかどうかを確認
+		exists, err := us.Repo.UserExistsByUserName(ctx, tx, u.UserName)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return ErrUserNameAlreadyExists
+		}
+		// メールアドレスが既に存在するかどうかを確認
+		exists, err = us.Repo.UserExistsByEmail(ctx, tx, u.Email)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return ErrEmailAlreadyExists
+		}
+
+		// ユーザーを更新する
+		if err := us.Repo.UpdateUser(ctx, tx, u); err != nil {
+			if errors.Is(err, store.ErrUserNotFound) {
+				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, u.UserName, err)
+			}
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // DeleteUserByUserNameはユーザー名からユーザーを削除する

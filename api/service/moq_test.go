@@ -102,6 +102,9 @@ var _ UserRepository = &UserRepositoryMock{}
 //			RegisterUserFunc: func(ctx context.Context, db store.Queryer, u *model.User) error {
 //				panic("mock out the RegisterUser method")
 //			},
+//			UpdateUserFunc: func(ctx context.Context, db store.Queryer, u *model.User) error {
+//				panic("mock out the UpdateUser method")
+//			},
 //			UserExistsByEmailFunc: func(ctx context.Context, db store.Queryer, email string) (bool, error) {
 //				panic("mock out the UserExistsByEmail method")
 //			},
@@ -126,6 +129,9 @@ type UserRepositoryMock struct {
 
 	// RegisterUserFunc mocks the RegisterUser method.
 	RegisterUserFunc func(ctx context.Context, db store.Queryer, u *model.User) error
+
+	// UpdateUserFunc mocks the UpdateUser method.
+	UpdateUserFunc func(ctx context.Context, db store.Queryer, u *model.User) error
 
 	// UserExistsByEmailFunc mocks the UserExistsByEmail method.
 	UserExistsByEmailFunc func(ctx context.Context, db store.Queryer, email string) (bool, error)
@@ -165,6 +171,15 @@ type UserRepositoryMock struct {
 			// U is the u argument value.
 			U *model.User
 		}
+		// UpdateUser holds details about calls to the UpdateUser method.
+		UpdateUser []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Db is the db argument value.
+			Db store.Queryer
+			// U is the u argument value.
+			U *model.User
+		}
 		// UserExistsByEmail holds details about calls to the UserExistsByEmail method.
 		UserExistsByEmail []struct {
 			// Ctx is the ctx argument value.
@@ -196,6 +211,7 @@ type UserRepositoryMock struct {
 	lockDeleteUserByUserName sync.RWMutex
 	lockGetUserByUserName    sync.RWMutex
 	lockRegisterUser         sync.RWMutex
+	lockUpdateUser           sync.RWMutex
 	lockUserExistsByEmail    sync.RWMutex
 	lockUserExistsByUserName sync.RWMutex
 	lockWithTransaction      sync.RWMutex
@@ -318,6 +334,46 @@ func (mock *UserRepositoryMock) RegisterUserCalls() []struct {
 	mock.lockRegisterUser.RLock()
 	calls = mock.calls.RegisterUser
 	mock.lockRegisterUser.RUnlock()
+	return calls
+}
+
+// UpdateUser calls UpdateUserFunc.
+func (mock *UserRepositoryMock) UpdateUser(ctx context.Context, db store.Queryer, u *model.User) error {
+	if mock.UpdateUserFunc == nil {
+		panic("UserRepositoryMock.UpdateUserFunc: method is nil but UserRepository.UpdateUser was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Db  store.Queryer
+		U   *model.User
+	}{
+		Ctx: ctx,
+		Db:  db,
+		U:   u,
+	}
+	mock.lockUpdateUser.Lock()
+	mock.calls.UpdateUser = append(mock.calls.UpdateUser, callInfo)
+	mock.lockUpdateUser.Unlock()
+	return mock.UpdateUserFunc(ctx, db, u)
+}
+
+// UpdateUserCalls gets all the calls that were made to UpdateUser.
+// Check the length with:
+//
+//	len(mockedUserRepository.UpdateUserCalls())
+func (mock *UserRepositoryMock) UpdateUserCalls() []struct {
+	Ctx context.Context
+	Db  store.Queryer
+	U   *model.User
+} {
+	var calls []struct {
+		Ctx context.Context
+		Db  store.Queryer
+		U   *model.User
+	}
+	mock.lockUpdateUser.RLock()
+	calls = mock.calls.UpdateUser
+	mock.lockUpdateUser.RUnlock()
 	return calls
 }
 

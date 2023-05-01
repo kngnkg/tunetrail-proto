@@ -107,6 +107,44 @@ func (r *Repository) GetUserByEmail(ctx context.Context, db Queryer, email strin
 	return u, nil
 }
 
+// UpdateUser はユーザーを更新する
+func (r *Repository) UpdateUser(ctx context.Context, db Queryer, u *model.User) error {
+	u.UpdatedAt = r.Clocker.Now()
+	query := `UPDATE users
+			SET user_name = $2, name = $3, password = $4, email = $5, icon_url = $6, bio = $7, updated_at = $8
+			WHERE id = $1;`
+
+	row, err := db.ExecContext(ctx, query, u.Id, u.UserName, u.Name, u.Password, u.Email, u.IconUrl, u.Bio, u.UpdatedAt)
+	if err != nil {
+		var pqError *pq.Error
+		// 重複エラーの場合はエラーをラップして返す
+		if errors.As(err, &pqError) && pqError.Code == ErrCodePostgresDuplicate {
+			// どの制約が違反されたかでエラーを分ける
+			if pqError.Constraint == ConstraintUserName {
+				return fmt.Errorf("%w: %w", ErrUserNameAlreadyExists, err)
+			}
+			if pqError.Constraint == ConstraintEmail {
+				return fmt.Errorf("%w: %w", ErrEmailAlreadyExists, err)
+			}
+		}
+		return err
+	}
+	// 更新された行数を取得
+	affected, err := row.RowsAffected()
+	if err != nil {
+		return err
+	}
+	// 更新された行数が0の場合はエラーを返す
+	if affected == 0 {
+		return ErrUserNotFound
+	}
+
+	// UTCに変換
+	u.CreatedAt = u.CreatedAt.UTC()
+	u.UpdatedAt = u.UpdatedAt.UTC()
+	return nil
+}
+
 // DeleteUserByUserName はユーザー名からユーザーを削除する
 func (r *Repository) DeleteUserByUserName(ctx context.Context, db Queryer, userName string) error {
 	query := `DELETE FROM users WHERE user_name = $1;`

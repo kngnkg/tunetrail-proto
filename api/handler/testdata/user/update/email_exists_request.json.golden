@@ -1,0 +1,9 @@
+{
+    "id": 1,
+    "userName": "dummy",
+    "name": "dummy",
+    "password": "ynJwP8sA",
+    "email": "exists@example.com",
+    "iconUrl": "https://example.com/icon.png",
+    "bio": "dummy"
+}
