@@ -138,6 +138,10 @@ func (r *Repository) UpdateUser(ctx context.Context, db Queryer, u *model.User) 
 	if affected == 0 {
 		return ErrUserNotFound
 	}
+
+	// UTCに変換
+	u.CreatedAt = u.CreatedAt.UTC()
+	u.UpdatedAt = u.UpdatedAt.UTC()
 	return nil
 }
 

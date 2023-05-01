@@ -93,6 +93,21 @@ func TestUserServiceTestSuite(t *testing.T) {
 			return nil, store.ErrUserNotFound
 		}
 
+	moqRepo.UpdateUserFunc =
+		func(ctx context.Context, db store.Queryer, u *model.User) error {
+			if u.Id != 1 {
+				return store.ErrUserNotFound
+			}
+			if u.UserName == "dummy" {
+				return store.ErrUserNameAlreadyExists
+			}
+			if u.Email == "dummy@example.com" {
+				return store.ErrEmailAlreadyExists
+			}
+			u.UpdatedAt = fc.Now()
+			return nil
+		}
+
 	moqRepo.DeleteUserByUserNameFunc =
 		func(ctx context.Context, db store.Queryer, userName string) error {
 			if userName == "dummy" {
@@ -264,6 +279,78 @@ func (s *UserServiceTestSuite) TestGetUserByUserName() {
 			}
 			if tt.wantErr == nil {
 				assert.Equal(s.T(), tt.wantUser, got)
+			}
+		})
+	}
+}
+
+func (s *UserServiceTestSuite) TestUpdateUser() {
+	type args struct {
+		ctx  context.Context
+		user *model.User
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			"ok",
+			args{
+				ctx: context.Background(),
+				user: fixture.User(&model.User{
+					Id:        1,
+					CreatedAt: s.fc.Now(),
+					UpdatedAt: s.fc.Now(),
+				}),
+			},
+			nil,
+		},
+		// IDが存在しない場合
+		{
+			"errUserNotFound",
+			args{
+				ctx: context.Background(),
+				user: fixture.User(&model.User{
+					Id:        999,
+					CreatedAt: s.fc.Now(),
+					UpdatedAt: s.fc.Now(),
+				}),
+			},
+			ErrUserNotFound,
+		},
+		{
+			// ユーザー名が重複している場合
+			"errUserNameAlreadyExists",
+			args{
+				ctx: context.Background(),
+				user: fixture.User(&model.User{
+					Id:       1,
+					UserName: "dummy", // ダミーユーザーのユーザー名と重複させる
+				}),
+			},
+			ErrUserNameAlreadyExists,
+		},
+		{
+			// メールアドレスが重複している場合
+			"errEmailNameAlreadyExists",
+			args{
+				ctx: context.Background(),
+				user: fixture.User(&model.User{
+					Id:    1,
+					Email: "dummy@example.com", // ダミーユーザーのメールアドレスと重複させる
+				}),
+			},
+			ErrEmailAlreadyExists,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := s.us.UpdateUser(tt.args.ctx, tt.args.user)
+			if !errors.Is(err, tt.wantErr) {
+				s.T().Errorf("UserService.UpdateUser() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
