@@ -1,7 +1,17 @@
-export default function HealthCheckPage() {
+import React from "react"
+
+import { apiContext } from "@/lib/apiContext"
+import { getHealth } from "@/lib/getHealth"
+import HealthStatus from "@/components/organisms/HealthStatus/HealthStatus"
+
+// ヘルスチェックの結果を表示するページ
+export default async function Health() {
+  const health = await getHealth(apiContext)
+
   return (
-    <>
-      <p>Health Check Page</p>
-    </>
+    <div className="container mx-auto p-8">
+      <h1 className="text-3xl mb-8">Health Check Page</h1>
+      <HealthStatus health={health} />
+    </div>
   )
 }
