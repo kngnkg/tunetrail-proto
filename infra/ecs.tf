@@ -9,6 +9,11 @@ resource "aws_ecs_service" "api" {
   cluster         = aws_ecs_cluster.tunetrail.id
   task_definition = aws_ecs_task_definition.api.arn
   desired_count   = 1 # タスクの数
+  network_configuration {
+    subnets          = [aws_subnet.private1.id]
+    security_groups  = [aws_security_group.sg.id]
+    assign_public_ip = false
+  }
 }
 
 # tunetrail-api タスク定義の作成
@@ -36,6 +41,11 @@ resource "aws_ecs_service" "frontend" {
   cluster         = aws_ecs_cluster.tunetrail.id
   task_definition = aws_ecs_task_definition.frontend.arn
   desired_count   = 1
+  network_configuration {
+    subnets          = [aws_subnet.private1.id]
+    security_groups  = [aws_security_group.sg.id]
+    assign_public_ip = false
+  }
 }
 
 # tunetrail-frontend タスク定義の作成
@@ -55,4 +65,34 @@ resource "aws_ecs_task_definition" "frontend" {
   network_mode             = "awsvpc"
   execution_role_arn       = aws_iam_role.execution_role.arn
   task_role_arn            = aws_iam_role.task_role.arn
+}
+
+# ECSタスク用のセキュリティグループ
+resource "aws_security_group" "sg" {
+  name        = "ecs_tasks_sg"
+  description = "Security Group for ECS Tasks"
+
+  # インバウンドルールの設定
+  ingress {
+    from_port   = 443 # APIとフロントエンドのポート番号
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # 任意のIPからのアクセスを許可
+  }
+
+  # DBへのアクセス用のインバウンドルールの設定
+  ingress {
+    from_port   = 5432 # DBのポート番号
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
+  }
+
+  # アウトバウンドルールの設定
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"] # 任意のIPへのアクセスを許可
+  }
 }
