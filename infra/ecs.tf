@@ -8,9 +8,9 @@ resource "aws_ecs_service" "api" {
   name            = "tunetrail-api"
   cluster         = aws_ecs_cluster.tunetrail.id
   task_definition = aws_ecs_task_definition.api.arn
-  desired_count   = 1 # タスクの数
+  desired_count   = 2 # タスクの数
   network_configuration {
-    subnets          = [aws_subnet.private1.id]
+    subnets          = [aws_subnet.private1.id, aws_subnet.private2.id]
     security_groups  = [aws_security_group.sg.id]
     assign_public_ip = false
   }
@@ -40,9 +40,9 @@ resource "aws_ecs_service" "frontend" {
   name            = "tunetrail-frontend"
   cluster         = aws_ecs_cluster.tunetrail.id
   task_definition = aws_ecs_task_definition.frontend.arn
-  desired_count   = 1
+  desired_count   = 2
   network_configuration {
-    subnets          = [aws_subnet.private1.id]
+    subnets          = [aws_subnet.private1.id, aws_subnet.private2.id]
     security_groups  = [aws_security_group.sg.id]
     assign_public_ip = false
   }
@@ -71,14 +71,6 @@ resource "aws_ecs_task_definition" "frontend" {
 resource "aws_security_group" "sg" {
   name        = "ecs_tasks_sg"
   description = "Security Group for ECS Tasks"
-
-  # インバウンドルールの設定
-  ingress {
-    from_port   = 443 # APIとフロントエンドのポート番号
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # 任意のIPからのアクセスを許可
-  }
 
   # DBへのアクセス用のインバウンドルールの設定
   ingress {
