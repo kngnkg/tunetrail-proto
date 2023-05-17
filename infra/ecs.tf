@@ -3,29 +3,6 @@ resource "aws_ecs_cluster" "tunetrail" {
   name = "tunetrail"
 }
 
-# ECSタスク用のセキュリティグループ
-resource "aws_security_group" "sg" {
-  name        = "ecs_tasks_sg"
-  description = "Security Group for ECS Tasks"
-  vpc_id      = aws_vpc.main.id
-
-  # DBへのアクセス用のインバウンドルールの設定
-  ingress {
-    from_port   = 5432 # DBのポート番号
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
-  }
-
-  # アウトバウンドルールの設定
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"] # 任意のIPへのアクセスを許可
-  }
-}
-
 # tunetrail-api サービスの設定
 resource "aws_ecs_service" "api" {
   name            = "tunetrail-api"
