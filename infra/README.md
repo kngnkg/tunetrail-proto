@@ -10,6 +10,12 @@ TunetrailのAWSリソースを管理するためのTerraform設定です。
 
 AWSのリソースに対するアクセスは、AWSプロバイダを使用して設定されています。`v3.0`以降のバージョンが必要です。
 
+## Architecture Diagram
+
+AWSのアーキテクチャ図を以下に示します。
+
+![アーキテクチャ図](./diagrams/aws-structure.drawio.svg)
+
 ## GitHub Actions
 
 このプロジェクトはGitHub Actionsを使用して、AWSへの自動デプロイを実現します。具体的な設定は`.github/workflows/`ディレクトリ内の`.yml`ファイルを参照してください。
@@ -18,10 +24,14 @@ AWSのリソースに対するアクセスは、AWSプロバイダを使用し�
 
 以下のTerraformファイルが含まれています：
 
-- `backend.tf`: TerraformのバックエンドとしてS3を設定します。
 - `provider.tf`: AWSのリージョンとバージョンを設定します。
 - `variables.tf`: データベースのパスワードなどの変数を設定します。
+- `vpc.tf`: VPC、サブネット、ルートテーブル、インターネットゲートウェイを設定します。
+- `backend.tf`: TerraformのバックエンドとしてS3を設定します。
+- `route53.tf`: Route53のホストゾーンを設定します。
 - `iam.tf`: ECSタスクの実行ロールとタスクロールを設定します。
+- `security_groups.tf`: セキュリティグループを設定します。
+- `vpc_endpoints.tf`: VPCエンドポイントを設定します。
 - `ecr.tf`: ECRリポジトリを設定します。
 - `ecs.tf`: ECSクラスタ、タスク定義、サービスを設定します。
 - `rds.tf`: RDSインスタンスとサブネットグループを設定します。
