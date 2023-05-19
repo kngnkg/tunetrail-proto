@@ -24,6 +24,14 @@ resource "aws_ecs_task_definition" "api" {
     portMappings = [{
       containerPort = 8080
     }],
+    logConfiguration = {
+      logDriver = "awslogs", # CloudWatch Logsを使用する
+      options = {
+        awslogs-group         = "${aws_cloudwatch_log_group.api_log_group.name}",
+        awslogs-region        = "ap-northeast-1",
+        awslogs-stream-prefix = "api"
+      }
+    },
   }])
 
   family                   = "tunetrail-api" # タスク定義のファミリー名
@@ -56,6 +64,14 @@ resource "aws_ecs_task_definition" "frontend" {
     portMappings = [{
       containerPort = 3000
     }],
+    logConfiguration = {
+      logDriver = "awslogs", # CloudWatch Logsを使用する
+      options = {
+        awslogs-group         = "${aws_cloudwatch_log_group.frontend_log_group.name}",
+        awslogs-region        = "ap-northeast-1",
+        awslogs-stream-prefix = "frontend"
+      }
+    },
   }])
 
   family                   = "tunetrail-frontend"
