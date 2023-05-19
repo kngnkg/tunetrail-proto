@@ -47,26 +47,3 @@ resource "aws_lb_target_group" "alb_tg" {
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id # VPCを指定
 }
-
-# ALBに適用するセキュリティグループ
-resource "aws_security_group" "alb_sg" {
-  name        = "allow_http_https"
-  description = "Allow HTTP and HTTPS inbound traffic"
-  vpc_id      = aws_vpc.main.id
-
-  # HTTPに対するインバウンドルール
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # 任意のIPからのアクセスを許可
-  }
-
-  # HTTPSに対するインバウンドルール
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # 任意のIPからのアクセスを許可
-  }
-}
