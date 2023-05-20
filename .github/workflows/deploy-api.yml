@@ -3,7 +3,7 @@ name: Deploy api to ECS
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy-api:

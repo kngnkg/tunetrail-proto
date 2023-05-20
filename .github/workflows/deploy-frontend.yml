@@ -3,7 +3,7 @@ name: Deploy frontend to ECS
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy-frontend:
