@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+    - './frontend/**'
+    - ./.github/workflows/deploy-frontend.yml
 
 jobs:
   deploy-frontend:
@@ -32,7 +35,7 @@ jobs:
         IMAGE_TAG: latest
       run: |
         cd frontend
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build --build-arg NEXT_PUBLIC_API_ROOT=${{ secrets.NEXT_PUBLIC_API_ROOT }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
