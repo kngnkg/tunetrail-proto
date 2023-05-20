@@ -24,6 +24,28 @@ resource "aws_ecs_task_definition" "api" {
     portMappings = [{
       containerPort = 8080
     }],
+    environment = [
+      {
+        name  = "TUNETRAIL_DB_HOST"
+        value = "${aws_db_instance.tunetrail.address}"
+      },
+      {
+        name  = "TUNETRAIL_DB_PORT"
+        value = tostring(aws_db_instance.tunetrail.port)
+      },
+      {
+        name  = "TUNETRAIL_DB_USER"
+        value = "${aws_db_instance.tunetrail.username}"
+      },
+      {
+        name  = "TUNETRAIL_DB_PASSWORD"
+        value = "${aws_db_instance.tunetrail.password}"
+      },
+      {
+        name  = "TUNETRAIL_DB_NAME"
+        value = "${aws_db_instance.tunetrail.name}"
+      },
+    ],
     logConfiguration = {
       logDriver = "awslogs", # CloudWatch Logsを使用する
       options = {
@@ -64,6 +86,12 @@ resource "aws_ecs_task_definition" "frontend" {
     portMappings = [{
       containerPort = 3000
     }],
+    environment = [
+      {
+        name  = "NEXT_PUBLIC_API_ROOT"
+        value = "https://${var.api_domain}"
+      },
+    ],
     logConfiguration = {
       logDriver = "awslogs", # CloudWatch Logsを使用する
       options = {
