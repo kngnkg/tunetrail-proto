@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+    # API関連のファイルまたはワークフローファイル自体に変更があった場合のみ、ワークフローを実行する
     paths:
     - './api/**'
     - ./.github/workflows/deploy-api.yml
