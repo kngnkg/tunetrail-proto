@@ -20,7 +20,7 @@ resource "aws_ecs_service" "api" {
 resource "aws_ecs_task_definition" "api" {
   container_definitions = jsonencode([{
     name  = "tunetrail-api",
-    image = "${aws_ecr_repository.api.repository_url}:latest", # ECRのリポジトリURL
+    image = "${aws_ecr_repository.api.repository_url}:${var.api_image_tag}", # ECRのリポジトリURL
     portMappings = [{
       containerPort = 8080
     }],
