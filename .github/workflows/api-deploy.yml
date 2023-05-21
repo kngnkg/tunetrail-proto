@@ -3,10 +3,9 @@ name: Deploy api
 on:
   push:
     branches:
-      - main
-    # API関連のファイルまたはワークフローファイル自体に変更があった場合のみ、ワークフローを実行する
+      - "main"
     paths:
-    - './api/**'
+    - "./api/**"
     - ./.github/workflows/api-deploy.yml
 
 jobs:
