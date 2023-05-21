@@ -53,5 +53,5 @@ jobs:
       working-directory: ${{ env.TF_WORKING_DIR }}
 
     - name: Terraform Apply
-      run: terraform apply -auto-approve -var "api_image_tag=${{ github.sha }} -var "db_password=${{ secrets.DB_PASSWORD }}"
+      run: terraform apply -auto-approve -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
       working-directory: ${{ env.TF_WORKING_DIR }}
