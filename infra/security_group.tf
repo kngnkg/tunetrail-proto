@@ -35,6 +35,14 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
   }
 
+  # VPCエンドポイント用のインバウンドルールの設定
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
+  }
+
   # アウトバウンドルールの設定
   egress {
     from_port   = 0
