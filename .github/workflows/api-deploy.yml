@@ -8,6 +8,11 @@ on:
     - "api/**"
     - ".github/workflows/api-deploy.yml"
 
+env:
+  AWS_REGION: ap-northeast-1
+  TF_VERSION: 1.4.6
+  TF_WORKING_DIR: infra
+
 jobs:
   deploy-api:
     runs-on: ubuntu-latest
@@ -21,7 +26,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-1
+        aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR
       id: login-ecr-api
@@ -32,30 +37,21 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
         ECR_REPOSITORY: "tunetrail-api"
-        IMAGE_TAG: latest
+        IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
       run: |
         cd api
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-    # タスク定義を取得する
-    - name: Download task definition
-      run: |
-        aws ecs describe-task-definition --task-definition tunetrail-api --query taskDefinition > task-definition.json
-
-    - name: Fill in the new image ID in the Amazon ECS task definition
-      id: task-def-api
-      uses: aws-actions/amazon-ecs-render-task-definition@v1
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
       with:
-        task-definition: task-definition.json
-        container-name: tunetrail-api
-        image: ${{ steps.build-image-api.outputs.image }}
+        terraform_version: ${{ env.TF_VERSION }}
 
-    - name: Deploy Amazon ECS task definition
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      with:
-        task-definition: ${{ steps.task-def-api.outputs.task-definition }}
-        service: tunetrail-api
-        cluster: tunetrail
-        wait-for-service-stability: true
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ${{ env.TF_WORKING_DIR }}
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -var "api_image_tag=${{ github.sha }} -var "db_password=${{ secrets.DB_PASSWORD }}"
+      working-directory: ${{ env.TF_WORKING_DIR }}
