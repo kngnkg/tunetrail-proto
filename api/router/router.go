@@ -67,6 +67,10 @@ func CorsMiddleware() gin.HandlerFunc {
 		// 許可したいアクセス元の一覧
 		AllowOrigins: []string{
 			"http://localhost:3000",
+			"http://www.tune-trail.com",
+			"https://www.tune-trail.com",
+			"http://tune-trail.com",
+			"https://tune-trail.com",
 		},
 		// preflight requestで許可した後の接続可能時間
 		MaxAge: 24 * time.Hour,
