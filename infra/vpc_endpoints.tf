@@ -18,3 +18,12 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   security_group_ids  = [aws_security_group.sg.id]
   private_dns_enabled = true
 }
+
+# S3用のVPCエンドポイント
+# ECRのイメージをプッシュ/プルする際に、S3のバケットを使用するために必要。
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.main.id
+  service_name      = "com.amazonaws.ap-northeast-1.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = [aws_route_table.public.id]
+}
