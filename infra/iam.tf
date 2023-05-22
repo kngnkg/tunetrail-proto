@@ -52,6 +52,18 @@ resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# S3 ReadOnlyアクセスポリシーをexecution_roleにアタッチ
+resource "aws_iam_role_policy_attachment" "s3_read_only" {
+  role       = aws_iam_role.execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+}
+
+# ECR ReadOnlyアクセスポリシーをexecution_roleにアタッチ
+resource "aws_iam_role_policy_attachment" "ecr_read_only" {
+  role       = aws_iam_role.execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
 # ECS タスク実行ロールに CloudWatch Logs への書き込み権限を付与
 resource "aws_iam_policy" "cloudwatch_logs_policy" {
   name        = "CloudWatchLogsPolicy"
