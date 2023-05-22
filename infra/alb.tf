@@ -46,4 +46,16 @@ resource "aws_lb_target_group" "alb_tg" {
   port     = 80
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id # VPCを指定
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2  # 2回連続で正常なレスポンスを返すとヘルスチェックをパス
+    unhealthy_threshold = 2  # 2回連続で異常なレスポンスを返すとヘルスチェックを不合格
+    timeout             = 5  # 5秒以内にレスポンスを返さない場合はヘルスチェックを不合格
+    interval            = 30 # 30秒ごとにヘルスチェックを実施
+    path                = "/health"
+    matcher             = "200-399" # 200番台と300番台のレスポンスを正常とする
+    port                = 8080
+    protocol            = "HTTP"
+  }
 }
