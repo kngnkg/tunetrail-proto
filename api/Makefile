@@ -1,7 +1,6 @@
 .PHONY: help build build-local up down logs ps test
 .DEFAULT_GOAL := help
 
-# test
 DOCKER_TAG := latest
 build: ## Build docker image to deploy
 	docker build -t kwtryo/tunetrail/api:${DOCKER_TAG} \
