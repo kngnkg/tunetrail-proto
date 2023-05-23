@@ -33,7 +33,7 @@ resource "aws_vpc_endpoint" "s3" {
 
 # CloudWatch Logs用のVPCエンドポイント
 resource "aws_vpc_endpoint" "cloudwatch_logs" {
-  count               = 0 # 一時的に無効化する場合は0にする
+  # count               = 0 # 一時的に無効化する場合は0にする
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-1.logs"
   vpc_endpoint_type   = "Interface"
