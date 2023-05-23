@@ -9,7 +9,8 @@ resource "aws_ecs_service" "api" {
   cluster         = aws_ecs_cluster.tunetrail.id
   task_definition = aws_ecs_task_definition.api.arn
   desired_count   = 2 # タスクの数
-  launch_type     = "FARGATE"
+  # desired_count = 0 # 一時的に無効化する場合は0にする
+  launch_type = "FARGATE"
   network_configuration {
     subnets          = [aws_subnet.private1.id, aws_subnet.private2.id]
     security_groups  = [aws_security_group.sg.id]
@@ -72,7 +73,8 @@ resource "aws_ecs_service" "frontend" {
   cluster         = aws_ecs_cluster.tunetrail.id
   task_definition = aws_ecs_task_definition.frontend.arn
   desired_count   = 2
-  launch_type     = "FARGATE"
+  # desired_count = 0 # 一時的に無効化する場合は0にする
+  launch_type = "FARGATE"
   network_configuration {
     subnets          = [aws_subnet.private1.id, aws_subnet.private2.id]
     security_groups  = [aws_security_group.sg.id]
