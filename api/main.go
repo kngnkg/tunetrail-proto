@@ -12,21 +12,18 @@ import (
 )
 
 func main() {
-	log.Print("start main")
 	cfg, err := config.New()
 	if err != nil {
 		log.Printf("cannot get config: %v", err)
 		os.Exit(1)
 	}
 
-	log.Print("init validation")
 	// バリデーションの初期化
 	if err := validate.InitValidation(); err != nil {
 		log.Printf("cannot init validation: %v", err)
 		os.Exit(1)
 	}
 
-	log.Print("setup router")
 	// ルーターの初期化
 	r, cleanup, err := router.SetupRouter(cfg)
 	if err != nil {
@@ -35,11 +32,9 @@ func main() {
 	}
 	defer cleanup()
 
-	log.Print("run server")
 	// サーバーの起動
 	if err := runner.Run(context.Background(), r, cfg); err != nil {
 		log.Printf("failed to terminated server: %v", err)
 		os.Exit(1)
 	}
-	log.Print("end main")
 }
