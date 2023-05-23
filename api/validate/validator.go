@@ -9,14 +9,14 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func InitValidation() {
+func InitValidation() error {
 	// カスタムバリデーションルールを登録
 	validate := binding.Validator.Engine().(*validator.Validate)
 	err := validate.RegisterValidation("password", passwordValidation)
 	if err != nil {
-		fmt.Printf("Failed to register custom validation: %v\n", err)
-		return
+		return fmt.Errorf("failed to register custom validation: %w", err)
 	}
+	return nil
 }
 
 // passwordValidationはパスワードのバリデーションを行う関数
