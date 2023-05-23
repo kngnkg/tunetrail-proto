@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/kwtryo/tunetrail/api/clock"
@@ -42,6 +43,9 @@ type Repository struct {
 
 // NewはconfigからDBオブジェクトを返す
 func New(cfg *config.Config) (*sqlx.DB, func(), error) {
+	log.Print("store: start store.New")
+	log.Print("store: open db")
+	log.Printf("store: db host: %s db port: %v db user: %s db name: %s", cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBName)
 	driver := "postgres"
 	db, err := sql.Open(driver, fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -49,14 +53,18 @@ func New(cfg *config.Config) (*sqlx.DB, func(), error) {
 		cfg.DBPassword, cfg.DBName,
 	))
 	if err != nil {
+		log.Printf("store: failed to open db: %v", err)
 		return nil, nil, err
 	}
 
+	log.Print("store: ping db")
 	// sql.Openは接続確認が行われないため、ここで確認する。
 	if err := db.Ping(); err != nil {
+		log.Printf("store: failed to ping db: %v", err)
 		return nil, func() { _ = db.Close() }, err
 	}
 	xdb := sqlx.NewDb(db, driver)
+	log.Print("store: end store.New")
 	return xdb, func() { _ = db.Close() }, nil
 }
 
