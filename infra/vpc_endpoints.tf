@@ -1,6 +1,7 @@
 # ECRのAPIを呼び出すためのVPCエンドポイント
 # イメージのメタデータを取得したり、イメージの認証トークンを取得するために使用される。
 resource "aws_vpc_endpoint" "ecr_api" {
+  # count               = 0 # 一時的に無効化する場合は0にする
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-1.ecr.api"
   vpc_endpoint_type   = "Interface"
@@ -11,6 +12,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
 
 # Dockerイメージのプッシュ/プルを行うためのVPCエンドポイント
 resource "aws_vpc_endpoint" "ecr_dkr" {
+  # count               = 0 # 一時的に無効化する場合は0にする
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-1.ecr.dkr"
   vpc_endpoint_type   = "Interface"
@@ -22,6 +24,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
 # S3用のVPCエンドポイント
 # ECRのイメージをプッシュ/プルする際に、S3のバケットを使用するために必要。
 resource "aws_vpc_endpoint" "s3" {
+  # count             = 0 # 一時的に無効化する場合は0にする
   vpc_id            = aws_vpc.main.id
   service_name      = "com.amazonaws.ap-northeast-1.s3"
   vpc_endpoint_type = "Gateway"
@@ -30,6 +33,7 @@ resource "aws_vpc_endpoint" "s3" {
 
 # CloudWatch Logs用のVPCエンドポイント
 resource "aws_vpc_endpoint" "cloudwatch_logs" {
+  count               = 0 # 一時的に無効化する場合は0にする
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.ap-northeast-1.logs"
   vpc_endpoint_type   = "Interface"
