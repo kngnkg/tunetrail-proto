@@ -18,7 +18,10 @@ func main() {
 	}
 
 	// バリデーションの初期化
-	validate.InitValidation()
+	if err := validate.InitValidation(); err != nil {
+		log.Printf("cannot init validation: %v", err)
+		os.Exit(1)
+	}
 
 	// ルーターの初期化
 	r, cleanup, err := router.SetupRouter(cfg)
