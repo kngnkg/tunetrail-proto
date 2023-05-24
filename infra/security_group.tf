@@ -27,10 +27,10 @@ resource "aws_security_group" "sg" {
   description = "Security Group for ECS Tasks"
   vpc_id      = aws_vpc.main.id
 
-  # DBへのアクセス用のインバウンドルールの設定
+  # ECSタスクへのアクセス用のインバウンドルールの設定
   ingress {
-    from_port   = 5432 # DBのポート番号
-    to_port     = 5432
+    from_port   = 80 # APIのポート番号
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
   }
@@ -39,6 +39,29 @@ resource "aws_security_group" "sg" {
   ingress {
     from_port   = 443
     to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
+  }
+
+  # アウトバウンドルールの設定
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"] # 任意のIPへのアクセスを許可
+  }
+}
+
+# RDS用のセキュリティグループ
+resource "aws_security_group" "rds_sg" {
+  name        = "rds_sg"
+  description = "Security Group for RDS Instance"
+  vpc_id      = aws_vpc.main.id
+
+  # RDSへのアクセス用のインバウンドルールの設定
+  ingress {
+    from_port   = 5432 # DBのポート番号
+    to_port     = 5432
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
   }
