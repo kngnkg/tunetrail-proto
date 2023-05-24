@@ -46,11 +46,17 @@ func New(cfg *config.Config) (*sqlx.DB, func(), error) {
 	log.Print("store: start store.New")
 	log.Print("store: open db")
 	log.Printf("store: db host: %s db port: %v db user: %s db name: %s", cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBName)
+
 	driver := "postgres"
+
+	sslMode := "require"
+	if cfg.Env == "dev" {
+		sslMode = "disable" // 開発環境の場合はSSL通信を無効にする
+	}
+
 	db, err := sql.Open(driver, fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser,
-		cfg.DBPassword, cfg.DBName,
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName, sslMode,
 	))
 	if err != nil {
 		log.Printf("store: failed to open db: %v", err)
