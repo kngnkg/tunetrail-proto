@@ -1,7 +1,6 @@
 package router
 
 import (
-	"log"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -14,11 +13,8 @@ import (
 )
 
 func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
-	log.Print("router: start router.setupRouter")
-	log.Print("router: setup gin router")
 	router := gin.Default()
 
-	log.Print("router: setup db")
 	db, cleanup, err := store.New(cfg)
 	if err != nil {
 		return nil, cleanup, err
@@ -34,10 +30,8 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		Service: &service.UserService{DB: db, Repo: r},
 	}
 
-	log.Print("router: setup cors middleware")
 	router.Use(CorsMiddleware())
 
-	log.Print("router: setup endpoints")
 	router.GET("/health", hh.HealthCheck)
 	user := router.Group("/user")
 	{
@@ -47,7 +41,6 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		user.DELETE("/:user_name", uh.DeleteUserByUserName)
 	}
 
-	log.Print("router: end router.setupRouter")
 	return router, cleanup, nil
 }
 
