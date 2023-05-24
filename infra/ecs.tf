@@ -28,6 +28,14 @@ resource "aws_ecs_task_definition" "api" {
     }],
     environment = [
       {
+        name  = "TUNETRAIL_ENV"
+        value = "prod"
+      },
+      {
+        name  = "PORT"
+        value = "80"
+      },
+      {
         name  = "TUNETRAIL_DB_HOST"
         value = "${aws_db_instance.tunetrail.address}"
       },
