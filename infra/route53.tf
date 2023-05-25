@@ -45,7 +45,7 @@ resource "aws_acm_certificate_validation" "cert" {
 # ALBへのエイリアスレコード (www)
 resource "aws_route53_record" "www" {
   zone_id = aws_route53_zone.tunetrail.zone_id
-  name    = "www.tune-trail.com"
+  name    = var.frontend_domain
   type    = "A"
 
   alias {
@@ -58,7 +58,7 @@ resource "aws_route53_record" "www" {
 # ALBへのエイリアスレコード (api)
 resource "aws_route53_record" "api" {
   zone_id = aws_route53_zone.tunetrail.zone_id
-  name    = "api.tune-trail.com"
+  name    = var.api_domain
   type    = "A"
 
   alias {

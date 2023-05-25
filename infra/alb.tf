@@ -40,8 +40,26 @@ resource "aws_lb_listener" "https" {
   }
 }
 
+# Frontend用のリスナールール
+# Frontendのドメインにアクセスした場合に、Frontend用のターゲットグループにフォワードする
+resource "aws_lb_listener_rule" "frontend" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 101
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.alb_tg_frontend.arn
+  }
+
+  condition {
+    host_header {
+      values = [var.frontend_domain]
+    }
+  }
+}
+
 # API用のリスナールール
-# api.tune-trail.comにアクセスした場合に、API用のターゲットグループにフォワードする
+# apiのドメインにアクセスした場合に、API用のターゲットグループにフォワードする
 resource "aws_lb_listener_rule" "api" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 100
@@ -53,7 +71,7 @@ resource "aws_lb_listener_rule" "api" {
 
   condition {
     host_header {
-      values = ["api.tune-trail.com"]
+      values = [var.api_domain]
     }
   }
 }
@@ -62,16 +80,15 @@ resource "aws_lb_listener_rule" "api" {
 # デフォルトではフロントエンドに接続する
 resource "aws_lb_target_group" "alb_tg" {
   name     = "default-target-group"
-  port     = 3000
+  port     = var.frontend_port
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id # VPCを指定
 }
 
-
-# API用のターゲットグループ
-resource "aws_lb_target_group" "alb_tg_api" {
-  name        = "api-target-group"
-  port        = 80
+# Frontend用のターゲットグループ
+resource "aws_lb_target_group" "alb_tg_frontend" {
+  name        = "frontend-target-group"
+  port        = var.frontend_port
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id # VPCを指定
   target_type = "ip"
@@ -84,8 +101,28 @@ resource "aws_lb_target_group" "alb_tg_api" {
     interval            = 30 # 30秒ごとにヘルスチェックを実施
     path                = "/health"
     matcher             = "200-399" # 200番台と300番台のレスポンスを正常とする
-    port                = 80
+    port                = var.frontend_port
     protocol            = "HTTP"
   }
 }
 
+# API用のターゲットグループ
+resource "aws_lb_target_group" "alb_tg_api" {
+  name        = "api-target-group"
+  port        = var.api_port
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id # VPCを指定
+  target_type = "ip"
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2  # 2回連続で正常なレスポンスを返すとヘルスチェックをパス
+    unhealthy_threshold = 2  # 2回連続で異常なレスポンスを返すとヘルスチェックを不合格
+    timeout             = 5  # 5秒以内にレスポンスを返さない場合はヘルスチェックを不合格
+    interval            = 30 # 30秒ごとにヘルスチェックを実施
+    path                = "/health"
+    matcher             = "200-399" # 200番台と300番台のレスポンスを正常とする
+    port                = var.api_port
+    protocol            = "HTTP"
+  }
+}
