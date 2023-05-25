@@ -40,9 +40,37 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# ALBのターゲットグループ
+# API用のリスナールール
+# api.tune-trail.comにアクセスした場合に、API用のターゲットグループにフォワードする
+resource "aws_lb_listener_rule" "api" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.alb_tg_api.arn
+  }
+
+  condition {
+    host_header {
+      values = ["api.tune-trail.com"]
+    }
+  }
+}
+
+# デフォルトのターゲットグループ
+# デフォルトではフロントエンドに接続する
 resource "aws_lb_target_group" "alb_tg" {
-  name     = "tunetrail-alb-tg"
+  name     = "default-target-group"
+  port     = 3000
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id # VPCを指定
+}
+
+
+# API用のターゲットグループ
+resource "aws_lb_target_group" "alb_tg_api" {
+  name     = "api-target-group"
   port     = 80
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id # VPCを指定
@@ -55,7 +83,8 @@ resource "aws_lb_target_group" "alb_tg" {
     interval            = 30 # 30秒ごとにヘルスチェックを実施
     path                = "/health"
     matcher             = "200-399" # 200番台と300番台のレスポンスを正常とする
-    port                = 8080
+    port                = 80
     protocol            = "HTTP"
   }
 }
+
