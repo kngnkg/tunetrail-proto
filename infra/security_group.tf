@@ -29,15 +29,46 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# ECSタスク用のセキュリティグループ
-resource "aws_security_group" "sg" {
-  name        = "ecs_tasks_sg"
-  description = "Security Group for ECS Tasks"
+# Frontend用のセキュリティグループ
+resource "aws_security_group" "frontend_sg" {
+  name        = "frontend_sg"
+  description = "Security Group for Frontend Tasks"
   vpc_id      = aws_vpc.main.id
 
-  # ECSタスクへのアクセス用のインバウンドルールの設定
+  # APIへのアクセス用のインバウンドルールの設定
   ingress {
-    from_port   = var.api_port # APIのポート番号
+    from_port   = var.frontend_port
+    to_port     = var.frontend_port
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
+  }
+
+  # VPCエンドポイント用のインバウンドルールの設定
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
+  }
+
+  # アウトバウンドルールの設定
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"] # 任意のIPへのアクセスを許可
+  }
+}
+
+# API用のセキュリティグループ
+resource "aws_security_group" "api_sg" {
+  name        = "api_sg"
+  description = "Security Group for API Tasks"
+  vpc_id      = aws_vpc.main.id
+
+  # APIへのアクセス用のインバウンドルールの設定
+  ingress {
+    from_port   = var.api_port
     to_port     = var.api_port
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
