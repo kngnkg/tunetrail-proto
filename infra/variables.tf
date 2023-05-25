@@ -1,3 +1,15 @@
+# 無駄な課金を防ぐために、リソースを使用しない間はfalseにする。
+variable "use_resources" {
+  description = "Whether to use resources or data sources"
+  type        = bool
+  default     = true
+}
+
+variable "frontend_image_tag" {
+  description = "value of the tag for the frontend image"
+  type        = string
+}
+
 variable "api_image_tag" {
   description = "value of the tag for the API image"
   type        = string

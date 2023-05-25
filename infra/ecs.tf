@@ -8,12 +8,11 @@ resource "aws_ecs_service" "api" {
   name            = "tunetrail-api"
   cluster         = aws_ecs_cluster.tunetrail.id
   task_definition = aws_ecs_task_definition.api.arn
-  desired_count   = 2 # タスクの数
-  # desired_count = 0 # 一時的に無効化する場合は0にする
-  launch_type = "FARGATE"
+  desired_count   = var.use_resources ? 2 : 0 # タスクの数
+  launch_type     = "FARGATE"
   network_configuration {
     subnets          = [aws_subnet.private1.id, aws_subnet.private2.id]
-    security_groups  = [aws_security_group.sg.id]
+    security_groups  = [aws_security_group.api_sg.id]
     assign_public_ip = false
   }
   # ロードバランサーの設定
@@ -88,12 +87,11 @@ resource "aws_ecs_service" "frontend" {
   name            = "tunetrail-frontend"
   cluster         = aws_ecs_cluster.tunetrail.id
   task_definition = aws_ecs_task_definition.frontend.arn
-  desired_count   = 2
-  # desired_count = 0 # 一時的に無効化する場合は0にする
-  launch_type = "FARGATE"
+  desired_count   = var.use_resources ? 2 : 0 # タスクの数
+  launch_type     = "FARGATE"
   network_configuration {
     subnets          = [aws_subnet.private1.id, aws_subnet.private2.id]
-    security_groups  = [aws_security_group.sg.id]
+    security_groups  = [aws_security_group.frontend_sg.id]
     assign_public_ip = false
   }
 }
@@ -102,7 +100,7 @@ resource "aws_ecs_service" "frontend" {
 resource "aws_ecs_task_definition" "frontend" {
   container_definitions = jsonencode([{
     name  = "tunetrail-frontend",
-    image = "${aws_ecr_repository.frontend.repository_url}:latest",
+    image = "${aws_ecr_repository.frontend.repository_url}:${var.frontend_image_tag}",
     portMappings = [{
       containerPort = var.frontend_port
     }],
