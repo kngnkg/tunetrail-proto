@@ -16,6 +16,13 @@ resource "aws_ecs_service" "api" {
     security_groups  = [aws_security_group.sg.id]
     assign_public_ip = false
   }
+  # ロードバランサーの設定
+  # ターゲットグループをアタッチすることで、ロードバランサーにターゲットとして登録される
+  load_balancer {
+    target_group_arn = aws_lb_target_group.alb_tg_api.arn
+    container_name   = "tunetrail-api"
+    container_port   = 80
+  }
 }
 
 # tunetrail-api タスク定義の作成
@@ -24,7 +31,8 @@ resource "aws_ecs_task_definition" "api" {
     name  = "tunetrail-api",
     image = "${aws_ecr_repository.api.repository_url}:${var.api_image_tag}", # ECRのリポジトリURL
     portMappings = [{
-      containerPort = 8080
+      containerPort = 80
+      protocol      = "tcp"
     }],
     environment = [
       {

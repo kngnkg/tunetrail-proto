@@ -28,6 +28,7 @@ func Run(ctx context.Context, r *gin.Engine, cfg *config.Config) error {
 	// Initializing the server in a goroutine so that
 	// it won't block the graceful shutdown handling below
 	eg.Go(func() error {
+		log.Printf("listening on port %d", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Printf("failed to close: %+v", err)
 			return err
