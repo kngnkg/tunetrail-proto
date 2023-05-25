@@ -21,7 +21,7 @@ resource "aws_ecs_service" "api" {
   load_balancer {
     target_group_arn = aws_lb_target_group.alb_tg_api.arn
     container_name   = "tunetrail-api"
-    container_port   = 80
+    container_port   = var.api_port
   }
 }
 
@@ -31,7 +31,7 @@ resource "aws_ecs_task_definition" "api" {
     name  = "tunetrail-api",
     image = "${aws_ecr_repository.api.repository_url}:${var.api_image_tag}", # ECRのリポジトリURL
     portMappings = [{
-      containerPort = 80
+      containerPort = var.api_port
       protocol      = "tcp"
     }],
     environment = [
@@ -104,7 +104,7 @@ resource "aws_ecs_task_definition" "frontend" {
     name  = "tunetrail-frontend",
     image = "${aws_ecr_repository.frontend.repository_url}:latest",
     portMappings = [{
-      containerPort = 3000
+      containerPort = var.frontend_port
     }],
     environment = [
       {

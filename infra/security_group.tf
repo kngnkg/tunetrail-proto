@@ -6,8 +6,8 @@ resource "aws_security_group" "alb_sg" {
 
   # HTTPに対するインバウンドルール
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = var.api_port
+    to_port     = var.api_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # 任意のIPからのアクセスを許可
   }
@@ -37,8 +37,8 @@ resource "aws_security_group" "sg" {
 
   # ECSタスクへのアクセス用のインバウンドルールの設定
   ingress {
-    from_port   = 80 # APIのポート番号
-    to_port     = 80
+    from_port   = var.api_port # APIのポート番号
+    to_port     = var.api_port
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
   }
@@ -68,8 +68,8 @@ resource "aws_security_group" "rds_sg" {
 
   # RDSへのアクセス用のインバウンドルールの設定
   ingress {
-    from_port   = 5432 # DBのポート番号
-    to_port     = 5432
+    from_port   = var.db_port # DBのポート番号
+    to_port     = var.db_port
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
   }
