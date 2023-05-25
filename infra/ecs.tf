@@ -24,7 +24,8 @@ resource "aws_ecs_task_definition" "api" {
     name  = "tunetrail-api",
     image = "${aws_ecr_repository.api.repository_url}:${var.api_image_tag}", # ECRのリポジトリURL
     portMappings = [{
-      containerPort = 8080
+      containerPort = 80
+      protocol      = "tcp"
     }],
     environment = [
       {
