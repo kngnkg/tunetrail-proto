@@ -1,0 +1,125 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+    - "api/**"
+    - "frontend/**"
+    # - "infra/**" # infraディレクトリのみに変更があった場合はデプロイしない
+    - ".github/workflows/deploy.yml"
+
+env:
+  AWS_REGION: ap-northeast-1
+  TF_VERSION: 1.4.6
+  TF_WORKING_DIR: infra
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+    # APIのディレクトリに変更があった場合のみデプロイを行う
+    if: contains(toJSON(github.event.commits.*.modified), 'api/')
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    # まだ存在しないのでコメントアウト
+    # # 現行のタスク定義からフロントエンドのイメージタグを取得する
+    # - name: Get the latest Frontend image tag
+    #   id: get-latest-tag
+    #   run: |
+    #     aws ecs describe-task-definition --task-definition tunetrail-frontend --query 'taskDefinition.containerDefinitions[0].image' --output-text | cut -d ':' -f 2
+
+    - name: Login to Amazon ECR
+      id: login-ecr-api
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image-api
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
+        ECR_REPOSITORY: "tunetrail-api"
+        API_IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
+      run: |
+        cd api
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG --target deploy .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ${{ env.TF_WORKING_DIR }}
+
+    # フロントエンドのタグは現行のタスク定義から取得する (変更しない)
+    # APIのタグはコミットハッシュを使用する
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -var "frontend_image_tag=${{ steps.get-latest-tag.outputs.tag }}" -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
+      working-directory: ${{ env.TF_WORKING_DIR }}
+
+  # APIのデプロイが完了したら、フロントエンドのデプロイを行う
+  deploy-frontend:
+    needs: deploy-api
+    runs-on: ubuntu-latest
+    # フロントエンドのディレクトリに変更があった場合のみデプロイを行う
+    # 最初のデプロイをしたいので一時的にコメントアウト
+    # if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    # 現行のタスク定義からAPIのイメージタグを取得する
+    - name: Get the latest API image tag
+      id: get-latest-tag
+      run: |
+        aws ecs describe-task-definition --task-definition tunetrail-api --query 'taskDefinition.containerDefinitions[0].image' --output-text | cut -d ':' -f 2
+
+    - name: Login to Amazon ECR
+      id: login-ecr-frontend
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image-frontend
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr-frontend.outputs.registry }}
+        ECR_REPOSITORY: "tunetrail-frontend"
+        IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
+      run: |
+        cd frontend
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ${{ env.TF_WORKING_DIR }}
+
+    # フロントエンドのタグは現行のタスク定義から取得する (変更しない)
+    # APIのタグはコミットハッシュを使用する
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -var "frontend_image_tag=${{ github.sha }}" -var "api_image_tag=${{ steps.get-latest-tag.outputs.tag }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
+      working-directory: ${{ env.TF_WORKING_DIR }}
