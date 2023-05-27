@@ -40,7 +40,7 @@ jobs:
       id: get-api-tag
       run: |
         set -e
-        result=$(aws ecs describe-task-definition --task-definition tunetrail-api --query 'taskDefinition.containerDefinitions[0].image' --output-text || echo "error")
+        result=$(aws ecs describe-task-definition --task-definition tunetrail-api --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
         if [ "$result" == "error" ]; then
           echo "Failed to describe the task definition."
           exit 1
@@ -54,7 +54,7 @@ jobs:
     #   id: get-frontend-tag
     #   run: |
     #     set -e
-    #     result=$(aws ecs describe-task-definition --task-definition tunetrail-frontend --query 'taskDefinition.containerDefinitions[0].image' --output-text || echo "error")
+    #     result=$(aws ecs describe-task-definition --task-definition tunetrail-frontend --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
     #     if [ "$result" == "error" ]; then
     #       echo "Failed to describe the task definition."
     #       exit 1
