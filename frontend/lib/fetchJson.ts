@@ -10,6 +10,7 @@ export const fetchJson = async (
   resource: RequestInfo,
   init?: RequestInit
 ): Promise<unknown> => {
+  console.log(`fetchJson: ${resource}`)
   const response = await fetch(resource, init)
   if (!response.ok) {
     const errorResponse = await response.json()
