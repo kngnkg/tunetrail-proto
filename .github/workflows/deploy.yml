@@ -16,10 +16,13 @@ env:
   TF_WORKING_DIR: infra
 
 jobs:
-  deploy-api:
+  # デプロイ準備ジョブ
+  # 現行のタスク定義からイメージタグを取得する
+  prepare-deployment:
     runs-on: ubuntu-latest
-    # APIのディレクトリに変更があった場合のみデプロイを行う
-    if: contains(toJSON(github.event.commits.*.modified), 'api/')
+    outputs:
+      api_image_tag: ${{ steps.get-api-tag.outputs.tag }}
+      frontend_image_tag: ${{ steps.get-frontend-tag.outputs.tag }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -32,19 +35,62 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # まだ存在しないのでコメントアウト
-    # # 現行のタスク定義からフロントエンドのイメージタグを取得する
-    # - name: Get the latest Frontend image tag
-    #   id: get-latest-tag
-    #   run: |
-    #     aws ecs describe-task-definition --task-definition tunetrail-frontend --query 'taskDefinition.containerDefinitions[0].image' --output-text | cut -d ':' -f 2
+    # APIのイメージタグを取得する
+    - name: Get the latest API image tag
+      id: get-api-tag
+      run: |
+        set -e
+        result=$(aws ecs describe-task-definition --task-definition tunetrail-api --query 'taskDefinition.containerDefinitions[0].image' --output-text || echo "error")
+        if [ "$result" == "error" ]; then
+          echo "Failed to describe the task definition."
+          exit 1
+        fi
+        TAG=$(echo $result | cut -d ':' -f 2)
+        echo "::set-output name=tag::$TAG"
 
-    - name: Login to Amazon ECR
+    # # フロントエンドのイメージタグを取得する
+    # # 一時的にコメントアウト
+    # - name: Get the latest Frontend image tag
+    #   id: get-frontend-tag
+    #   run: |
+    #     set -e
+    #     result=$(aws ecs describe-task-definition --task-definition tunetrail-frontend --query 'taskDefinition.containerDefinitions[0].image' --output-text || echo "error")
+    #     if [ "$result" == "error" ]; then
+    #       echo "Failed to describe the task definition."
+    #       exit 1
+    #     fi
+    #     TAG=$(echo $result | cut -d ':' -f 2)
+    #     echo "::set-output name=tag::$TAG"
+
+  # デプロイジョブ
+  deploy:
+    needs: prepare-deployment
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    # ECRにログインする (API)
+    - name: Login to Amazon ECR (API)
       id: login-ecr-api
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push image to Amazon ECR
+    # イメージのビルドとプッシュを行う
+    # TODO: 各イメージのビルドとTerraformのデプロイをそれぞれ並列で行う
+
+    # APIのイメージをビルドしてECRにプッシュする
+    - name: Build, tag, and push API image to Amazon ECR
       id: build-image-api
+      # APIディレクトリ以下に変更があった場合のみビルドする
+      if: contains(toJSON(github.event.commits.*.modified), 'api/')
       env:
         ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
         ECR_REPOSITORY: "tunetrail-api"
@@ -54,52 +100,16 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG --target deploy .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_version: ${{ env.TF_VERSION }}
-
-    - name: Terraform Init
-      run: terraform init
-      working-directory: ${{ env.TF_WORKING_DIR }}
-
-    # フロントエンドのタグは現行のタスク定義から取得する (変更しない)
-    # APIのタグはコミットハッシュを使用する
-    - name: Terraform Apply
-      run: terraform apply -auto-approve -var "frontend_image_tag=${{ steps.get-latest-tag.outputs.tag }}" -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
-      working-directory: ${{ env.TF_WORKING_DIR }}
-
-  # APIのデプロイが完了したら、フロントエンドのデプロイを行う
-  deploy-frontend:
-    needs: deploy-api
-    runs-on: ubuntu-latest
-    # フロントエンドのディレクトリに変更があった場合のみデプロイを行う
-    # 最初のデプロイをしたいので一時的にコメントアウト
-    # if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-
-    # 現行のタスク定義からAPIのイメージタグを取得する
-    - name: Get the latest API image tag
-      id: get-latest-tag
-      run: |
-        aws ecs describe-task-definition --task-definition tunetrail-api --query 'taskDefinition.containerDefinitions[0].image' --output-text | cut -d ':' -f 2
-
-    - name: Login to Amazon ECR
+    # ECRにログインする (フロントエンド)
+    - name: Login to Amazon ECR (Frontend)
       id: login-ecr-frontend
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push image to Amazon ECR
+    # フロントエンドのイメージをビルドしてECRにプッシュする
+    - name: Build, tag, and push Frontend image to Amazon ECR
       id: build-image-frontend
+      # フロントエンドディレクトリ以下に変更があった場合のみビルドする
+      if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
       env:
         ECR_REGISTRY: ${{ steps.login-ecr-frontend.outputs.registry }}
         ECR_REPOSITORY: "tunetrail-frontend"
@@ -118,8 +128,38 @@ jobs:
       run: terraform init
       working-directory: ${{ env.TF_WORKING_DIR }}
 
+    # APIコンテナをデプロイする
     # フロントエンドのタグは現行のタスク定義から取得する (変更しない)
     # APIのタグはコミットハッシュを使用する
-    - name: Terraform Apply
-      run: terraform apply -auto-approve -var "frontend_image_tag=${{ github.sha }}" -var "api_image_tag=${{ steps.get-latest-tag.outputs.tag }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
+    - name: Terraform Apply (API only)
+      # APIディレクトリ以下に変更があった場合のみデプロイする
+      if: contains(toJSON(github.event.commits.*.modified), 'api/')
+      run: |
+        set -e
+        terraform apply -auto-approve -var "frontend_image_tag=${{ needs.prepare-deployment.outputs.frontend_image_tag }}" -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
+      working-directory: ${{ env.TF_WORKING_DIR }}
+
+    # APIコンテナが起動したら、フロントエンドのデプロイを行う
+    # APIコンテナが起動するまで待機する
+    # タイムアウトは10分
+    - name: Wait for API to start
+      run: |
+        timeout 600 bash <<'EOF'
+        while : ; do
+            status=$(aws ecs describe-services --region ap-northeast-1 --cluster tunetrail --services tunetrail-api --query 'services[0].status' --output text)
+            if [[ "$status" = "ACTIVE" ]]; then
+                break
+            fi
+            echo "Waiting for service to become ACTIVE..."
+            sleep 10
+        done
+        EOF
+
+    # フロントエンドコンテナをデプロイする
+    # APIのタグは現行のタスク定義から取得する (変更しない)
+    # フロントエンドのタグはコミットハッシュを使用する
+    - name: Terraform Apply (Frontend only)
+      # フロントエンドディレクトリ以下に変更があった場合のみデプロイする
+      if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
+      run: terraform apply -auto-approve -var "frontend_image_tag=${{ github.sha }}" -var "api_image_tag=${{ needs.prepare-deployment.outputs.api_image_tag }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
       working-directory: ${{ env.TF_WORKING_DIR }}
