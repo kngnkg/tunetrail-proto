@@ -48,18 +48,19 @@ jobs:
         TAG=$(echo $result | cut -d ':' -f 2)
         echo "::set-output name=tag::$TAG"
 
-    # フロントエンドのイメージタグを取得する
-    - name: Get the latest Frontend image tag
-      id: get-frontend-tag
-      run: |
-        set -e
-        result=$(aws ecs describe-task-definition --task-definition tunetrail-frontend --query 'taskDefinition.containerDefinitions[0].image' --output-text || echo "error")
-        if [ "$result" == "error" ]; then
-          echo "Failed to describe the task definition."
-          exit 1
-        fi
-        TAG=$(echo $result | cut -d ':' -f 2)
-        echo "::set-output name=tag::$TAG"
+    # # フロントエンドのイメージタグを取得する
+    # # 一時的にコメントアウト
+    # - name: Get the latest Frontend image tag
+    #   id: get-frontend-tag
+    #   run: |
+    #     set -e
+    #     result=$(aws ecs describe-task-definition --task-definition tunetrail-frontend --query 'taskDefinition.containerDefinitions[0].image' --output-text || echo "error")
+    #     if [ "$result" == "error" ]; then
+    #       echo "Failed to describe the task definition."
+    #       exit 1
+    #     fi
+    #     TAG=$(echo $result | cut -d ':' -f 2)
+    #     echo "::set-output name=tag::$TAG"
 
   # デプロイジョブ
   deploy:
@@ -88,6 +89,8 @@ jobs:
     # APIのイメージをビルドしてECRにプッシュする
     - name: Build, tag, and push API image to Amazon ECR
       id: build-image-api
+      # APIディレクトリ以下に変更があった場合のみビルドする
+      if: contains(toJSON(github.event.commits.*.modified), 'api/')
       env:
         ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
         ECR_REPOSITORY: "tunetrail-api"
@@ -105,6 +108,8 @@ jobs:
     # フロントエンドのイメージをビルドしてECRにプッシュする
     - name: Build, tag, and push Frontend image to Amazon ECR
       id: build-image-frontend
+      # フロントエンドディレクトリ以下に変更があった場合のみビルドする
+      if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
       env:
         ECR_REGISTRY: ${{ steps.login-ecr-frontend.outputs.registry }}
         ECR_REPOSITORY: "tunetrail-frontend"
@@ -127,6 +132,8 @@ jobs:
     # フロントエンドのタグは現行のタスク定義から取得する (変更しない)
     # APIのタグはコミットハッシュを使用する
     - name: Terraform Apply (API only)
+      # APIディレクトリ以下に変更があった場合のみデプロイする
+      if: contains(toJSON(github.event.commits.*.modified), 'api/')
       run: |
         set -e
         terraform apply -auto-approve -var "frontend_image_tag=${{ needs.prepare-deployment.outputs.frontend_image_tag }}" -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
@@ -152,5 +159,7 @@ jobs:
     # APIのタグは現行のタスク定義から取得する (変更しない)
     # フロントエンドのタグはコミットハッシュを使用する
     - name: Terraform Apply (Frontend only)
+      # フロントエンドディレクトリ以下に変更があった場合のみデプロイする
+      if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
       run: terraform apply -auto-approve -var "frontend_image_tag=${{ github.sha }}" -var "api_image_tag=${{ needs.prepare-deployment.outputs.api_image_tag }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
       working-directory: ${{ env.TF_WORKING_DIR }}
