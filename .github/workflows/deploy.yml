@@ -108,8 +108,9 @@ jobs:
     # フロントエンドのイメージをビルドしてECRにプッシュする
     - name: Build, tag, and push Frontend image to Amazon ECR
       id: build-image-frontend
-      # フロントエンドディレクトリ以下に変更があった場合のみビルドする
-      if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
+      # # フロントエンドディレクトリ以下に変更があった場合のみビルドする
+      # 一時的にコメントアウト
+      # if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
       env:
         ECR_REGISTRY: ${{ steps.login-ecr-frontend.outputs.registry }}
         ECR_REPOSITORY: "tunetrail-frontend"
@@ -160,6 +161,7 @@ jobs:
     # フロントエンドのタグはコミットハッシュを使用する
     - name: Terraform Apply (Frontend only)
       # フロントエンドディレクトリ以下に変更があった場合のみデプロイする
-      if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
+      # 一時的にコメントアウト
+      # if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
       run: terraform apply -auto-approve -var "frontend_image_tag=${{ github.sha }}" -var "api_image_tag=${{ needs.prepare-deployment.outputs.api_image_tag }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
       working-directory: ${{ env.TF_WORKING_DIR }}
