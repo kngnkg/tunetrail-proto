@@ -148,7 +148,7 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr-frontend.outputs.registry }}
         ECR_REPOSITORY: "tunetrail-frontend"
         IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
-        NEXT_PUBLIC_API_ROOT: https://api.tune-trail.com
+        NEXT_PUBLIC_API_ROOT: "https://api.tune-trail.com"
       run: |
         cd frontend
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .

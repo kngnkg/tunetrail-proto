@@ -41,4 +41,3 @@ resource "aws_vpc_endpoint" "cloudwatch_logs" {
   security_group_ids  = [aws_security_group.api_sg.id, aws_security_group.frontend_sg.id]
   private_dns_enabled = true
 }
-
