@@ -151,7 +151,7 @@ jobs:
         NEXT_PUBLIC_API_ROOT: "https://api.tune-trail.com"
       run: |
         cd frontend
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
+        docker build --build-arg NEXT_PUBLIC_API_ROOT=${{ env.NEXT_PUBLIC_API_ROOT }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
     # フロントエンドコンテナをデプロイする
