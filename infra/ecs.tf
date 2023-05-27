@@ -94,6 +94,14 @@ resource "aws_ecs_service" "frontend" {
     security_groups  = [aws_security_group.frontend_sg.id]
     assign_public_ip = false
   }
+
+  # ロードバランサーの設定
+  # ターゲットグループをアタッチすることで、ロードバランサーにターゲットとして登録される
+  load_balancer {
+    target_group_arn = aws_lb_target_group.alb_tg_frontend.arn
+    container_name   = "tunetrail-frontend"
+    container_port   = var.frontend_port
+  }
 }
 
 # tunetrail-frontend タスク定義の作成
