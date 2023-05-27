@@ -83,9 +83,6 @@ jobs:
       id: login-ecr-api
       uses: aws-actions/amazon-ecr-login@v1
 
-    # イメージのビルドとプッシュを行う
-    # TODO: 各イメージのビルドとTerraformのデプロイをそれぞれ並列で行う
-
     # APIのイメージをビルドしてECRにプッシュする
     - name: Build, tag, and push API image to Amazon ECR
       id: build-image-api
@@ -99,26 +96,6 @@ jobs:
         cd api
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG --target deploy .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG
-
-    # ECRにログインする (フロントエンド)
-    - name: Login to Amazon ECR (Frontend)
-      id: login-ecr-frontend
-      uses: aws-actions/amazon-ecr-login@v1
-
-    # フロントエンドのイメージをビルドしてECRにプッシュする
-    - name: Build, tag, and push Frontend image to Amazon ECR
-      id: build-image-frontend
-      # # フロントエンドディレクトリ以下に変更があった場合のみビルドする
-      # 一時的にコメントアウト
-      # if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr-frontend.outputs.registry }}
-        ECR_REPOSITORY: "tunetrail-frontend"
-        IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
-      run: |
-        cd frontend
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
@@ -140,7 +117,7 @@ jobs:
         terraform apply -auto-approve -var "frontend_image_tag=${{ needs.prepare-deployment.outputs.frontend_image_tag }}" -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
       working-directory: ${{ env.TF_WORKING_DIR }}
 
-    # APIコンテナが起動したら、フロントエンドのデプロイを行う
+    # APIコンテナが起動したら、フロントエンドのイメージビルドとデプロイを行う
     # APIコンテナが起動するまで待機する
     # タイムアウトは10分
     - name: Wait for API to start
@@ -155,6 +132,27 @@ jobs:
             sleep 10
         done
         EOF
+
+    # ECRにログインする (フロントエンド)
+    - name: Login to Amazon ECR (Frontend)
+      id: login-ecr-frontend
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # フロントエンドのイメージをビルドしてECRにプッシュする
+    - name: Build, tag, and push Frontend image to Amazon ECR
+      id: build-image-frontend
+      # # フロントエンドディレクトリ以下に変更があった場合のみビルドする
+      # 一時的にコメントアウト
+      # if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr-frontend.outputs.registry }}
+        ECR_REPOSITORY: "tunetrail-frontend"
+        IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
+        NEXT_PUBLIC_API_ROOT: https://api.tune-trail.com
+      run: |
+        cd frontend
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
     # フロントエンドコンテナをデプロイする
     # APIのタグは現行のタスク定義から取得する (変更しない)
