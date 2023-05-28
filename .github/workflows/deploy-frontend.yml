@@ -1,14 +1,12 @@
-name: Deploy
+name: Deploy Frontend
 
 on:
   push:
     branches:
       - "main"
     paths:
-    - "api/**"
     - "frontend/**"
-    # - "infra/**" # infraディレクトリのみに変更があった場合はデプロイしない
-    - ".github/workflows/deploy.yml"
+    - ".github/workflows/deploy-frontend.yml"
 
 env:
   AWS_REGION: ap-northeast-1
@@ -17,7 +15,7 @@ env:
 
 jobs:
   # デプロイ準備ジョブ
-  # 現行のタスク定義からイメージタグを取得する
+  # 現行のタスク定義からAPIのイメージタグを取得する
   prepare-deployment:
     runs-on: ubuntu-latest
     outputs:
@@ -48,19 +46,6 @@ jobs:
         TAG=$(echo $result | cut -d ':' -f 2)
         echo "::set-output name=tag::$TAG"
 
-    # フロントエンドのイメージタグを取得する
-    - name: Get the latest Frontend image tag
-      id: get-frontend-tag
-      run: |
-        set -e
-        result=$(aws ecs describe-task-definition --task-definition tunetrail-frontend --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
-        if [ "$result" == "error" ]; then
-          echo "Failed to describe the task definition."
-          exit 1
-        fi
-        TAG=$(echo $result | cut -d ':' -f 2)
-        echo "::set-output name=tag::$TAG"
-
   # デプロイジョブ
   deploy:
     needs: prepare-deployment
@@ -77,49 +62,9 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # ECRにログインする (API)
-    - name: Login to Amazon ECR (API)
-      id: login-ecr-api
-      uses: aws-actions/amazon-ecr-login@v1
-
-    # APIのイメージをビルドしてECRにプッシュする
-    - name: Build, tag, and push API image to Amazon ECR
-      id: build-image-api
-      # APIディレクトリ以下に変更があった場合のみビルドする
-      if: contains(toJSON(github.event.commits.*.modified), 'api/')
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
-        ECR_REPOSITORY: "tunetrail-api"
-        API_IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
-      run: |
-        cd api
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG --target deploy .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_version: ${{ env.TF_VERSION }}
-
-    - name: Terraform Init
-      run: terraform init
-      working-directory: ${{ env.TF_WORKING_DIR }}
-
-    # APIコンテナをデプロイする
-    # フロントエンドのタグは現行のタスク定義から取得する (変更しない)
-    # APIのタグはコミットハッシュを使用する
-    - name: Terraform Apply (API only)
-      # APIディレクトリ以下に変更があった場合のみデプロイする
-      if: contains(toJSON(github.event.commits.*.modified), 'api/')
-      run: |
-        set -e
-        terraform apply -auto-approve -var "frontend_image_tag=${{ needs.prepare-deployment.outputs.frontend_image_tag }}" -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
-      working-directory: ${{ env.TF_WORKING_DIR }}
-
-    # APIコンテナが起動したら、フロントエンドのイメージビルドとデプロイを行う
-    # APIコンテナが起動するまで待機する
+    # APIコンテナが起動していることを確認する
     # タイムアウトは10分
-    - name: Wait for API to start
+    - name: Verify that the API is activated
       run: |
         timeout 600 bash <<'EOF'
         while : ; do
@@ -132,7 +77,6 @@ jobs:
         done
         EOF
 
-    # ECRにログインする (フロントエンド)
     - name: Login to Amazon ECR (Frontend)
       id: login-ecr-frontend
       uses: aws-actions/amazon-ecr-login@v1
@@ -140,8 +84,6 @@ jobs:
     # フロントエンドのイメージをビルドしてECRにプッシュする
     - name: Build, tag, and push Frontend image to Amazon ECR
       id: build-image-frontend
-      # # フロントエンドディレクトリ以下に変更があった場合のみビルドする
-      if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
       env:
         ECR_REGISTRY: ${{ steps.login-ecr-frontend.outputs.registry }}
         ECR_REPOSITORY: "tunetrail-frontend"
@@ -152,11 +94,18 @@ jobs:
         docker build --build-arg NEXT_PUBLIC_API_ROOT=${{ env.NEXT_PUBLIC_API_ROOT }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ${{ env.TF_WORKING_DIR }}
+
     # フロントエンドコンテナをデプロイする
     # APIのタグは現行のタスク定義から取得する (変更しない)
     # フロントエンドのタグはコミットハッシュを使用する
-    - name: Terraform Apply (Frontend only)
-      # フロントエンドディレクトリ以下に変更があった場合のみデプロイする
-      if: contains(toJSON(github.event.commits.*.modified), 'frontend/')
+    - name: Terraform Apply
       run: terraform apply -auto-approve -var "frontend_image_tag=${{ github.sha }}" -var "api_image_tag=${{ needs.prepare-deployment.outputs.api_image_tag }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
       working-directory: ${{ env.TF_WORKING_DIR }}
