@@ -114,6 +114,10 @@ resource "aws_ecs_task_definition" "frontend" {
     }],
     environment = [
       {
+        name  = "API_ROOT"
+        value = "https://${aws_lb.tunetrail.dns_name}"
+      },
+      {
         name  = "NEXT_PUBLIC_API_ROOT"
         value = "https://${var.api_domain}"
       },

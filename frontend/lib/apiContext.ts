@@ -1,5 +1,6 @@
 import { ApiContext } from "@/types"
 
 export const apiContext: ApiContext = {
-  apiRoot: process.env.NEXT_PUBLIC_API_ROOT || "",
+  clientApiRoot: process.env.NEXT_PUBLIC_API_ROOT || "",
+  serverApiRoot: process.env.API_ROOT || "",
 }
