@@ -7,7 +7,7 @@ on:
     paths:
     - "api/**"
     # 一時的にコメントアウト
-    # - ".github/workflows/deploy-api.yml"
+    - ".github/workflows/deploy-api.yml"
 
 env:
   AWS_REGION: ap-northeast-1
