@@ -1,0 +1,98 @@
+name: Deploy API
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+    - "api/**"
+    # 一時的にコメントアウト
+    # - ".github/workflows/deploy-api.yml"
+
+env:
+  AWS_REGION: ap-northeast-1
+  TF_VERSION: 1.4.6
+  TF_WORKING_DIR: infra
+
+jobs:
+  # デプロイ準備ジョブ
+  # 現行のタスク定義からフロントエンドのイメージタグを取得する
+  prepare-deployment:
+    runs-on: ubuntu-latest
+    outputs:
+      api_image_tag: ${{ steps.get-api-tag.outputs.tag }}
+      frontend_image_tag: ${{ steps.get-frontend-tag.outputs.tag }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    # フロントエンドのイメージタグを取得する
+    - name: Get the latest Frontend image tag
+      id: get-frontend-tag
+      run: |
+        set -e
+        result=$(aws ecs describe-task-definition --task-definition tunetrail-frontend --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
+        if [ "$result" == "error" ]; then
+          echo "Failed to describe the task definition."
+          exit 1
+        fi
+        TAG=$(echo $result | cut -d ':' -f 2)
+        echo "::set-output name=tag::$TAG"
+
+  # デプロイジョブ
+  deploy:
+    needs: prepare-deployment
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR (API)
+      id: login-ecr-api
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # APIのイメージをビルドしてECRにプッシュする
+    - name: Build, tag, and push API image to Amazon ECR
+      id: build-image-api
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
+        ECR_REPOSITORY: "tunetrail-api"
+        API_IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
+      run: |
+        cd api
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG --target deploy .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ${{ env.TF_WORKING_DIR }}
+
+    # APIコンテナをデプロイする
+    # フロントエンドのタグは現行のタスク定義から取得する (変更しない)
+    # APIのタグはコミットハッシュを使用する
+    - name: Terraform Apply
+      run: |
+        set -e
+        terraform apply -auto-approve -var "frontend_image_tag=${{ needs.prepare-deployment.outputs.frontend_image_tag }}" -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
+      working-directory: ${{ env.TF_WORKING_DIR }}
