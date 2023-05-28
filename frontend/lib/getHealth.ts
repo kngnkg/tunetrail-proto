@@ -1,11 +1,21 @@
 import { ApiContext, Health } from "@/types"
 
-import { fetchJson } from "./fetchJson"
 import { HealthSchema } from "./validations/health.schema"
 
 // getHealthはAPIの稼働状態を取得する
 export const getHealth = async (context: ApiContext): Promise<Health> => {
-  const data: unknown = await fetchJson(`${context.apiRoot}/health`)
+  const response = await fetch(`${context.apiRoot}/health`, {
+    cache: "no-store",
+  })
+  if (!response.ok) {
+    const errorResponse = await response.json()
+    const error = new Error(
+      errorResponse.message ?? "Failed to fetch data from the API."
+    )
+    throw error
+  }
+
+  const data = await response.json()
   if (!data) {
     throw new Error("Failed to fetch data from the API.")
   }
