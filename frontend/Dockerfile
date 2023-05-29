@@ -11,9 +11,6 @@ COPY ./ ./
 
 RUN npm install
 
-ARG NEXT_PUBLIC_API_ROOT
-ENV NEXT_PUBLIC_API_ROOT=$NEXT_PUBLIC_API_ROOT
-
 RUN npm run build
 
 CMD [ "npm", "start" ]
