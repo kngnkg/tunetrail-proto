@@ -1,9 +1,21 @@
+import dns from "dns"
 import { ApiContext, Health } from "@/types"
 
 import { HealthSchema } from "./validations/health.schema"
 
 // getHealthはAPIの稼働状態を取得する
 export const getHealth = async (context: ApiContext): Promise<Health> => {
+  // DNSのlookupを行う
+  const apiHost = context.apiRoot.replace(/^https:\/\//, "")
+  console.log(`looking up ${apiHost}`)
+  dns.lookup(apiHost, (err, address, family) => {
+    if (err) {
+      console.error(err)
+      return
+    }
+    console.log(`address: ${address} family: IPv${family}`)
+  })
+
   console.log(`fetching ${context.apiRoot}/health`)
   try {
     const response = await fetch(`${context.apiRoot}/health`, {
