@@ -82,8 +82,8 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Generate .env.production
-    run: |
-      echo NEXT_PUBLIC_API_ROOT=${{ secrets.NEXT_PUBLIC_API_ROOT }} > frontend/.env.production
+      run: |
+        echo NEXT_PUBLIC_API_ROOT=${{ secrets.NEXT_PUBLIC_API_ROOT }} > frontend/.env.production
 
     # フロントエンドのイメージをビルドしてECRにプッシュする
     - name: Build, tag, and push Frontend image to Amazon ECR
