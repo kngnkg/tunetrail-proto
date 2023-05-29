@@ -6,6 +6,5 @@ export type Health = {
 
 // APIのルートパスを表す
 export type ApiContext = {
-  clientApiRoot: string
-  serverApiRoot: string
+  apiRoot: string
 }
