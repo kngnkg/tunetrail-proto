@@ -112,12 +112,6 @@ resource "aws_ecs_task_definition" "frontend" {
     portMappings = [{
       containerPort = var.frontend_port
     }],
-    environment = [
-      {
-        name  = "NEXT_PUBLIC_API_ROOT"
-        value = "https://${var.api_domain}"
-      },
-    ],
     logConfiguration = {
       logDriver = "awslogs", # CloudWatch Logsを使用する
       options = {
