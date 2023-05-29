@@ -36,7 +36,8 @@ export const getHealth = async (context: ApiContext): Promise<Health> => {
     return validationResult.data
   } catch (e) {
     if (e instanceof Error) {
-      console.error(e.message)
+      console.error(e)
+      // console.error(e.message)
     } else {
       console.error(e)
     }
