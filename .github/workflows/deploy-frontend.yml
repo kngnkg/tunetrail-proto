@@ -81,6 +81,10 @@ jobs:
       id: login-ecr-frontend
       uses: aws-actions/amazon-ecr-login@v1
 
+    - name: Generate .env.production
+    run: |
+      echo NEXT_PUBLIC_API_ROOT=${{ secrets.NEXT_PUBLIC_API_ROOT }} > frontend/.env.production
+
     # フロントエンドのイメージをビルドしてECRにプッシュする
     - name: Build, tag, and push Frontend image to Amazon ECR
       id: build-image-frontend
@@ -88,10 +92,9 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr-frontend.outputs.registry }}
         ECR_REPOSITORY: "tunetrail-frontend"
         IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
-        NEXT_PUBLIC_API_ROOT: "https://api.tune-trail.com"
       run: |
         cd frontend
-        docker build --build-arg NEXT_PUBLIC_API_ROOT=${{ env.NEXT_PUBLIC_API_ROOT }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
     - name: Setup Terraform
