@@ -10,23 +10,27 @@ export const getHealth = async (context: ApiContext): Promise<Health> => {
       cache: "no-store",
     })
     if (!response.ok) {
-      console.error(response)
       const errorResponse = await response.json()
       const error = new Error(
         errorResponse.message ??
           `Failed to fetch data from the API. Status: ${response.status}`
       )
+      console.error(error)
       throw error
     }
 
     const data = await response.json()
     if (!data) {
-      throw new Error("data is empty from the API.")
+      const error = new Error("data is empty from the API.")
+      console.error(error)
+      throw error
     }
 
     const validationResult = HealthSchema.safeParse(data)
     if (!validationResult.success) {
-      throw new Error(validationResult.error.message)
+      const error = new Error(validationResult.error.message)
+      console.error(error)
+      throw error
     }
 
     return validationResult.data
