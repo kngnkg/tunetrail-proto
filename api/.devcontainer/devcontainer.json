@@ -27,15 +27,14 @@
                 }
             },
             "extensions": [
-				"golang.go",
-				"oderwat.indent-rainbow",
-				"eamodio.gitlens",
-				"ms-vscode.makefile-tools",
-				"bungcip.better-toml",
-				"wmaurer.vscode-jumpy",
-				"yzhang.markdown-all-in-one",
-				"GitHub.copilot"
-			]
+                "golang.go",
+                "oderwat.indent-rainbow",
+                "eamodio.gitlens",
+                "ms-vscode.makefile-tools",
+                "bungcip.better-toml",
+                "yzhang.markdown-all-in-one",
+                "GitHub.copilot"
+            ]
         }
     }
 }
