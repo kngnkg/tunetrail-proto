@@ -17,15 +17,14 @@
                 }
             },
             "extensions": [
-				"xabikos.JavaScriptSnippets",
-				"oderwat.indent-rainbow",
-				"eamodio.gitlens",
-				"wmaurer.vscode-jumpy",
-				"dbaeumer.vscode-eslint",
-				"esbenp.prettier-vscode",
-				"yzhang.markdown-all-in-one",
-				"GitHub.copilot"
-			]
+                "xabikos.JavaScriptSnippets",
+                "oderwat.indent-rainbow",
+                "eamodio.gitlens",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "yzhang.markdown-all-in-one",
+                "GitHub.copilot"
+            ]
         }
     }
 }
