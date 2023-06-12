@@ -5,6 +5,7 @@
     ],
     "service": "frontend",
     "workspaceFolder": "/workspace/frontend",
+    "postCreateCommand": "sh ./.devcontainer/devcontainer-post-create.sh",
     "customizations": {
         "vscode": {
             "settings": {
@@ -17,14 +18,15 @@
                 }
             },
             "extensions": [
-                "xabikos.JavaScriptSnippets",
-                "oderwat.indent-rainbow",
-                "eamodio.gitlens",
-                "dbaeumer.vscode-eslint",
-                "esbenp.prettier-vscode",
-                "yzhang.markdown-all-in-one",
-                "GitHub.copilot"
-            ]
+				"GitHub.copilot",
+				"oderwat.indent-rainbow",
+				"eamodio.gitlens",
+				"xabikos.JavaScriptSnippets",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"yzhang.markdown-all-in-one",
+				"bradlc.vscode-tailwindcss"
+			]
         }
     }
 }

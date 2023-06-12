@@ -4,8 +4,8 @@
         "../../docker-compose.yml"
     ],
     "service": "api",
-    "shutdownAction": "none",
     "workspaceFolder": "/workspace/api",
+    "postCreateCommand": "sh ./.devcontainer/devcontainer-post-create.sh",
     "customizations": {
         "vscode": {
             "settings": {
@@ -27,13 +27,13 @@
                 }
             },
             "extensions": [
-                "golang.go",
+                "GitHub.copilot",
                 "oderwat.indent-rainbow",
                 "eamodio.gitlens",
+                "golang.go",
                 "ms-vscode.makefile-tools",
                 "bungcip.better-toml",
-                "yzhang.markdown-all-in-one",
-                "GitHub.copilot"
+                "yzhang.markdown-all-in-one"
             ]
         }
     }

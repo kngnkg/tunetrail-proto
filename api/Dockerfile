@@ -14,8 +14,6 @@ RUN go build -trimpath -ldflags "-w -s" -o app
 
 FROM debian:bullseye-slim as deploy
 
-RUN apt-get update
-
 COPY --from=deploy-builder /app/app .
 
 CMD ["./app"]
@@ -25,17 +23,18 @@ CMD ["./app"]
 
 FROM golang:1.20.3 as dev
 
-RUN apt update
-
 # GoのModule ModeをONにする
 ENV GO111MODULE on
 
 # ワーキングディレクトリを変更
 WORKDIR /workspace
 
-# 開発に使用するコマンドをインストール
-RUN apt -y install jq && \
-    apt-get -y install iputils-ping net-tools
+# 開発用のツールをインストール
+RUN apt-get update && apt-get install -y \
+        jq \
+        iputils-ping \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # goの各種ツールをインストール
 RUN go install github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest && \

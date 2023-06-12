@@ -5,8 +5,6 @@ FROM node:19.8 as deploy
 
 WORKDIR /usr/src/app
 
-RUN apt-get update
-
 COPY ./ ./
 
 RUN npm install
@@ -22,14 +20,15 @@ FROM node:19.8 as dev
 
 WORKDIR /workspace
 
-RUN apt-get update
-
 COPY ./ ./
 
-RUN npm install -g npm@latest && npm install create-next-app
+# 開発用のツールをインストール
+RUN apt-get update && apt-get install -y \
+        jq \
+        iputils-ping \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# 開発に使用するコマンドをインストール
-RUN apt -y install jq && \
-    apt-get -y install iputils-ping net-tools
+RUN npm install -g npm@latest && npm install create-next-app
 
 ENTRYPOINT ["sleep", "infinity"]
