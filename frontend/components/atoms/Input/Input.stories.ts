@@ -24,3 +24,24 @@ export const WithBorder: Story = {
     className: "border border-primary",
   },
 }
+
+export const Disabled: Story = {
+  args: {
+    placeholder: "Type something...",
+    disabled: true,
+  },
+}
+
+export const Email: Story = {
+  args: {
+    placeholder: "Type your email...",
+    type: "email",
+  },
+}
+
+export const Password: Story = {
+  args: {
+    placeholder: "Type your password...",
+    type: "password",
+  },
+}
