@@ -28,7 +28,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "components/atoms/Input/input.stories.ats"
+    "components/ui/Input/input.stories.ats"
   ],
   "exclude": ["node_modules"]
 }

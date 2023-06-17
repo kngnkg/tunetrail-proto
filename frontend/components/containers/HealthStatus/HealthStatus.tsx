@@ -1,7 +1,7 @@
 import React from "react"
 import { Health } from "@/types"
 
-import HealthIndicator from "@/components/atoms/HealthIndicator/HealthIndicator"
+import HealthIndicator from "@/components/ui/HealthIndicator/HealthIndicator"
 
 interface HealthStatusProps {
   health: Health
