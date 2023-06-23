@@ -13,15 +13,29 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground: #ffffff;
-    --background-start: #282828;
-    --background-end: #282828;
+    --background-start: #b537f2;
+    --background-end: #1d1f27;
     --color-primary: #8a2be2;
     --color-secondary: #ff1493;
   }
 }
 
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   color: var(--foreground);
-  background: linear-gradient(to bottom, transparent, var(--background-end))
-    var(--background-start);
+  background: linear-gradient(
+    to bottom left,
+    var(--background-end) 5%,
+    var(--background-start) 20%,
+    var(--background-end) 30%,
+    var(--background-end)
+  );
+  background-size: 100% 100%;
 }
