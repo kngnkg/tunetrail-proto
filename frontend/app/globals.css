@@ -8,15 +8,21 @@
   --background-highlight-rgb: 214, 219, 220;
   --color-primary-rgb: 59, 85, 206;
   --color-secondary-rgb: 255, 97, 190;
+  --color-gray-lightest-rgb: 139, 130, 183;
+  --color-gray-light-rgb: 97, 91, 126;
+  --color-gray-rgb: 66, 60, 94;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 255, 255, 255;
+    --foreground-rgb: 255, 255, 255; /* テキストの文字色 */
     --background-main-rgb: 29, 31, 39;
     --background-highlight-rgb: 181, 55, 242;
     --color-primary-rgb: 181, 55, 242;
     --color-secondary-rgb: 255, 20, 147;
+    --color-gray-lightest-rgb: 139, 130, 183;
+    --color-gray-light-rgb: 97, 91, 126;
+    --color-gray-rgb: 66, 60, 94;
   }
 }
 

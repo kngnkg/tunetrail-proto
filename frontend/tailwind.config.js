@@ -15,6 +15,14 @@ module.exports = {
       colors: {
         primary: "rgb(var(--color-primary-rgb))",
         secondary: "rgb(var(--color-secondary-rgb))",
+        gray: {
+          DEFAULT: "rgb(var(--color-gray-rgb))",
+          light: "rgb(var(--color-gray-light-rgb))",
+          lightest: "rgb(var(--color-gray-lightest-rgb))",
+        },
+      },
+      fontSize: {
+        tiny: ".625rem",
       },
     },
   },
