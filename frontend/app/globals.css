@@ -31,9 +31,9 @@ body {
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
-    to bottom left,
-    rgba(var(--background-highlight-rgb), 0.8) -20%,
-    rgb(var(--background-main-rgb)) 30%,
+    195deg,
+    rgba(var(--background-highlight-rgb), 0.5) -50%,
+    rgb(var(--background-main-rgb)) 20%,
     rgb(var(--background-main-rgb))
   );
 }
