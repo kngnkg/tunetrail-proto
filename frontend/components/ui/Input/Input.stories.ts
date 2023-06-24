@@ -14,34 +14,34 @@ type Story = StoryObj<typeof Input>
 
 export const Default: Story = {
   args: {
-    placeholder: "Type something...",
+    placeholderText: "Type something...",
   },
 }
 
 export const WithBorder: Story = {
   args: {
-    placeholder: "Type something...",
+    placeholderText: "Type something...",
     className: "border border-primary",
   },
 }
 
 export const Disabled: Story = {
   args: {
-    placeholder: "Type something...",
+    placeholderText: "Type something...",
     disabled: true,
   },
 }
 
 export const Email: Story = {
   args: {
-    placeholder: "Type your email...",
+    placeholderText: "メールアドレス",
     type: "email",
   },
 }
 
 export const Password: Story = {
   args: {
-    placeholder: "Type your password...",
+    placeholderText: "パスワード",
     type: "password",
   },
 }
