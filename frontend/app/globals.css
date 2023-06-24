@@ -31,9 +31,20 @@ body {
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
-    195deg,
+    210deg,
     rgba(var(--background-highlight-rgb), 0.5) -50%,
     rgb(var(--background-main-rgb)) 20%,
     rgb(var(--background-main-rgb))
   );
+}
+
+@media (min-width: 800px) {
+  body {
+    background: linear-gradient(
+      195deg,
+      rgba(var(--background-highlight-rgb), 0.5) -50%,
+      rgb(var(--background-main-rgb)) 20%,
+      rgb(var(--background-main-rgb))
+    );
+  }
 }
