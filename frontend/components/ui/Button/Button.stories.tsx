@@ -17,3 +17,32 @@ export const Default: Story = {
     children: "ボタン",
   },
 }
+
+export const Small: Story = {
+  args: {
+    children: "Small",
+    size: "small",
+  },
+}
+
+export const Large: Story = {
+  args: {
+    children: "Small",
+    size: "large",
+  },
+}
+
+export const Long: Story = {
+  args: {
+    children: "Long",
+    size: "medium",
+    className: "w-96",
+  },
+}
+
+export const Disabled: Story = {
+  args: {
+    children: "Disabled",
+    disabled: true,
+  },
+}
