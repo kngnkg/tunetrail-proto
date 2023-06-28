@@ -44,7 +44,7 @@ export const ToastViewPort: React.FC<ToastViewPortProps> = ({
 ToastViewPort.displayName = "ToastViewPort"
 
 export const toastVariants = cva(
-  "grid bg-gray-dark text-white rounded-lg border-s-4 shadow-lg p-2 w-60",
+  "animate-slide-bottom grid bg-gray-dark text-white rounded-lg border-s-4 shadow-lg p-2 w-60",
   {
     variants: {
       intent: {
@@ -66,6 +66,14 @@ export interface ToastProps
   content?: string
 }
 
+/**
+ * トースト
+ * @param className - Toastに適用するクラス名
+ * @param intent - Toastの意図を指定するためのvariant
+ * @param title - タイトル
+ * @param content - 内容
+ * @param props - その他のToastPrimitive.Rootのprops
+ */
 export const Toast: React.FC<ToastProps> = ({
   className,
   intent,
