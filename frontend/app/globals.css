@@ -11,6 +11,7 @@
   --color-gray-lightest-rgb: 139, 130, 183;
   --color-gray-light-rgb: 97, 91, 126;
   --color-gray-rgb: 66, 60, 94;
+  --color-gray-dark-rgb: 45, 42, 55;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +24,7 @@
     --color-gray-lightest-rgb: 139, 130, 183;
     --color-gray-light-rgb: 97, 91, 126;
     --color-gray-rgb: 66, 60, 94;
+    --color-gray-dark-rgb: 45, 42, 55;
   }
 }
 

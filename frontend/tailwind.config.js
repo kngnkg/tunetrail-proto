@@ -22,10 +22,24 @@ module.exports = {
           DEFAULT: "rgb(var(--color-gray-rgb))",
           light: "rgb(var(--color-gray-light-rgb))",
           lightest: "rgb(var(--color-gray-lightest-rgb))",
+          dark: "rgb(var(--color-gray-dark-rgb))",
         },
       },
       fontSize: {
         tiny: ".625rem",
+      },
+      animation: {
+        "slide-bottom": "slide-bottom 0.5s both",
+      },
+      keyframes: {
+        "slide-bottom": {
+          "0%": {
+            transform: "translateY(0)",
+          },
+          to: {
+            transform: "translateY(5px)",
+          },
+        },
       },
     },
   },
