@@ -1,6 +1,7 @@
 import * as React from "react"
 import { ToastProvider } from "@/providers/ToastProvider"
 import { Meta, StoryObj } from "@storybook/react"
+import { set } from "zod"
 
 import { Toast, ToastProps, ToastViewPort } from "./Toast"
 
@@ -23,20 +24,30 @@ type Story = StoryObj<typeof Toast>
 
 export const Default: Story = (args: ToastProps) => {
   const [open, setOpen] = React.useState(false)
-  const timerRef = React.useRef(0)
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null)
+
+  // コンポーネントがアンマウントされたときにタイマーをクリア
   React.useEffect(() => {
-    return () => clearTimeout(timerRef.current)
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
   }, [])
+
+  React.useEffect(() => {
+    if (open) {
+      // トーストが表示されているときに5秒後に非表示にするタイマー
+      timerRef.current = setTimeout(() => setOpen(false), 5000)
+    }
+  }, [open])
 
   return (
     <>
       <button
         className="bg-gray rounded-md text-xs p-2"
         onClick={() => {
-          setOpen(false)
-          timerRef.current = window.setTimeout(() => {
-            setOpen(true)
-          }, 100)
+          setOpen(!open)
         }}
       >
         Show Toast
@@ -46,6 +57,7 @@ export const Default: Story = (args: ToastProps) => {
     </>
   )
 }
+
 Default.args = {
   content: "Content",
 }
