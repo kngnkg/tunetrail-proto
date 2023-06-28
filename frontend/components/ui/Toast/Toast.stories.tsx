@@ -53,7 +53,7 @@ Default.args = {
 export const WithTitle: Story = (args: ToastProps) => (
   <>
     <Toast {...args} />
-    <ToastViewPort intent="storybook" />
+    <ToastViewPort position="inPlace" />
   </>
 )
 WithTitle.args = {
@@ -65,7 +65,7 @@ WithTitle.args = {
 export const Success: Story = (args: ToastProps) => (
   <>
     <Toast {...args} />
-    <ToastViewPort intent="storybook" />
+    <ToastViewPort position="inPlace" />
   </>
 )
 Success.args = {
@@ -77,7 +77,7 @@ Success.args = {
 export const Error: Story = (args: ToastProps) => (
   <>
     <Toast {...args} />
-    <ToastViewPort intent="storybook" />
+    <ToastViewPort position="inPlace" />
   </>
 )
 Error.args = {

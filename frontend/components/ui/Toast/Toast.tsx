@@ -8,13 +8,13 @@ export const toastViewPortVariants = cva(
   "flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
   {
     variants: {
-      intent: {
-        default: "fixed top-0 z-[100]",
-        storybook: "",
+      position: {
+        top: "fixed top-0 z-[100]",
+        inPlace: "",
       },
     },
     defaultVariants: {
-      intent: "default",
+      position: "top",
     },
   }
 )
@@ -23,14 +23,20 @@ export interface ToastViewPortProps
   extends React.ComponentPropsWithoutRef<typeof ToastPrimitive.Viewport>,
     VariantProps<typeof toastViewPortVariants> {}
 
+/**
+ * Toastの表示位置を指定するためのコンポーネント
+ * @param className - Toastの表示領域に適用するクラス名
+ * @param position - Toastの表示位置を指定するためのvariant
+ * @param props - その他のToastPrimitive.Viewportのprops
+ */
 export const ToastViewPort: React.FC<ToastViewPortProps> = ({
   className,
-  intent,
+  position,
   ...props
 }) => {
   return (
     <ToastPrimitive.Viewport
-      className={mergeClasses(toastViewPortVariants({ intent }), className)}
+      className={mergeClasses(toastViewPortVariants({ position }), className)}
       {...props}
     />
   )
