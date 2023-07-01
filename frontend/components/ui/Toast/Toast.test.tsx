@@ -1,8 +1,8 @@
 import "@testing-library/jest-dom"
-import { ToastProvider } from "@/providers/ToastProvider"
+import "@/providers/ToastProvider"
 import { render, screen } from "@testing-library/react"
 
-import { Toast, ToastViewPort } from "./Toast"
+import { Toast, ToastProvider, ToastViewPort } from "./Toast"
 
 describe("ToastViewPort", () => {
   test("positionが正しく適用されること", () => {

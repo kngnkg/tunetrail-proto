@@ -1,9 +1,9 @@
 import * as React from "react"
-import { ToastProvider } from "@/providers/ToastProvider"
-import { Meta, StoryObj } from "@storybook/react"
-import { set } from "zod"
 
-import { Toast, ToastProps, ToastViewPort } from "./Toast"
+import "@/providers/ToastProvider"
+import { Meta, StoryObj } from "@storybook/react"
+
+import { Toast, ToastProps, ToastProvider, ToastViewPort } from "./Toast"
 
 const meta: Meta<typeof Toast> = {
   title: "UI/Toast",
