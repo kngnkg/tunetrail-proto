@@ -4,6 +4,8 @@ import { VariantProps, cva } from "class-variance-authority"
 
 import { mergeClasses } from "@/lib/utils"
 
+export const ToastProvider = ToastPrimitive.Provider
+
 export const toastViewPortVariants = cva(
   "flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
   {
