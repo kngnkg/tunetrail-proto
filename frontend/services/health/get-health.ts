@@ -1,7 +1,7 @@
 import dns from "dns"
 import { ApiContext, Health } from "@/types"
 
-import { HealthSchema } from "./validations/health.schema"
+import { HealthSchema } from "@/lib/validations/health.schema"
 
 // getHealthはAPIの稼働状態を取得する
 export const getHealth = async (context: ApiContext): Promise<Health> => {
