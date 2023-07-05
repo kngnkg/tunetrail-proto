@@ -12,7 +12,7 @@ import (
 
 type UserService interface {
 	RegisterUser(
-		ctx context.Context, userName, name, password, email, iconUrl, Bio string,
+		ctx context.Context, userName, name, password, email string,
 	) (*model.User, error)
 	GetUserByUserName(ctx context.Context, userName string) (*model.User, error)
 	UpdateUser(ctx context.Context, u *model.User) error
@@ -33,7 +33,7 @@ func (uh *UserHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 	u, err := uh.Service.RegisterUser(
-		c.Request.Context(), req.UserName, req.Name, req.Password, req.Email, req.IconUrl, req.Bio,
+		c.Request.Context(), req.UserName, req.Name, req.Password, req.Email,
 	)
 	if err != nil {
 		c.Error(err)

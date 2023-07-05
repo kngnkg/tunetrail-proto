@@ -24,6 +24,4 @@ type UserRegisterRequest struct {
 	Name     string `json:"name" binding:"required,min=3,max=20"`
 	Password string `json:"password" binding:"required,password"`
 	Email    string `json:"email" binding:"required,email"`
-	IconUrl  string `json:"iconUrl" binding:"required,url"`
-	Bio      string `json:"bio" binding:"required,max=1000"`
 }

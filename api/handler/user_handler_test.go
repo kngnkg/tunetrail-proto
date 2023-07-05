@@ -19,7 +19,7 @@ func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
 
 	fc := &clock.FixedClocker{}
 	moqService.RegisterUserFunc =
-		func(ctx context.Context, userName, name, password, email, iconUrl, Bio string) (*model.User, error) {
+		func(ctx context.Context, userName, name, password, email string) (*model.User, error) {
 			// ユーザー名またはメールアドレスが既に存在する場合はエラーを返す
 			if userName == "alreadyExists" {
 				t.Log("username already exists")
@@ -35,8 +35,6 @@ func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
 				Name:      name,
 				Password:  password,
 				Email:     email,
-				IconUrl:   iconUrl,
-				Bio:       Bio,
 				CreatedAt: fc.Now(),
 				UpdatedAt: fc.Now(),
 			}
