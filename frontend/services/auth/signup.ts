@@ -28,7 +28,7 @@ export const signup = async (
   data: SignupData
 ): Promise<null | FetchError> => {
   try {
-    const response = await fetch(`${context.apiRoot}/register`, {
+    const response = await fetch(`${context.apiRoot}/user/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
