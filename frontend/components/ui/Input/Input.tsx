@@ -37,6 +37,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     ? "text-tiny top-0.5"
                     : "text-sm top-3"
                 }`}
+          htmlFor={props.id}
         >
           {placeholderText}
         </label>

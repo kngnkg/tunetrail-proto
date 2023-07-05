@@ -1,28 +1,41 @@
 import * as z from "zod"
 
+import { MESSAGE } from "@/config/messages"
+
 // パスワードのバリデーションルールを定義する
 // 最低8文字、最大20文字
 // 少なくとも1つの小文字、大文字、数字
 // 英数字のみ
 const passwordSchema = z
   .string()
-  .min(8, "パスワードは8文字以上である必要があります")
-  .max(20, "パスワードは20文字以下である必要があります")
-  .regex(
-    /[a-z]+/,
-    "少なくとも1つの小文字、大文字、数字が含まれている必要があります"
+  .min(8)
+  .max(20)
+  .refine(
+    (value) =>
+      /[a-z]+/.test(value) &&
+      /[A-Z]+/.test(value) &&
+      /[0-9]+/.test(value) &&
+      /^[a-zA-Z0-9]+$/.test(value),
+    MESSAGE.VALIDATION.USER.PASSWORD
   )
-  .regex(
-    /[A-Z]+/,
-    "少なくとも1つの小文字、大文字、数字が含まれている必要があります"
-  )
-  .regex(
-    /[0-9]+/,
-    "少なくとも1つの小文字、大文字、数字が含まれている必要があります"
-  )
-  .regex(/^[a-zA-Z0-9]+$/, "パスワードは英数字のみである必要があります")
 
-export const userAuthSchema = z.object({
-  email: z.string().email("メールアドレスの形式が正しくありません"),
-  password: passwordSchema,
-})
+const passwordConfirmationSchema = z
+  .object({
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "パスワードと確認用パスワードが一致しません",
+  })
+
+export const userAuthSchema = z
+  .object({
+    userName: z.string().min(5, MESSAGE.VALIDATION.USER.USERNAME),
+    name: z.string().min(1, MESSAGE.VALIDATION.USER.NAME),
+    email: z.string().email(MESSAGE.VALIDATION.USER.EMAIL),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => passwordConfirmationSchema.safeParse(data).success, {
+    message: "パスワードと確認用パスワードが一致しません",
+  })

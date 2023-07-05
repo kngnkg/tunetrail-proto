@@ -2,11 +2,19 @@ import { ApiContext } from "@/types/api-context"
 import { FetchError, isApiError } from "@/types/error"
 import { MESSAGE } from "@/config/messages"
 
-export type SignupData = {
+export interface SignupData {
   userName: string
   name: string
   password: string
   email: string
+}
+export const isSignupData = (arg: any): arg is SignupData => {
+  return (
+    arg.userName !== undefined &&
+    arg.name !== undefined &&
+    arg.password !== undefined &&
+    arg.email !== undefined
+  )
 }
 
 /**
