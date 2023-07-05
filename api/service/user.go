@@ -43,7 +43,7 @@ type UserService struct {
 
 // RegisterUserはユーザーを登録する
 func (us *UserService) RegisterUser(
-	ctx context.Context, userName, name, password, email, iconUrl, Bio string,
+	ctx context.Context, userName, name, password, email string,
 ) (*model.User, error) {
 	registeredUser := &model.User{}
 	// トランザクション開始
@@ -70,8 +70,8 @@ func (us *UserService) RegisterUser(
 			Name:     name,
 			Password: password,
 			Email:    email,
-			IconUrl:  iconUrl,
-			Bio:      Bio,
+			IconUrl:  "",
+			Bio:      "",
 		}
 		if err = us.Repo.RegisterUser(ctx, tx, u); err != nil {
 			return err

@@ -165,8 +165,6 @@ func (s *UserServiceTestSuite) TestRegisterUser() {
 				name:     "test",
 				password: "test",
 				email:    "test@example.com",
-				iconUrl:  "https://example.com/icon.png",
-				Bio:      "test",
 			},
 			&model.User{
 				Id:        1,
@@ -174,8 +172,8 @@ func (s *UserServiceTestSuite) TestRegisterUser() {
 				Name:      "test",
 				Password:  "test",
 				Email:     "test@example.com",
-				IconUrl:   "https://example.com/icon.png",
-				Bio:       "test",
+				IconUrl:   "",
+				Bio:       "",
 				CreatedAt: s.fc.Now(),
 				UpdatedAt: s.fc.Now(),
 			},
@@ -190,8 +188,6 @@ func (s *UserServiceTestSuite) TestRegisterUser() {
 				name:     "test",
 				password: "test",
 				email:    "test@example.com",
-				iconUrl:  "https://example.com/icon.png",
-				Bio:      "test",
 			},
 			nil,
 			ErrUserNameAlreadyExists,
@@ -205,8 +201,6 @@ func (s *UserServiceTestSuite) TestRegisterUser() {
 				name:     "test",
 				password: "test",
 				email:    "dummy@example.com", // ダミーユーザーのメールアドレスと重複させる
-				iconUrl:  "https://example.com/icon.png",
-				Bio:      "test",
 			},
 			nil,
 			ErrEmailAlreadyExists,
@@ -216,7 +210,7 @@ func (s *UserServiceTestSuite) TestRegisterUser() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			got, err := s.us.RegisterUser(
-				tt.args.ctx, tt.args.userName, tt.args.name, tt.args.password, tt.args.email, tt.args.iconUrl, tt.args.Bio,
+				tt.args.ctx, tt.args.userName, tt.args.name, tt.args.password, tt.args.email,
 			)
 			if !errors.Is(err, tt.wantErr) {
 				s.T().Errorf("UserService.RegisterUser() error = %v, wantErr %v", err, tt.wantErr)
