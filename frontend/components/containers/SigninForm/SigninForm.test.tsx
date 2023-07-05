@@ -1,4 +1,4 @@
-describe("UserAuthForm", () => {
+describe("SigninForm", () => {
   test("クラッシュなくレンダリングされること", () => {})
 
   test("ボタンを押すとonSubmitが発火すること", () => {})

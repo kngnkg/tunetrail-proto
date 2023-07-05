@@ -12,11 +12,11 @@ import { useToast } from "@/hooks/toast/use-toast"
 import { Button } from "@/components/ui/Button/Button"
 import { Input } from "@/components/ui/Input/Input"
 
-interface LoginFormProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface SigninFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 type FormData = z.infer<typeof userAuthSchema>
 
-export const LoginForm: React.FC<LoginFormProps> = ({
+export const SigninForm: React.FC<SigninFormProps> = ({
   className,
   ...props
 }) => {
@@ -84,7 +84,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </div>
           <div className="grid gap-1">
             <Button type="submit" disabled={isLoading}>
-              ログイン
+              サインイン
             </Button>
           </div>
         </div>
