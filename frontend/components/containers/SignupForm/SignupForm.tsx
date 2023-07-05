@@ -18,7 +18,6 @@ export interface SignupFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 type FormData = z.infer<typeof userAuthSchema>
 
-// 登録ボタン押下時の処理
 export const SignupForm: React.FC<SignupFormProps> = ({
   className,
   ...props
@@ -29,6 +28,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const { showToast } = useToast()
 
+  // 登録ボタン押下時の処理
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
 
@@ -36,8 +36,13 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       setIsLoading(false)
       return
     }
-    const error = await signup(apiContext, data)
 
+    const error = await signup(apiContext, {
+      userName: data.userName,
+      name: data.name,
+      password: data.password,
+      email: data.email,
+    })
     if (error) {
       showToast({
         intent: "error",

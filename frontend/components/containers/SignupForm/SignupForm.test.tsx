@@ -50,7 +50,7 @@ describe("SignupForm", () => {
 
     // フォームに入力
     // Inputコンポーネントのプレースホルダーは内部的にlabelを使用しているため、
-    // getByPlaceholderTextで取得する
+    // getByLabelTextで取得する
     fireEvent.change(screen.getByLabelText("アカウント名"), {
       target: { value: "testname" },
     })
