@@ -1,7 +1,7 @@
 repository: kwtryo/tunetrail/api
 coverage:
   paths:
-    - ./api/coverage.out
+    - ./restapi/coverage.out
 codeToTestRatio:
   code:
     - '**/*.go'

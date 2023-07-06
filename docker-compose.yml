@@ -1,12 +1,12 @@
 version: "3.9"
 services:
-  api:
-    container_name: tunetrail-api
-    hostname: tunetrail-api
+  restapi:
+    container_name: tunetrail-restapi
+    hostname: tunetrail-restapi
     build:
       context: .
       target: dev
-      dockerfile: ./api/Dockerfile
+      dockerfile: ./restapi/Dockerfile
     environment:
       TUNETRAIL_ENV: dev
       PORT: 8080
@@ -37,8 +37,8 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       # dockerコンテナ起動時に自動で実行される.sqlファイル
-      - ./api/_tools/postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-      - ./api/_tools/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./restapi/_tools/postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./restapi/_tools/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
     ports:
       - "5555:5432"
     networks:
@@ -53,10 +53,6 @@ services:
       context: .
       target: dev
       dockerfile: ./webapp/Dockerfile
-    environment:
-      TODO_ENV: dev
-      TODO_API_HOST: tunetrail-api
-      TODO_API_PORT: 8080
     tty: true
     volumes:
       # .gitを含むルートディレクトリを指定する

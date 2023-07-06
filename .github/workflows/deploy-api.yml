@@ -5,8 +5,7 @@ on:
     branches:
       - "main"
     paths:
-    - "api/**"
-    # 一時的にコメントアウト
+    - "restapi/**"
     - ".github/workflows/deploy-api.yml"
 
 env:
@@ -75,7 +74,7 @@ jobs:
         ECR_REPOSITORY: "tunetrail-api"
         API_IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
       run: |
-        cd api
+        cd restapi
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG --target deploy .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG
 
