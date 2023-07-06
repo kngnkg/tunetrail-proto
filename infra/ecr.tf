@@ -7,7 +7,7 @@ resource "aws_ecr_repository" "api" {
   image_tag_mutability = "MUTABLE"
 }
 
-resource "aws_ecr_repository" "frontend" {
-  name                 = "tunetrail-frontend"
+resource "aws_ecr_repository" "webapp" {
+  name                 = "tunetrail-webapp"
   image_tag_mutability = "MUTABLE"
 }

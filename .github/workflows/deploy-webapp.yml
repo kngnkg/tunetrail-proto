@@ -1,12 +1,12 @@
-name: Deploy Frontend
+name: Deploy Webapp
 
 on:
   push:
     branches:
       - "main"
     paths:
-    - "frontend/**"
-    - ".github/workflows/deploy-frontend.yml"
+    - "webapp/**"
+    - ".github/workflows/deploy-webapp.yml"
 
 env:
   AWS_REGION: ap-northeast-1
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       api_image_tag: ${{ steps.get-api-tag.outputs.tag }}
-      frontend_image_tag: ${{ steps.get-frontend-tag.outputs.tag }}
+      webapp_image_tag: ${{ steps.get-webapp-tag.outputs.tag }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -77,23 +77,23 @@ jobs:
         done
         EOF
 
-    - name: Login to Amazon ECR (Frontend)
-      id: login-ecr-frontend
+    - name: Login to Amazon ECR (webapp)
+      id: login-ecr-webapp
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Generate .env.production
       run: |
-        echo NEXT_PUBLIC_API_ROOT=${{ secrets.NEXT_PUBLIC_API_ROOT }} > frontend/.env.production
+        echo NEXT_PUBLIC_API_ROOT=${{ secrets.NEXT_PUBLIC_API_ROOT }} > webapp/.env.production
 
-    # フロントエンドのイメージをビルドしてECRにプッシュする
-    - name: Build, tag, and push Frontend image to Amazon ECR
-      id: build-image-frontend
+    # イメージをビルドしてECRにプッシュする
+    - name: Build, tag, and push webapp image to Amazon ECR
+      id: build-image-webapp
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr-frontend.outputs.registry }}
-        ECR_REPOSITORY: "tunetrail-frontend"
+        ECR_REGISTRY: ${{ steps.login-ecr-webapp.outputs.registry }}
+        ECR_REPOSITORY: "tunetrail-webapp"
         IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
       run: |
-        cd frontend
+        cd webapp
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
@@ -106,9 +106,9 @@ jobs:
       run: terraform init
       working-directory: ${{ env.TF_WORKING_DIR }}
 
-    # フロントエンドコンテナをデプロイする
+    # webappコンテナをデプロイする
     # APIのタグは現行のタスク定義から取得する (変更しない)
-    # フロントエンドのタグはコミットハッシュを使用する
+    # webappのタグはコミットハッシュを使用する
     - name: Terraform Apply
-      run: terraform apply -auto-approve -var "frontend_image_tag=${{ github.sha }}" -var "api_image_tag=${{ needs.prepare-deployment.outputs.api_image_tag }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
+      run: terraform apply -auto-approve -var "webapp_image_tag=${{ github.sha }}" -var "api_image_tag=${{ needs.prepare-deployment.outputs.api_image_tag }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
       working-directory: ${{ env.TF_WORKING_DIR }}

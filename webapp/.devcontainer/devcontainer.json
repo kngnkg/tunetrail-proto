@@ -1,10 +1,10 @@
 {
-    "name": "tunetrail-frontend",
+    "name": "tunetrail-webapp",
     "dockerComposeFile": [
         "../../docker-compose.yml"
     ],
-    "service": "frontend",
-    "workspaceFolder": "/workspace/frontend",
+    "service": "webapp",
+    "workspaceFolder": "/workspace/webapp",
     "postCreateCommand": "sh ./.devcontainer/devcontainer-post-create.sh",
     "customizations": {
         "vscode": {
@@ -18,15 +18,15 @@
                 }
             },
             "extensions": [
-				"GitHub.copilot",
-				"oderwat.indent-rainbow",
-				"eamodio.gitlens",
-				"xabikos.JavaScriptSnippets",
-				"dbaeumer.vscode-eslint",
-				"esbenp.prettier-vscode",
-				"yzhang.markdown-all-in-one",
-				"bradlc.vscode-tailwindcss"
-			]
+                "GitHub.copilot",
+                "oderwat.indent-rainbow",
+                "eamodio.gitlens",
+                "xabikos.JavaScriptSnippets",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "yzhang.markdown-all-in-one",
+                "bradlc.vscode-tailwindcss"
+            ]
         }
     }
 }

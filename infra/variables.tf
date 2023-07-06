@@ -5,8 +5,8 @@ variable "use_resources" {
   default     = true
 }
 
-variable "frontend_image_tag" {
-  description = "value of the tag for the frontend image"
+variable "webapp_image_tag" {
+  description = "value of the tag for the webapp image"
   type        = string
 }
 
@@ -20,14 +20,14 @@ variable "db_password" {
   type        = string
 }
 
-variable "frontend_domain" {
-  description = "The domain name for the frontend"
+variable "webapp_domain" {
+  description = "The domain name for the webapp"
   type        = string
   default     = "www.tune-trail.com"
 }
 
-variable "frontend_port" {
-  description = "The port for the frontend"
+variable "webapp_port" {
+  description = "The port for the webapp"
   type        = number
   default     = 3000
 }

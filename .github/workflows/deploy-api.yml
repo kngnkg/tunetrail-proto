@@ -16,12 +16,12 @@ env:
 
 jobs:
   # デプロイ準備ジョブ
-  # 現行のタスク定義からフロントエンドのイメージタグを取得する
+  # 現行のタスク定義からwebappのイメージタグを取得する
   prepare-deployment:
     runs-on: ubuntu-latest
     outputs:
       api_image_tag: ${{ steps.get-api-tag.outputs.tag }}
-      frontend_image_tag: ${{ steps.get-frontend-tag.outputs.tag }}
+      webapp_image_tag: ${{ steps.get-webapp-tag.outputs.tag }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -34,12 +34,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # フロントエンドのイメージタグを取得する
-    - name: Get the latest Frontend image tag
-      id: get-frontend-tag
+    # webappのイメージタグを取得する
+    - name: Get the latest webapp image tag
+      id: get-webapp-tag
       run: |
         set -e
-        result=$(aws ecs describe-task-definition --task-definition tunetrail-frontend --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
+        result=$(aws ecs describe-task-definition --task-definition tunetrail-webapp --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
         if [ "$result" == "error" ]; then
           echo "Failed to describe the task definition."
           exit 1
@@ -89,10 +89,10 @@ jobs:
       working-directory: ${{ env.TF_WORKING_DIR }}
 
     # APIコンテナをデプロイする
-    # フロントエンドのタグは現行のタスク定義から取得する (変更しない)
+    # webappのタグは現行のタスク定義から取得する (変更しない)
     # APIのタグはコミットハッシュを使用する
     - name: Terraform Apply
       run: |
         set -e
-        terraform apply -auto-approve -var "frontend_image_tag=${{ needs.prepare-deployment.outputs.frontend_image_tag }}" -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
+        terraform apply -auto-approve -var "webapp_image_tag=${{ needs.prepare-deployment.outputs.webapp_image_tag }}" -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
       working-directory: ${{ env.TF_WORKING_DIR }}
