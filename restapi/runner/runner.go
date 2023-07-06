@@ -52,7 +52,7 @@ func Run(ctx context.Context, r *gin.Engine, cfg *config.Config) error {
 		return err
 	}
 
-	// log.Println("Server exiting")
+	log.Println("Server exiting")
 	// グレースフルシャットダウンの終了を待つ。
 	return eg.Wait()
 }
