@@ -1,6 +1,6 @@
 # tunetrail-api の CloudWatch Logs の設定
-resource "aws_cloudwatch_log_group" "api_log_group" {
-  name              = "tunetrail-api"
+resource "aws_cloudwatch_log_group" "restapi_log_group" {
+  name              = "tunetrail-restapi"
   retention_in_days = 14 # 14日間ログを保持する
 }
 

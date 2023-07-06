@@ -19,7 +19,7 @@ jobs:
   prepare-deployment:
     runs-on: ubuntu-latest
     outputs:
-      api_image_tag: ${{ steps.get-api-tag.outputs.tag }}
+      restapi_image_tag: ${{ steps.get-restapi-tag.outputs.tag }}
       webapp_image_tag: ${{ steps.get-webapp-tag.outputs.tag }}
     steps:
     - name: Checkout
@@ -33,12 +33,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # APIのイメージタグを取得する
-    - name: Get the latest API image tag
-      id: get-api-tag
+    # restapiのイメージタグを取得する
+    - name: Get the latest restapi image tag
+      id: get-restapi-tag
       run: |
         set -e
-        result=$(aws ecs describe-task-definition --task-definition tunetrail-api --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
+        result=$(aws ecs describe-task-definition --task-definition tunetrail-restapi --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
         if [ "$result" == "error" ]; then
           echo "Failed to describe the task definition."
           exit 1
@@ -62,13 +62,13 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # APIコンテナが起動していることを確認する
+    # restapiコンテナが起動していることを確認する
     # タイムアウトは10分
-    - name: Verify that the API is activated
+    - name: Verify that the restapi is activated
       run: |
         timeout 600 bash <<'EOF'
         while : ; do
-            status=$(aws ecs describe-services --region ap-northeast-1 --cluster tunetrail --services tunetrail-api --query 'services[0].status' --output text)
+            status=$(aws ecs describe-services --region ap-northeast-1 --cluster tunetrail --services tunetrail-restapi --query 'services[0].status' --output text)
             if [[ "$status" = "ACTIVE" ]]; then
                 break
             fi
@@ -107,8 +107,8 @@ jobs:
       working-directory: ${{ env.TF_WORKING_DIR }}
 
     # webappコンテナをデプロイする
-    # APIのタグは現行のタスク定義から取得する (変更しない)
+    # restapiのタグは現行のタスク定義から取得する (変更しない)
     # webappのタグはコミットハッシュを使用する
     - name: Terraform Apply
-      run: terraform apply -auto-approve -var "webapp_image_tag=${{ github.sha }}" -var "api_image_tag=${{ needs.prepare-deployment.outputs.api_image_tag }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
+      run: terraform apply -auto-approve -var "webapp_image_tag=${{ github.sha }}" -var "restapi_image_tag=${{ needs.prepare-deployment.outputs.restapi_image_tag }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
       working-directory: ${{ env.TF_WORKING_DIR }}

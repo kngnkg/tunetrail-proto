@@ -55,10 +55,10 @@ resource "aws_route53_record" "www" {
   }
 }
 
-# ALBへのエイリアスレコード (api)
-resource "aws_route53_record" "api" {
+# ALBへのエイリアスレコード (REST API)
+resource "aws_route53_record" "restapi" {
   zone_id = aws_route53_zone.tunetrail.zone_id
-  name    = var.api_domain
+  name    = var.restapi_domain
   type    = "A"
 
   alias {

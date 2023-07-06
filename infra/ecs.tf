@@ -3,34 +3,34 @@ resource "aws_ecs_cluster" "tunetrail" {
   name = "tunetrail"
 }
 
-# tunetrail-api サービスの設定
-resource "aws_ecs_service" "api" {
-  name            = "tunetrail-api"
+# tunetrail-restapi サービスの設定
+resource "aws_ecs_service" "restapi" {
+  name            = "tunetrail-restapi"
   cluster         = aws_ecs_cluster.tunetrail.id
-  task_definition = aws_ecs_task_definition.api.arn
+  task_definition = aws_ecs_task_definition.restapi.arn
   desired_count   = var.use_resources ? 2 : 0 # タスクの数
   launch_type     = "FARGATE"
   network_configuration {
     subnets          = [aws_subnet.private1.id, aws_subnet.private2.id]
-    security_groups  = [aws_security_group.api_sg.id]
+    security_groups  = [aws_security_group.restapi_sg.id]
     assign_public_ip = false
   }
   # ロードバランサーの設定
   # ターゲットグループをアタッチすることで、ロードバランサーにターゲットとして登録される
   load_balancer {
-    target_group_arn = aws_lb_target_group.alb_tg_api.arn
-    container_name   = "tunetrail-api"
-    container_port   = var.api_port
+    target_group_arn = aws_lb_target_group.alb_tg_restapi.arn
+    container_name   = "tunetrail-restapi"
+    container_port   = var.restapi_port
   }
 }
 
-# tunetrail-api タスク定義の作成
-resource "aws_ecs_task_definition" "api" {
+# tunetrail-restapi タスク定義の作成
+resource "aws_ecs_task_definition" "restapi" {
   container_definitions = jsonencode([{
-    name  = "tunetrail-api",
-    image = "${aws_ecr_repository.api.repository_url}:${var.api_image_tag}", # ECRのリポジトリURL
+    name  = "tunetrail-restapi",
+    image = "${aws_ecr_repository.restapi.repository_url}:${var.restapi_image_tag}", # ECRのリポジトリURL
     portMappings = [{
-      containerPort = var.api_port
+      containerPort = var.restapi_port
       protocol      = "tcp"
     }],
     environment = [
@@ -66,14 +66,14 @@ resource "aws_ecs_task_definition" "api" {
     logConfiguration = {
       logDriver = "awslogs", # CloudWatch Logsを使用する
       options = {
-        awslogs-group         = "${aws_cloudwatch_log_group.api_log_group.name}",
+        awslogs-group         = "${aws_cloudwatch_log_group.restapi_log_group.name}",
         awslogs-region        = "ap-northeast-1",
-        awslogs-stream-prefix = "api"
+        awslogs-stream-prefix = "restapi"
       }
     },
   }])
 
-  family                   = "tunetrail-api" # タスク定義のファミリー名
+  family                   = "tunetrail-restapi" # タスク定義のファミリー名
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"

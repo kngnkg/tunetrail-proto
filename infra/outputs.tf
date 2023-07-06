@@ -8,7 +8,7 @@ output "webapp_image_tag" {
   description = "The tag of the webapp image"
 }
 
-output "api_image_tag" {
-  value       = var.api_image_tag
-  description = "The tag of the API image"
+output "restapi_image_tag" {
+  value       = var.restapi_image_tag
+  description = "The tag of the REST API image"
 }
