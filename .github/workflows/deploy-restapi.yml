@@ -19,7 +19,7 @@ jobs:
   prepare-deployment:
     runs-on: ubuntu-latest
     outputs:
-      api_image_tag: ${{ steps.get-api-tag.outputs.tag }}
+      restapi_image_tag: ${{ steps.get-restapi-tag.outputs.tag }}
       webapp_image_tag: ${{ steps.get-webapp-tag.outputs.tag }}
     steps:
     - name: Checkout
@@ -62,21 +62,21 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Login to Amazon ECR (API)
-      id: login-ecr-api
+    - name: Login to Amazon ECR (REST API)
+      id: login-ecr-restapi
       uses: aws-actions/amazon-ecr-login@v1
 
-    # APIのイメージをビルドしてECRにプッシュする
-    - name: Build, tag, and push API image to Amazon ECR
-      id: build-image-api
+    # restapiのイメージをビルドしてECRにプッシュする
+    - name: Build, tag, and push restapi image to Amazon ECR
+      id: build-image-restapi
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
-        ECR_REPOSITORY: "tunetrail-api"
-        API_IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
+        ECR_REGISTRY: ${{ steps.login-ecr-restapi.outputs.registry }}
+        ECR_REPOSITORY: "tunetrail-restapi"
+        REST_API_IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
       run: |
         cd restapi
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG --target deploy .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$API_IMAGE_TAG
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$REST_API_IMAGE_TAG --target deploy .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$REST_API_IMAGE_TAG
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
@@ -93,5 +93,5 @@ jobs:
     - name: Terraform Apply
       run: |
         set -e
-        terraform apply -auto-approve -var "webapp_image_tag=${{ needs.prepare-deployment.outputs.webapp_image_tag }}" -var "api_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
+        terraform apply -auto-approve -var "webapp_image_tag=${{ needs.prepare-deployment.outputs.webapp_image_tag }}" -var "restapi_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
       working-directory: ${{ env.TF_WORKING_DIR }}

@@ -10,8 +10,8 @@ variable "webapp_image_tag" {
   type        = string
 }
 
-variable "api_image_tag" {
-  description = "value of the tag for the API image"
+variable "restapi_image_tag" {
+  description = "value of the tag for the REST API image"
   type        = string
 }
 
@@ -32,14 +32,14 @@ variable "webapp_port" {
   default     = 3000
 }
 
-variable "api_domain" {
-  description = "The domain name for the API"
+variable "restapi_domain" {
+  description = "The domain name for the REST API"
   type        = string
   default     = "api.tune-trail.com"
 }
 
-variable "api_port" {
-  description = "The port for the API"
+variable "restapi_port" {
+  description = "The port for the REST API"
   type        = number
   default     = 80
 }

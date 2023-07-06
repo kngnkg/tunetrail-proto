@@ -6,8 +6,8 @@ resource "aws_security_group" "alb_sg" {
 
   # HTTPに対するインバウンドルール
   ingress {
-    from_port   = var.api_port
-    to_port     = var.api_port
+    from_port   = var.restapi_port
+    to_port     = var.restapi_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # 任意のIPからのアクセスを許可
   }
@@ -35,7 +35,7 @@ resource "aws_security_group" "webapp_sg" {
   description = "Security Group for webapp Tasks"
   vpc_id      = aws_vpc.main.id
 
-  # APIへのアクセス用のインバウンドルールの設定
+  # restapiへのアクセス用のインバウンドルールの設定
   ingress {
     from_port   = var.webapp_port
     to_port     = var.webapp_port
@@ -60,16 +60,16 @@ resource "aws_security_group" "webapp_sg" {
   }
 }
 
-# API用のセキュリティグループ
-resource "aws_security_group" "api_sg" {
-  name        = "api_sg"
-  description = "Security Group for API Tasks"
+# REST API用のセキュリティグループ
+resource "aws_security_group" "restapi_sg" {
+  name        = "restapi_sg"
+  description = "Security Group for REST API Tasks"
   vpc_id      = aws_vpc.main.id
 
-  # APIへのアクセス用のインバウンドルールの設定
+  # REST APIへのアクセス用のインバウンドルールの設定
   ingress {
-    from_port   = var.api_port
-    to_port     = var.api_port
+    from_port   = var.restapi_port
+    to_port     = var.restapi_port
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
   }

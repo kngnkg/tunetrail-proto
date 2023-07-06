@@ -1,5 +1,5 @@
-resource "aws_ecr_repository" "api" {
-  name = "tunetrail-api"
+resource "aws_ecr_repository" "restapi" {
+  name = "tunetrail-restapi"
   /**
   開発フェーズでは、イメージのタグを変更することが多いため、
   イメージのタグを変更可能にしておく。

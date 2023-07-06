@@ -58,20 +58,20 @@ resource "aws_lb_listener_rule" "webapp" {
   }
 }
 
-# API用のリスナールール
-# apiのドメインにアクセスした場合に、API用のターゲットグループにフォワードする
-resource "aws_lb_listener_rule" "api" {
+# REST APIコンテナ用のリスナールール
+# REST APIのドメインにアクセスした場合に、REST APIコンテナ用のターゲットグループにフォワードする
+resource "aws_lb_listener_rule" "restapi" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 100
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.alb_tg_api.arn
+    target_group_arn = aws_lb_target_group.alb_tg_restapi.arn
   }
 
   condition {
     host_header {
-      values = [var.api_domain]
+      values = [var.restapi_domain]
     }
   }
 }
@@ -106,10 +106,10 @@ resource "aws_lb_target_group" "alb_tg_webapp" {
   }
 }
 
-# API用のターゲットグループ
-resource "aws_lb_target_group" "alb_tg_api" {
-  name        = "api-target-group"
-  port        = var.api_port
+# restapi用のターゲットグループ
+resource "aws_lb_target_group" "alb_tg_restapi" {
+  name        = "restapi-target-group"
+  port        = var.restapi_port
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id # VPCを指定
   target_type = "ip"
@@ -122,7 +122,7 @@ resource "aws_lb_target_group" "alb_tg_api" {
     interval            = 30 # 30秒ごとにヘルスチェックを実施
     path                = "/health"
     matcher             = "200-399" # 200番台と300番台のレスポンスを正常とする
-    port                = var.api_port
+    port                = var.restapi_port
     protocol            = "HTTP"
   }
 }
