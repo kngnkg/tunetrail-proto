@@ -6,7 +6,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
   service_name        = "com.amazonaws.ap-northeast-1.ecr.api"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private1.id, aws_subnet.private2.id]
-  security_group_ids  = [aws_security_group.api_sg.id, aws_security_group.frontend_sg.id]
+  security_group_ids  = [aws_security_group.api_sg.id, aws_security_group.webapp_sg.id]
   private_dns_enabled = true
 }
 
@@ -17,7 +17,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   service_name        = "com.amazonaws.ap-northeast-1.ecr.dkr"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private1.id, aws_subnet.private2.id]
-  security_group_ids  = [aws_security_group.api_sg.id, aws_security_group.frontend_sg.id]
+  security_group_ids  = [aws_security_group.api_sg.id, aws_security_group.webapp_sg.id]
   private_dns_enabled = true
 }
 
@@ -38,6 +38,6 @@ resource "aws_vpc_endpoint" "cloudwatch_logs" {
   service_name        = "com.amazonaws.ap-northeast-1.logs"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = [aws_subnet.private1.id, aws_subnet.private2.id]
-  security_group_ids  = [aws_security_group.api_sg.id, aws_security_group.frontend_sg.id]
+  security_group_ids  = [aws_security_group.api_sg.id, aws_security_group.webapp_sg.id]
   private_dns_enabled = true
 }

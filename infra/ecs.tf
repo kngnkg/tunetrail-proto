@@ -82,47 +82,47 @@ resource "aws_ecs_task_definition" "api" {
   task_role_arn            = aws_iam_role.task_role.arn      # タスクロール
 }
 
-# tunetrail-frontend サービスの設定
-resource "aws_ecs_service" "frontend" {
-  name            = "tunetrail-frontend"
+# tunetrail-webapp サービスの設定
+resource "aws_ecs_service" "webapp" {
+  name            = "tunetrail-webapp"
   cluster         = aws_ecs_cluster.tunetrail.id
-  task_definition = aws_ecs_task_definition.frontend.arn
+  task_definition = aws_ecs_task_definition.webapp.arn
   desired_count   = var.use_resources ? 2 : 0 # タスクの数
   launch_type     = "FARGATE"
   network_configuration {
     subnets          = [aws_subnet.private1.id, aws_subnet.private2.id]
-    security_groups  = [aws_security_group.frontend_sg.id]
+    security_groups  = [aws_security_group.webapp_sg.id]
     assign_public_ip = false
   }
 
   # ロードバランサーの設定
   # ターゲットグループをアタッチすることで、ロードバランサーにターゲットとして登録される
   load_balancer {
-    target_group_arn = aws_lb_target_group.alb_tg_frontend.arn
-    container_name   = "tunetrail-frontend"
-    container_port   = var.frontend_port
+    target_group_arn = aws_lb_target_group.alb_tg_webapp.arn
+    container_name   = "tunetrail-webapp"
+    container_port   = var.webapp_port
   }
 }
 
-# tunetrail-frontend タスク定義の作成
-resource "aws_ecs_task_definition" "frontend" {
+# tunetrail-webapp タスク定義の作成
+resource "aws_ecs_task_definition" "webapp" {
   container_definitions = jsonencode([{
-    name  = "tunetrail-frontend",
-    image = "${aws_ecr_repository.frontend.repository_url}:${var.frontend_image_tag}",
+    name  = "tunetrail-webapp",
+    image = "${aws_ecr_repository.webapp.repository_url}:${var.webapp_image_tag}",
     portMappings = [{
-      containerPort = var.frontend_port
+      containerPort = var.webapp_port
     }],
     logConfiguration = {
       logDriver = "awslogs", # CloudWatch Logsを使用する
       options = {
-        awslogs-group         = "${aws_cloudwatch_log_group.frontend_log_group.name}",
+        awslogs-group         = "${aws_cloudwatch_log_group.webapp_log_group.name}",
         awslogs-region        = "ap-northeast-1",
-        awslogs-stream-prefix = "frontend"
+        awslogs-stream-prefix = "webapp"
       }
     },
   }])
 
-  family                   = "tunetrail-frontend"
+  family                   = "tunetrail-webapp"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"

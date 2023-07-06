@@ -75,7 +75,7 @@ resource "aws_iam_policy" "cloudwatch_logs_policy" {
       ],
       "Resource": [
         "${aws_cloudwatch_log_group.api_log_group.arn}",
-        "${aws_cloudwatch_log_group.frontend_log_group.arn}"
+        "${aws_cloudwatch_log_group.webapp_log_group.arn}"
       ]
     }
   ]

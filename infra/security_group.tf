@@ -29,16 +29,16 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# Frontend用のセキュリティグループ
-resource "aws_security_group" "frontend_sg" {
-  name        = "frontend_sg"
-  description = "Security Group for Frontend Tasks"
+# webapp用のセキュリティグループ
+resource "aws_security_group" "webapp_sg" {
+  name        = "webapp_sg"
+  description = "Security Group for webapp Tasks"
   vpc_id      = aws_vpc.main.id
 
   # APIへのアクセス用のインバウンドルールの設定
   ingress {
-    from_port   = var.frontend_port
-    to_port     = var.frontend_port
+    from_port   = var.webapp_port
+    to_port     = var.webapp_port
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
   }

@@ -3,9 +3,9 @@ output "use_resources" {
   description = "Current status of the resources"
 }
 
-output "frontend_image_tag" {
-  value       = var.frontend_image_tag
-  description = "The tag of the Frontend image"
+output "webapp_image_tag" {
+  value       = var.webapp_image_tag
+  description = "The tag of the webapp image"
 }
 
 output "api_image_tag" {
