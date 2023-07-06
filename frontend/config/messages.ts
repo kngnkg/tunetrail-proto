@@ -10,6 +10,7 @@ export const MESSAGE = {
     },
   },
   SUCCESS_SIGNUP: "登録に成功しました!",
+  SUCCESS_LOGIN: "ログインしました!",
   DUP_USERNAME: "ユーザー名が既に登録されています。",
   DUP_EMAIL: "メールアドレスが既に登録されています。",
   UNKNOWN_ERROR: "不明なエラーが発生しました",

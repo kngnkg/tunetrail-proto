@@ -12,14 +12,14 @@ import { useToast } from "@/hooks/toast/use-toast"
 import { Button } from "@/components/ui/Button/Button"
 import { Input } from "@/components/ui/Input/Input"
 
-interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface SigninFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 type FormData = z.infer<typeof userAuthSchema>
 
-export default function UserAuthForm({
+export const SigninForm: React.FC<SigninFormProps> = ({
   className,
   ...props
-}: UserAuthFormProps) {
+}) => {
   const { register, handleSubmit, formState } = useForm<FormData>({
     resolver: zodResolver(userAuthSchema),
   })
@@ -37,7 +37,7 @@ export default function UserAuthForm({
     if (!signinResult) {
       showToast({
         intent: "error",
-        description: MESSAGE.LOGIN.FAILED,
+        description: "ユーザー認証に失敗しました",
       })
       setIsLoading(false)
       return
@@ -45,7 +45,7 @@ export default function UserAuthForm({
 
     showToast({
       intent: "success",
-      description: MESSAGE.LOGIN.SUCCESS,
+      description: MESSAGE.SUCCESS_LOGIN,
     })
     setIsLoading(false)
   }
@@ -84,7 +84,7 @@ export default function UserAuthForm({
           </div>
           <div className="grid gap-1">
             <Button type="submit" disabled={isLoading}>
-              ログイン
+              サインイン
             </Button>
           </div>
         </div>
