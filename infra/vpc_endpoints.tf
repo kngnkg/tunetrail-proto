@@ -41,7 +41,7 @@ resource "aws_vpc_endpoint" "cloudwatch_logs" {
   security_group_ids = [
     aws_security_group.restapi_sg.id,
     aws_security_group.webapp_sg.id,
-    aws_security_group.migration_sg
+    aws_security_group.migration_sg.id
   ]
   private_dns_enabled = true
 }
