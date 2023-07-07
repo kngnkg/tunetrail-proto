@@ -15,10 +15,10 @@ DB_USER := tunetrail
 DB_PASSWORD := tunetrail
 DB_NAME := tunetrail
 dry-migrate: ## Try migration
-	psqldef --dry-run --host=${DB_HOST} --port=${DB_PORT} --user=${DB_USER} --password=${DB_PASSWORD} ${DB_NAME} < ./_tools/postgres/schema.sql
+	psqldef --dry-run --host=${DB_HOST} --port=${DB_PORT} --user=${DB_USER} --password=${DB_PASSWORD} ${DB_NAME} < ../database/_tools/postgres/schema.sql
 
 migrate:  ## Execute migration
-	psqldef --host=${DB_HOST} --port=${DB_PORT} --user=${DB_USER} --password=${DB_PASSWORD} ${DB_NAME} < ./_tools/postgres/schema.sql
+	psqldef --host=${DB_HOST} --port=${DB_PORT} --user=${DB_USER} --password=${DB_PASSWORD} ${DB_NAME} < ../database/_tools/postgres/schema.sql
 
 generate: ## Generate codes
 	go generate ./...
