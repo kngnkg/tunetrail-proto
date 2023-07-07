@@ -1,4 +1,4 @@
-name: Migration
+name: Deploy Migration
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - "main"
     paths:
     - "database/**"
-    - ".github/workflows/deploy-migrate.yml"
+    - ".github/workflows/deploy-migration.yml"
 
 env:
   AWS_REGION: ap-northeast-1
@@ -33,16 +33,16 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Login to Amazon ECR (migrate)
-      id: login-ecr-migrate
+    - name: Login to Amazon ECR (migration)
+      id: login-ecr-migration
       uses: aws-actions/amazon-ecr-login@v1
 
     # イメージをビルドしてECRにプッシュする
-    - name: Build, tag, and push migrate image to Amazon ECR
-      id: build-image-migrate
+    - name: Build, tag, and push migration image to Amazon ECR
+      id: build-image-migration
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr-migrate.outputs.registry }}
-        ECR_REPOSITORY: "tunetrail-migrate"
+        ECR_REGISTRY: ${{ steps.login-ecr-migration.outputs.registry }}
+        ECR_REPOSITORY: "tunetrail-migration"
         IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
       run: |
         cd database
