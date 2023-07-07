@@ -1,5 +1,8 @@
-# リリース用のビルドを行うコンテナイメージを作成するステージ
-FROM golang:1.20.3-bullseye as deploy-builder
+# RDSをマイグレーションするためのコンテナ
+
+# ---------------------------------------------------
+# リリース用のコンテナイメージを作成するステージ
+FROM golang:1.20.3-alpine
 
 WORKDIR /app
 
@@ -7,14 +10,10 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -trimpath -ldflags "-w -s" -o app
 
-# ---------------------------------------------------
-# リリース用のコンテナイメージを作成するステージ
+RUN go install github.com/k0kubun/sqldef/cmd/psqldef@latest
 
-FROM debian:bullseye-slim as deploy
-
-COPY --from=deploy-builder /app/app .
+RUN go build -ldflags "-w -s" -o app
 
 CMD ["./app"]
 
@@ -23,18 +22,8 @@ CMD ["./app"]
 
 FROM golang:1.20.3 as dev
 
-# GoのModule ModeをONにする
-ENV GO111MODULE on
-
 # ワーキングディレクトリを変更
 WORKDIR /workspace
-
-# 開発用のツールをインストール
-RUN apt-get update && apt-get install -y \
-    jq \
-    iputils-ping \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 # goの各種ツールをインストール
 RUN go install github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest && \

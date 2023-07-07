@@ -1,5 +1,22 @@
 version: "3.9"
+
 services:
+  webapp:
+    container_name: tunetrail-webapp
+    hostname: tunetrail-webapp
+    build:
+      context: .
+      target: dev
+      dockerfile: ./webapp/Dockerfile
+    tty: true
+    volumes:
+      # .gitを含むルートディレクトリを指定する
+      - .:/workspace:cached
+    ports:
+      - '3000:3000'
+    networks:
+      - tunetrail-external
+
   restapi:
     container_name: tunetrail-restapi
     hostname: tunetrail-restapi
@@ -23,7 +40,28 @@ services:
     networks:
       - tunetrail-internal
       - tunetrail-external
-    command: sleep infinity
+
+  migration:
+    container_name: tunetrail-migration
+    hostname: tunetrail-migration
+    build:
+      context: .
+      target: dev
+      dockerfile: ./database/Dockerfile
+    environment:
+      TUNETRAIL_DB_HOST: tunetrail-db
+      TUNETRAIL_DB_PORT: 5432
+      TUNETRAIL_DB_USER: tunetrail
+      TUNETRAIL_DB_PASSWORD: tunetrail
+      TUNETRAIL_DB_NAME: tunetrail
+    volumes:
+      # .gitを含むルートディレクトリを指定する
+      - .:/workspace:cached
+    ports:
+      - "18009:8080"
+    networks:
+      - tunetrail-internal
+      - tunetrail-external
 
   db:
     container_name: tunetrail-db
@@ -45,22 +83,6 @@ services:
       - tunetrail-internal
     # 設定ファイルを読み込む
     command: -c 'config_file=/etc/postgresql/postgresql.conf'
-
-  webapp:
-    container_name: tunetrail-webapp
-    hostname: tunetrail-webapp
-    build:
-      context: .
-      target: dev
-      dockerfile: ./webapp/Dockerfile
-    tty: true
-    volumes:
-      # .gitを含むルートディレクトリを指定する
-      - .:/workspace:cached
-    ports:
-      - '3000:3000'
-    networks:
-      - tunetrail-external
 
 networks:
   # 内部ネットワーク
