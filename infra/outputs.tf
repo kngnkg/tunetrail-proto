@@ -12,3 +12,8 @@ output "restapi_image_tag" {
   value       = var.restapi_image_tag
   description = "The tag of the REST API image"
 }
+
+output "migration_image_tag" {
+  value       = var.migration_image_tag
+  description = "The tag of the migration image"
+}

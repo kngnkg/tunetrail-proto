@@ -113,3 +113,26 @@ resource "aws_security_group" "rds_sg" {
     cidr_blocks = ["0.0.0.0/0"] # 任意のIPへのアクセスを許可
   }
 }
+
+# マイグレーション時に起動するlambda用のセキュリティグループ
+resource "aws_security_group" "migration_sg" {
+  name        = "migration_sg"
+  description = "Security Group for migration"
+  vpc_id      = aws_vpc.main.id
+
+  # VPCエンドポイント用のインバウンドルールの設定
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
+  }
+
+  # アウトバウンドルールの設定
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"] # 任意のIPへのアクセスを許可
+  }
+}

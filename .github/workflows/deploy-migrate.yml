@@ -1,0 +1,50 @@
+name: Migration
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+    - "database/**"
+    - ".github/workflows/deploy-migrate.yml"
+
+env:
+  AWS_REGION: ap-northeast-1
+  TF_VERSION: 1.4.6
+  TF_WORKING_DIR: infra
+
+jobs:
+  # デプロイ準備ジョブ
+  # 現行のタスク定義からwebappのイメージタグを取得する
+  prepare-deployment:
+    runs-on: ubuntu-latest
+    outputs:
+      restapi_image_tag: ${{ steps.get-restapi-tag.outputs.tag }}
+      webapp_image_tag: ${{ steps.get-webapp-tag.outputs.tag }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR (migrate)
+      id: login-ecr-migrate
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # イメージをビルドしてECRにプッシュする
+    - name: Build, tag, and push migrate image to Amazon ECR
+      id: build-image-migrate
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr-migrate.outputs.registry }}
+        ECR_REPOSITORY: "tunetrail-migrate"
+        IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
+      run: |
+        cd database
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

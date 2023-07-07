@@ -33,11 +33,15 @@ resource "aws_vpc_endpoint" "s3" {
 
 # CloudWatch Logs用のVPCエンドポイント
 resource "aws_vpc_endpoint" "cloudwatch_logs" {
-  count               = var.use_resources ? 1 : 0
-  vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.ap-northeast-1.logs"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = [aws_subnet.private1.id, aws_subnet.private2.id]
-  security_group_ids  = [aws_security_group.restapi_sg.id, aws_security_group.webapp_sg.id]
+  count             = var.use_resources ? 1 : 0
+  vpc_id            = aws_vpc.main.id
+  service_name      = "com.amazonaws.ap-northeast-1.logs"
+  vpc_endpoint_type = "Interface"
+  subnet_ids        = [aws_subnet.private1.id, aws_subnet.private2.id]
+  security_group_ids = [
+    aws_security_group.restapi_sg.id,
+    aws_security_group.webapp_sg.id,
+    aws_security_group.migration_sg
+  ]
   private_dns_enabled = true
 }
