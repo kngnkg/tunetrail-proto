@@ -2,7 +2,7 @@
 
 # ---------------------------------------------------
 # リリース用のコンテナイメージを作成するステージ
-FROM golang:1.20.3-alpine as deploy
+FROM golang:1.20.3-bullseye as deploy
 
 WORKDIR /app
 
