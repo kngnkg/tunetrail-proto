@@ -14,13 +14,8 @@ env:
   TF_WORKING_DIR: infra
 
 jobs:
-  # デプロイ準備ジョブ
-  # 現行のタスク定義からwebappのイメージタグを取得する
-  prepare-deployment:
+  build:
     runs-on: ubuntu-latest
-    outputs:
-      restapi_image_tag: ${{ steps.get-restapi-tag.outputs.tag }}
-      webapp_image_tag: ${{ steps.get-webapp-tag.outputs.tag }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -37,7 +32,7 @@ jobs:
       id: login-ecr-migration
       uses: aws-actions/amazon-ecr-login@v1
 
-    # イメージをビルドしてECRにプッシュする
+    # イメージをビルドしてECRにpushする
     - name: Build, tag, and push migration image to Amazon ECR
       id: build-image-migration
       env:
@@ -48,3 +43,30 @@ jobs:
         cd database
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    # 先程pushしたイメージのタグをterraform applyに渡すことで、Lambda関数を更新する
+    - name: Terraform Apply
+      working-directory: ${{ env.TF_WORKING_DIR }}
+      run: |
+        set -e
+        terraform init
+        WEBAPP_IMAGE_TAG=$(terraform output -raw webapp_image_tag)
+        RESTAPI_IMAGE_TAG=$(terraform output -raw restapi_image_tag)
+        terraform apply \
+          -auto-approve \
+          -var "webapp_image_tag=$WEBAPP_IMAGE_TAG" \
+          -var "restapi_image_tag=$RESTAPI_IMAGE_TAG" \
+          -var "migration_image_tag=${{ github.sha }}" \
+          -var "db_password=${{ secrets.DB_PASSWORD }}"
