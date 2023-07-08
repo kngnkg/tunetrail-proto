@@ -1,12 +1,10 @@
 # RDSをマイグレーションするためのコンテナ
 
-ARG FUNCTION_DIR="/app"
-
 # ---------------------------------------------------
 # リリース用のコンテナイメージを作成するステージ
 FROM golang:1.20.3-bullseye as deploy
 
-WORKDIR ${FUNCTION_DIR}
+WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -29,7 +27,7 @@ WORKDIR /
 ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie /usr/local/bin/aws-lambda-rie
 RUN chmod 755 /usr/local/bin/aws-lambda-rie
 
-WORKDIR ${FUNCTION_DIR}
+WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -48,6 +46,12 @@ CMD ["./app"]
 
 FROM golang:1.20.3 as dev
 
+WORKDIR /
+
+# RIEの設定
+ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie /usr/local/bin/aws-lambda-rie
+RUN chmod 755 /usr/local/bin/aws-lambda-rie
+
 # ワーキングディレクトリを変更
 WORKDIR /workspace
 
@@ -61,4 +65,5 @@ RUN go install github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest && \
     go install github.com/cweill/gotests/gotests@latest && \
     go install github.com/k0kubun/sqldef/cmd/psqldef@latest
 
+# ENTRYPOINT [ "/usr/local/bin/aws-lambda-rie" ]
 ENTRYPOINT ["sleep", "infinity"]
