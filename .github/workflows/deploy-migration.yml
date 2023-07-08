@@ -62,17 +62,26 @@ jobs:
       with:
         terraform_version: ${{ env.TF_VERSION }}
 
+    - name: Terraform Init
+      working-directory: ${{ env.TF_WORKING_DIR }}
+      run: |
+        terraform init
+
+    - name: Get image tags
+      working-directory: ${{ env.TF_WORKING_DIR }}
+      id: image_tags
+      run: |
+        set -e
+        echo "WEBAPP_IMAGE_TAG=$(terraform output -raw webapp_image_tag)" >> $GITHUB_ENV
+        echo "RESTAPI_IMAGE_TAG=$(terraform output -raw restapi_image_tag)" >> $GITHUB_ENV
+
     # 先程pushしたイメージのタグをterraform applyに渡すことで、Lambda関数を更新する
     - name: Terraform Apply
       working-directory: ${{ env.TF_WORKING_DIR }}
       run: |
-        set -e
-        terraform init
-        WEBAPP_IMAGE_TAG=$(terraform output -raw webapp_image_tag)
-        RESTAPI_IMAGE_TAG=$(terraform output -raw restapi_image_tag)
         terraform apply \
           -auto-approve \
-          -var "webapp_image_tag=$WEBAPP_IMAGE_TAG" \
-          -var "restapi_image_tag=$RESTAPI_IMAGE_TAG" \
+          -var "webapp_image_tag=${{ env.WEBAPP_IMAGE_TAG }}" \
+          -var "restapi_image_tag=${{ env.RESTAPI_IMAGE_TAG }}" \
           -var "migration_image_tag=${{ github.sha }}" \
           -var "db_password=${{ secrets.DB_PASSWORD }}"
