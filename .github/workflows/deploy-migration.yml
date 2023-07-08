@@ -72,8 +72,10 @@ jobs:
       id: image_tags
       run: |
         set -e
-        echo "WEBAPP_IMAGE_TAG=$(terraform output -raw webapp_image_tag)" >> $GITHUB_ENV
-        echo "RESTAPI_IMAGE_TAG=$(terraform output -raw restapi_image_tag)" >> $GITHUB_ENV
+        terraform output -raw webapp_image_tag > webapp_image_tag.txt
+        terraform output -raw restapi_image_tag > restapi_image_tag.txt
+        echo "WEBAPP_IMAGE_TAG=$(<webapp_image_tag.txt)" >> $GITHUB_ENV
+        echo "RESTAPI_IMAGE_TAG=$(<restapi_image_tag.txt)" >> $GITHUB_ENV
 
     # 先程pushしたイメージのタグをterraform applyに渡すことで、Lambda関数を更新する
     - name: Terraform Apply
