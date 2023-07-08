@@ -34,5 +34,6 @@ func HandleRequest(ctx context.Context, name MyEvent) (string, error) {
 }
 
 func main() {
+	log.Printf("Starting Lambda\n")
 	lambda.Start(HandleRequest)
 }

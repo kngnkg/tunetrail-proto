@@ -2,7 +2,7 @@
 # IAM ポリシー
 # ------------------------------
 
-# CloudWatch Logs への書き込み権限を持つポリシー
+# ECS用のCloudWatch Logs への書き込み権限を持つポリシー
 resource "aws_iam_policy" "cloudwatch_logs_policy" {
   name        = "CloudWatchLogsPolicy"
   description = "Allow writing to CloudWatch Logs"
@@ -19,13 +19,54 @@ resource "aws_iam_policy" "cloudwatch_logs_policy" {
       ],
       "Resource": [
         "${aws_cloudwatch_log_group.restapi_log_group.arn}",
-        "${aws_cloudwatch_log_group.webapp_log_group.arn}",
-        "${aws_cloudwatch_log_group.migration_log_group.arn}"
+        "${aws_cloudwatch_log_group.webapp_log_group.arn}"
       ]
     }
   ]
 }
 EOF
+}
+
+# Lambda用のCloudWatch Logs への書き込み権限を持つポリシー
+resource "aws_iam_policy" "lambda_cloudwatch" {
+  name        = "CloudWatchLogsPolicyLambda"
+  description = "Allow writing to CloudWatch Logs"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = "${aws_cloudwatch_log_group.migration_log_group.arn}",
+        Effect   = "Allow"
+      }
+    ]
+  })
+}
+
+# LambdaがVPC内で動作するために必要な権限を持つポリシー
+resource "aws_iam_role_policy" "lambda_vpc_access" {
+  name = "lambda_vpc_access"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ec2:CreateNetworkInterface",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DeleteNetworkInterface"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 # ------------------------------
@@ -120,5 +161,5 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_logs_policy_attach" {
 # lambdaの実行ロールに CloudWatch Logs への書き込み権限を持つポリシーをアタッチ
 resource "aws_iam_role_policy_attachment" "cloudwatch_logs_policy_attach_lambda" {
   role       = aws_iam_role.lambda_exec.name
-  policy_arn = aws_iam_policy.cloudwatch_logs_policy.arn
+  policy_arn = aws_iam_policy.lambda_cloudwatch.arn
 }
