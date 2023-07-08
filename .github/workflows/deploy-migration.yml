@@ -67,17 +67,16 @@ jobs:
       run: |
         terraform init
 
-    - name: Get webapp image tag
+    - name: Get image tags
       working-directory: ${{ env.TF_WORKING_DIR }}
-      id: webapp_tag
+      id: image_tags
+      # stderrの出力が混入するため、2>/dev/nullで破棄する
       run: |
-        echo "tag=$(terraform output -raw webapp_image_tag)" >> $GITHUB_OUTPUT
-
-    - name: Get restapi image tag
-      working-directory: ${{ env.TF_WORKING_DIR }}
-      id: restapi_tag
-      run: |
-        echo "tag=$(terraform output -raw restapi_image_tag)" >> $GITHUB_OUTPUT
+        set -e
+        terraform output -raw webapp_image_tag 2>/dev/null > webapp_image_tag.txt
+        terraform output -raw restapi_image_tag 2>/dev/null > restapi_image_tag.txt
+        echo "tag=$(<webapp_image_tag.txt)" >> $GITHUB_OUTPUT
+        echo "tag=$(<restapi_image_tag.txt)" >> $GITHUB_OUTPUT
 
     # 先程pushしたイメージのタグをterraform applyに渡すことで、Lambda関数を更新する
     - name: Terraform Apply
@@ -85,7 +84,7 @@ jobs:
       run: |
         terraform apply \
           -auto-approve \
-          -var "webapp_image_tag=${{ steps.webapp_tag.outputs.tag }}" \
-          -var "restapi_image_tag=${{ steps.restapi_tag.outputs.tag }}" \
+          -var "webapp_image_tag=${{ steps.image_tags.outputs.webapp_tag }}" \
+          -var "restapi_image_tag=${{ steps.image_tags.outputs.restapi_tag }}" \
           -var "migration_image_tag=${{ github.sha }}" \
           -var "db_password=${{ secrets.DB_PASSWORD }}"
