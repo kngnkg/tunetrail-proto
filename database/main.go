@@ -1,9 +1,5 @@
 package main
 
-import (
-	"log"
-)
-
 // type Config struct {
 // 	DBHost     string `env:"TUNETRAIL_DB_HOST" envDefault:"tunetrail-db"`
 // 	DBPort     int    `env:"TUNETRAIL_DB_PORT" envDefault:"5432"`
@@ -20,34 +16,23 @@ import (
 // 	return cfg, nil
 // }
 
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/aws/aws-lambda-go/lambda"
+)
+
+type MyEvent struct {
+	Name string `json:"name"`
+}
+
+func HandleRequest(ctx context.Context, name MyEvent) (string, error) {
+	log.Printf("Processing Lambda request %s\n", name.Name)
+	return fmt.Sprintf("Hello %s!", name.Name), nil
+}
+
 func main() {
-	// cfg, err := loadConfig()
-	// if err != nil {
-	// 	log.Fatalf("Failed to parse config: %s\n", err)
-	// }
-
-	// cmd := exec.Command("psqldef",
-	// 	cfg.DBName,
-	// 	"--host="+cfg.DBHost,
-	// 	"--port="+strconv.Itoa(cfg.DBPort),
-	// 	"--user="+cfg.DBUser,
-	// 	"--password="+cfg.DBPassword,
-	// 	"--file=_tools/postgres/schema.sql",
-	// )
-
-	// var stdout, stderr bytes.Buffer
-	// cmd.Stdout = &stdout
-	// cmd.Stderr = &stderr
-
-	// err = cmd.Run()
-	// outStr, errStr := stdout.String(), stderr.String()
-	// log.Printf("stdout: %s\n", outStr)
-	// if err != nil {
-	// 	log.Printf("stderr: %s\n", errStr)
-	// 	log.Fatalf("psqldef failed with %s\n", err)
-	// } else if stderr.Len() > 0 {
-	// 	log.Printf("stderr: %s\n", errStr)
-	// }
-
-	log.Print("hello world")
+	lambda.Start(HandleRequest)
 }

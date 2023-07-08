@@ -1,16 +1,39 @@
 .DEFAULT_GOAL := help
 
+DOCKER_TAG := latest
+build: ## Build docker image
+	docker build --no-cache -t lambda-test:${DOCKER_TAG} \
+		--target test ./
+
+run: ## Run docker image
+	docker run -p 9000:8080 lambda-test:${DOCKER_TAG}
+
+request:
+	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" \
+		-d '{"Name": "World"}'
+
 DB_HOST := tunetrail-db
 DB_PORT := 5432
 DB_USER := tunetrail
 DB_PASSWORD := tunetrail
 DB_NAME := tunetrail
 dry-migrate: ## Try migration
-	psqldef --dry-run --host=${DB_HOST} --port=${DB_PORT} --user=${DB_USER} --password=${DB_PASSWORD} ${DB_NAME} < ./_tools/postgres/schema.sql
-
+	psqldef --dry-run \
+		--host=${DB_HOST} \
+		--port=${DB_PORT} \
+		--user=${DB_USER} \
+		--password=${DB_PASSWORD} \
+		${DB_NAME} \
+		< ./_tools/postgres/schema.sql
 
 migrate:  ## Execute migration
-	psqldef --host=${DB_HOST} --port=${DB_PORT} --user=${DB_USER} --password=${DB_PASSWORD} ${DB_NAME} < ./_tools/postgres/schema.sql
+	psqldef \
+		--host=${DB_HOST} \
+		--port=${DB_PORT} \
+		--user=${DB_USER} \
+		--password=${DB_PASSWORD} \
+		${DB_NAME} \
+		< ./_tools/postgres/schema.sql
 
 help: ## Show options
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
