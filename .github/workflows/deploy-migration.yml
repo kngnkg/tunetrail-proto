@@ -57,34 +57,46 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
+    # webappのイメージタグを取得する
+    - name: Get the latest webapp image tag
+      id: get-webapp-tag
+      run: |
+        set -e
+        result=$(aws ecs describe-task-definition --task-definition tunetrail-webapp --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
+        if [ "$result" == "error" ]; then
+          echo "Failed to describe the task definition."
+          exit 1
+        fi
+        TAG=$(echo $result | cut -d ':' -f 2)
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+    # restapiのイメージタグを取得する
+    - name: Get the latest restapi image tag
+      id: get-restapi-tag
+      run: |
+        set -e
+        result=$(aws ecs describe-task-definition --task-definition tunetrail-restapi --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
+        if [ "$result" == "error" ]; then
+          echo "Failed to describe the task definition."
+          exit 1
+        fi
+        TAG=$(echo $result | cut -d ':' -f 2)
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
       with:
         terraform_version: ${{ env.TF_VERSION }}
 
-    - name: Terraform Init
-      working-directory: ${{ env.TF_WORKING_DIR }}
-      run: |
-        terraform init
-
-    - name: Get image tags
-      working-directory: ${{ env.TF_WORKING_DIR }}
-      id: image_tags
-      # stderrの出力が混入するため、2>/dev/nullで破棄する
-      run: |
-        set -e
-        terraform output -raw webapp_image_tag 2>/dev/null > webapp_image_tag.txt
-        terraform output -raw restapi_image_tag 2>/dev/null > restapi_image_tag.txt
-        echo "tag=$(<webapp_image_tag.txt)" >> $GITHUB_OUTPUT
-        echo "tag=$(<restapi_image_tag.txt)" >> $GITHUB_OUTPUT
-
     # 先程pushしたイメージのタグをterraform applyに渡すことで、Lambda関数を更新する
     - name: Terraform Apply
       working-directory: ${{ env.TF_WORKING_DIR }}
       run: |
+        set -e
+        terraform init
         terraform apply \
           -auto-approve \
-          -var "webapp_image_tag=${{ steps.image_tags.outputs.webapp_tag }}" \
-          -var "restapi_image_tag=${{ steps.image_tags.outputs.restapi_tag }}" \
+          -var "webapp_image_tag=${{ steps.get-webapp-tag.outputs.tag }}" \
+          -var "restapi_image_tag=${{ steps.get-webapp-tag.outputs.tag }}" \
           -var "migration_image_tag=${{ github.sha }}" \
           -var "db_password=${{ secrets.DB_PASSWORD }}"
