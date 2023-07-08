@@ -9,6 +9,11 @@ resource "aws_lambda_function" "migration" {
   memory_size  = 128
   package_type = "Image"
 
+  vpc_config {
+    subnet_ids         = [aws_subnet.private1.id, aws_subnet.private2.id]
+    security_group_ids = [aws_security_group.migration_sg.id]
+  }
+
   environment {
     variables = {
       TUNETRAIL_DB_HOST     = "${aws_db_instance.tunetrail.address}"
