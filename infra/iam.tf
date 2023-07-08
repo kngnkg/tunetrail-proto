@@ -41,7 +41,7 @@ resource "aws_iam_policy" "lambda_cloudwatch" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        Resource = "${aws_cloudwatch_log_group.migration_log_group.arn}",
+        Resource = "${aws_cloudwatch_log_group.migration_log_group.arn}:*",
         Effect   = "Allow"
       }
     ]
