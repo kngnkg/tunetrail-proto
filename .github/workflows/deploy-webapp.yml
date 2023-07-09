@@ -97,12 +97,12 @@ jobs:
       id: get-migration-tag
       run: |
         set -e
-        result=$(aws ecs describe-task-definition --task-definition tunetrail-migration --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
+        result=$(aws lambda get-function --function-name migration_lambda --query 'Configuration.ImageUri' --output text || echo "error")
         if [ "$result" == "error" ]; then
-          echo "Failed to describe the task definition."
+          echo "Failed to describe the lambda function."
           exit 1
         fi
-        TAG=$(echo $result | cut -d ':' -f 2)
+        TAG=$(echo $result | rev | cut -d ':' -f 1 | rev)
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
     - name: Setup Terraform
