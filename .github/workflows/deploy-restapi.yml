@@ -84,7 +84,7 @@ jobs:
           echo "Failed to describe the lambda function."
           exit 1
         fi
-        TAG=$(echo $result | cut -d ':' -f 1 | rev)
+        TAG=$(echo $result | cut -d ':' -f 2)
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
     - name: Setup Terraform
