@@ -24,7 +24,8 @@ services:
       context: .
       target: dev
       dockerfile: ./restapi/Dockerfile
-    environment: # Dockerネットワーク内でのみ有効な環境変数
+    environment:
+      # Dockerネットワーク内でのみ有効な環境変数
       TUNETRAIL_ENV: dev
       PORT: 8080
       TUNETRAIL_DB_HOST: tunetrail-db
@@ -47,7 +48,7 @@ services:
     build:
       context: .
       target: dev
-      dockerfile: ./database/Dockerfile
+      dockerfile: ./migration/Dockerfile
     environment:
       ENV: dev
       TUNETRAIL_DB_HOST: tunetrail-db
@@ -76,8 +77,8 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       # dockerコンテナ起動時に自動で実行される.sqlファイル
-      - ./database/_tools/postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-      - ./database/_tools/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./migration/_tools/postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./migration/_tools/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
     ports:
       - "5555:5432"
     networks:

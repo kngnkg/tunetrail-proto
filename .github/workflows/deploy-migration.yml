@@ -5,7 +5,7 @@ on:
     branches:
       - "main"
     paths:
-    - "database/**"
+    - "migration/**"
     - ".github/workflows/deploy-migration.yml"
 
 env:
@@ -38,7 +38,7 @@ jobs:
         ECR_REPOSITORY: "tunetrail-migration"
         IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
       run: |
-        cd database
+        cd migration
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
