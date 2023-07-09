@@ -1,8 +1,8 @@
 # RDSをマイグレーションするためのコンテナ
 
 # ---------------------------------------------------
-# リリース用のコンテナイメージを作成するステージ
-FROM golang:1.20.3-bullseye as deploy
+# リリース用のビルドを行うコンテナイメージを作成するステージ
+FROM golang:1.20.3-bullseye as deploy-builder
 
 WORKDIR /app
 
@@ -11,9 +11,24 @@ RUN go mod download
 
 COPY . .
 
-RUN go install github.com/k0kubun/sqldef/cmd/psqldef@latest
-
 RUN go build -ldflags "-w -s" -o app
+
+# ---------------------------------------------------
+# リリース用のコンテナイメージを作成するステージ
+
+FROM debian:bullseye-slim as deploy
+
+WORKDIR /app
+
+COPY --from=deploy-builder /app/app .
+
+# 一時的にgolangをインストールして、sqldefをインストールする
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends golang-go && \
+    go install github.com/k0kubun/sqldef/cmd/psqldef@latest && \
+    apt-get remove -y golang-go && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 
 CMD ["./app"]
 
