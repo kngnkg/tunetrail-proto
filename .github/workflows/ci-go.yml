@@ -10,6 +10,9 @@ jobs:
   lint-restapi:
     name: golangci-lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./restapi
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
@@ -17,6 +20,23 @@ jobs:
         uses: reviewdog/action-golangci-lint@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          golangci_lint_flags: "--config=./.golangci.yml ./restapi/**"
+          golangci_lint_flags: "--config=../.golangci.yml ./restapi/**"
+          fail_on_error: true
+          reporter: "github-pr-review"
+
+  lint-migration:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./migration
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          golangci_lint_flags: "--config=../.golangci.yml ./migration/**"
           fail_on_error: true
           reporter: "github-pr-review"

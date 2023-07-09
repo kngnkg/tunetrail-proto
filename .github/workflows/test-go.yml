@@ -16,7 +16,9 @@ defaults:
 jobs:
   test-restapi:
     runs-on: ubuntu-latest
-    working-directory: ./restapi
+    defaults:
+      run:
+        working-directory: ./restapi
     services:
       postgres:
         image: postgres
@@ -49,7 +51,9 @@ jobs:
 
   test-migration:
     runs-on: ubuntu-latest
-    working-directory: ./migration
+    defaults:
+      run:
+        working-directory: ./migration
     services:
       postgres:
         image: postgres
