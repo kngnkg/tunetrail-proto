@@ -1,39 +1,60 @@
 package main
 
-// type Config struct {
-// 	DBHost     string `env:"TUNETRAIL_DB_HOST" envDefault:"tunetrail-db"`
-// 	DBPort     int    `env:"TUNETRAIL_DB_PORT" envDefault:"5432"`
-// 	DBUser     string `env:"TUNETRAIL_DB_USER" envDefault:"tunetrail"`
-// 	DBPassword string `env:"TUNETRAIL_DB_PASSWORD" envDefault:"tunetrail"`
-// 	DBName     string `env:"TUNETRAIL_DB_NAME" envDefault:"tunetrail"`
-// }
-
-// func loadConfig() (*Config, error) {
-// 	cfg := &Config{}
-// 	if err := env.Parse(cfg); err != nil {
-// 		return nil, err
-// 	}
-// 	return cfg, nil
-// }
-
 import (
 	"context"
-	"fmt"
 	"log"
+	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/kwtryo/tunetrail/database/config"
+	"github.com/kwtryo/tunetrail/database/s3dl"
 )
 
-type MyEvent struct {
-	Name string `json:"name"`
+type Event struct {
+	Item string `json:"name"`
+}
+type Response struct {
+	Message string `json:"Answer:"`
 }
 
-func HandleRequest(ctx context.Context, name MyEvent) (string, error) {
-	log.Printf("Processing Lambda request %s\n", name.Name)
-	return fmt.Sprintf("Hello %s!", name.Name), nil
+func handleRequest(ctx context.Context, event Event) (Response, error) {
+	log.Printf("Processing Lambda request %s", event.Item)
+	// item := "sample.sql"
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatalf("Error loading config: %v", err)
+	}
+	log.Printf("Config: %+v", cfg)
+
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("your-region"),
+	})
+	if err != nil {
+		log.Fatalf("Error creating AWS session: %v", err)
+	}
+
+	downloader := s3dl.New(sess, cfg.S3Bucket)
+	file, err := downloader.Download(ctx, event.Item)
+	if err != nil {
+		log.Fatalf("Error downloading from S3: %v", err)
+	}
+
+	if err := migration(cfg, file); err != nil {
+		log.Fatalf("Error running migration: %v", err)
+	}
+
+	return Response{Message: "Success"}, nil
 }
 
 func main() {
-	log.Printf("Starting Lambda\n")
-	lambda.Start(HandleRequest)
+	if os.Getenv("ENV") == "dev" {
+		log.Println("Running locally")
+		handleRequest(context.Background(), Event{Item: "local.sql"})
+		return
+	}
+
+	log.Println("Starting Lambda")
+	lambda.Start(handleRequest)
 }

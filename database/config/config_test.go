@@ -9,7 +9,7 @@ import (
 
 func TestNew(t *testing.T) {
 	wantPort := 9999
-	t.Setenv("DBPORT", fmt.Sprint(wantPort))
+	t.Setenv("TUNETRAIL_DB_PORT", fmt.Sprint(wantPort))
 
 	got, err := New()
 	if err != nil {

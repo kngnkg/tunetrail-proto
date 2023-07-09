@@ -2,15 +2,26 @@
 
 DOCKER_TAG := latest
 build: ## Build docker image
+	docker build -t lambda-test:${DOCKER_TAG} \
+		--target test ./
+
+build-no-cache: ## Build docker image without cache
 	docker build --no-cache -t lambda-test:${DOCKER_TAG} \
 		--target test ./
 
 run: ## Run docker image
-	docker run -p 9000:8080 lambda-test:${DOCKER_TAG}
+	docker run -p 9000:8080 \
+		--rm \
+		-e TUNETRAIL_DB_HOST=localhost \
+		-e TUNETRAIL_DB_PORT=5555 \
+		lambda-test:${DOCKER_TAG}
 
 request:
 	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" \
 		-d '{"Name": "World"}'
+
+test: ## Execute tests
+	go test -race -shuffle=on ./...
 
 DB_HOST := tunetrail-db
 DB_PORT := 5432
