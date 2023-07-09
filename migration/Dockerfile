@@ -16,22 +16,15 @@ RUN go build -ldflags "-w -s" -o app
 # ---------------------------------------------------
 # リリース用のコンテナイメージを作成するステージ
 
-FROM debian:bullseye-slim as deploy
+FROM golang:1.20.3-bullseye as deploy
 
 WORKDIR /app
 
 COPY --from=deploy-builder /app/app .
 
-# sqldefをインストールするため、一時的にgolangをインストールする
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates golang-go
-
 ENV GO111MODULE on
 
-RUN go get github.com/k0kubun/sqldef/cmd/psqldef@latest && \
-    apt-get remove -y golang-go && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+RUN go install github.com/k0kubun/sqldef/cmd/psqldef@latest
 
 CMD ["./app"]
 
