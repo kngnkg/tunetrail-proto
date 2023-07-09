@@ -9,24 +9,22 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/kwtryo/tunetrail/database/config"
-	"github.com/kwtryo/tunetrail/database/s3dl"
+	"github.com/kwtryo/tunetrail/database/s3downloader"
 )
 
 type Event struct {
-	Item string `json:"name"`
+	Item string `json:"item"` // バケット内のオブジェクトのキー
 }
+
 type Response struct {
-	Message string `json:"Answer:"`
+	Result string `json:"result"` // レスポンスメッセージ
 }
 
 func handleRequest(ctx context.Context, event Event) (Response, error) {
-	log.Printf("Processing Lambda request %s", event.Item)
-	// item := "sample.sql"
 	cfg, err := config.New()
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
 	}
-	log.Printf("Config: %+v", cfg)
 
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("your-region"),
@@ -35,8 +33,8 @@ func handleRequest(ctx context.Context, event Event) (Response, error) {
 		log.Fatalf("Error creating AWS session: %v", err)
 	}
 
-	downloader := s3dl.New(sess, cfg.S3Bucket)
-	file, err := downloader.Download(ctx, event.Item)
+	s3dl := s3downloader.New(sess, cfg.S3Bucket)
+	file, err := s3dl.Download(ctx, event.Item)
 	if err != nil {
 		log.Fatalf("Error downloading from S3: %v", err)
 	}
@@ -45,7 +43,7 @@ func handleRequest(ctx context.Context, event Event) (Response, error) {
 		log.Fatalf("Error running migration: %v", err)
 	}
 
-	return Response{Message: "Success"}, nil
+	return Response{Result: "Success"}, nil
 }
 
 func main() {
