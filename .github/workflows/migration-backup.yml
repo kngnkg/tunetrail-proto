@@ -1,0 +1,102 @@
+name: Migration
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+    - "migration/**"
+    - ".github/workflows/migration.yml"
+
+env:
+  AWS_REGION: ap-northeast-1
+  TF_VERSION: 1.4.6
+  TF_WORKING_DIR: infra
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR (migration)
+      id: login-ecr-migration
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push migration image to Amazon ECR
+      id: build-image-migration
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr-migration.outputs.registry }}
+        ECR_REPOSITORY: "tunetrail-migration"
+        IMAGE_TAG: ${{ github.sha }} # コミットハッシュをタグとして使用
+      run: |
+        cd migration
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target deploy .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # Terraform backendのS3バケットにアクセスするため、AWSのクレデンシャル情報を設定する
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    # 先程pushしたイメージのタグをterraform applyに渡すことで、Lambda関数を更新する
+    - name: Terraform Apply
+      working-directory: ${{ env.TF_WORKING_DIR }}
+      run: |
+        set -e
+        terraform init
+        WEBAPP_IMAGE_TAG=$(terraform output -raw webapp_image_tag)
+        RESTAPI_IMAGE_TAG=$(terraform output -raw restapi_image_tag)
+        terraform apply \
+          -auto-approve \
+          -var "webapp_image_tag=$WEBAPP_IMAGE_TAG" \
+          -var "restapi_image_tag=$RESTAPI_IMAGE_TAG" \
+          -var "migration_image_tag=${{ github.sha }}" \
+          -var "db_password=${{ secrets.DB_PASSWORD }}"
+
+  # migration:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v2
+
+  #   # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
+  #   - name: Configure AWS credentials
+  #     uses: aws-actions/configure-aws-credentials@v1
+  #     with:
+  #       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #       aws-region: ${{ env.AWS_REGION }}
+
+    # - name: Invoke Lambda function
+    #   run: |
+    #     output=$(aws lambda invoke --function-name migration_lambda --output text)
+    #     if echo "$output" | grep -q "FunctionError"; then
+    #       echo "Lambda function execution failed."
+    #       echo "$output"
+    #       exit 1
+    #     fi
