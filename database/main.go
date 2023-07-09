@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -27,7 +26,7 @@ func handleRequest(ctx context.Context, event Event) (Response, error) {
 	}
 
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("your-region"),
+		Region: aws.String(cfg.AWSRegion),
 	})
 	if err != nil {
 		log.Fatalf("Error creating AWS session: %v", err)
@@ -47,12 +46,6 @@ func handleRequest(ctx context.Context, event Event) (Response, error) {
 }
 
 func main() {
-	if os.Getenv("ENV") == "dev" {
-		log.Println("Running locally")
-		handleRequest(context.Background(), Event{Item: "local.sql"})
-		return
-	}
-
 	log.Println("Starting Lambda")
 	lambda.Start(handleRequest)
 }
