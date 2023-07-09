@@ -22,10 +22,13 @@ WORKDIR /app
 
 COPY --from=deploy-builder /app/app .
 
-# 一時的にgolangをインストールして、sqldefをインストールする
+# sqldefをインストールするため、一時的にgolangをインストールする
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends golang-go && \
-    go install github.com/k0kubun/sqldef/cmd/psqldef@latest && \
+    apt-get install -y --no-install-recommends golang-go
+
+ENV GO111MODULE on
+
+RUN go install github.com/k0kubun/sqldef/cmd/psqldef@latest && \
     apt-get remove -y golang-go && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
