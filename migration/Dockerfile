@@ -24,7 +24,7 @@ COPY --from=deploy-builder /app/app .
 
 # sqldefをインストールするため、一時的にgolangをインストールする
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends golang-go
+    apt-get install -y --no-install-recommends ca-certificates golang-go
 
 ENV GO111MODULE on
 
