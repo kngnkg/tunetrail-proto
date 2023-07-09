@@ -49,7 +49,7 @@ jobs:
         EOF
 
     - name: Login to Amazon ECR (REST API)
-      id: login-ecr-restapi
+      id: login-ecr-webapp
       uses: aws-actions/amazon-ecr-login@v1
 
     # イメージをビルドしてECRにプッシュする
