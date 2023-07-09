@@ -1,4 +1,4 @@
-name: next-test
+name: Test for JavaScript and TypeScript
 on:
   push:
     branches:
@@ -10,7 +10,7 @@ on:
       - "**.jsx"
       - "**.ts"
       - "**.tsx"
-      - ./.github/workflows/next-test.yml
+      - ./.github/workflows/test-js-and-ts.yml
 
 defaults:
   run:

@@ -2,13 +2,13 @@ name: Deploy REST API
 
 on:
   workflow_run:
-    workflows: ["Migration"]
+    # workflows: ["Migration"]
   push:
     branches:
       - "main"
     paths:
     - "restapi/**"
-    - ".github/workflows/deploy-api.yml"
+    - ".github/workflows/deploy-restapi.yml"
 
 env:
   AWS_REGION: ap-northeast-1
@@ -16,47 +16,12 @@ env:
   TF_WORKING_DIR: infra
 
 jobs:
-  # デプロイ準備ジョブ
-  # 現行のタスク定義からwebappのイメージタグを取得する
-  prepare-deployment:
-    runs-on: ubuntu-latest
-    outputs:
-      restapi_image_tag: ${{ steps.get-restapi-tag.outputs.tag }}
-      webapp_image_tag: ${{ steps.get-webapp-tag.outputs.tag }}
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-
-    # webappのイメージタグを取得する
-    - name: Get the latest webapp image tag
-      id: get-webapp-tag
-      run: |
-        set -e
-        result=$(aws ecs describe-task-definition --task-definition tunetrail-webapp --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
-        if [ "$result" == "error" ]; then
-          echo "Failed to describe the task definition."
-          exit 1
-        fi
-        TAG=$(echo $result | cut -d ':' -f 2)
-        echo "::set-output name=tag::$TAG"
-
-  # デプロイジョブ
-  deploy:
-    needs: prepare-deployment
+  build:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v2
 
-    # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -80,20 +45,61 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$REST_API_IMAGE_TAG --target deploy .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$REST_API_IMAGE_TAG
 
+  # デプロイジョブ
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # 以降のステップでAWS CLIを使用するため、AWSのクレデンシャル情報を設定する
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    # webappのイメージタグを取得する
+    - name: Get the latest webapp image tag
+      id: get-webapp-tag
+      run: |
+        set -e
+        result=$(aws ecs describe-task-definition --task-definition tunetrail-webapp --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
+        if [ "$result" == "error" ]; then
+          echo "Failed to describe the task definition."
+          exit 1
+        fi
+        TAG=$(echo $result | cut -d ':' -f 2)
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+    # migrationのイメージタグを取得する
+    - name: Get the latest migration image tag
+      id: get-migration-tag
+      run: |
+        set -e
+        result=$(aws ecs describe-task-definition --task-definition tunetrail-migration --query 'taskDefinition.containerDefinitions[0].image' --output text || echo "error")
+        if [ "$result" == "error" ]; then
+          echo "Failed to describe the task definition."
+          exit 1
+        fi
+        TAG=$(echo $result | cut -d ':' -f 2)
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
       with:
         terraform_version: ${{ env.TF_VERSION }}
 
-    - name: Terraform Init
-      run: terraform init
-      working-directory: ${{ env.TF_WORKING_DIR }}
-
-    # APIコンテナをデプロイする
-    # webappのタグは現行のタスク定義から取得する (変更しない)
-    # APIのタグはコミットハッシュを使用する
+    # 先程pushしたイメージのタグをterraform applyに渡すことで、restapiのタスク定義を更新する
     - name: Terraform Apply
+      working-directory: ${{ env.TF_WORKING_DIR }}
       run: |
         set -e
-        terraform apply -auto-approve -var "webapp_image_tag=${{ needs.prepare-deployment.outputs.webapp_image_tag }}" -var "restapi_image_tag=${{ github.sha }}" -var "db_password=${{ secrets.DB_PASSWORD }}"
-      working-directory: ${{ env.TF_WORKING_DIR }}
+        terraform init
+        terraform apply -auto-approve \
+          -var "webapp_image_tag=${{ steps.get-webapp-tag.outputs.tag }}" \
+          -var "restapi_image_tag=${{ github.sha }}" \
+          -var "migration_image_tag=${{ steps.get-migration-tag.outputs.tag }}" \
+          -var "db_password=${{ secrets.DB_PASSWORD }}"

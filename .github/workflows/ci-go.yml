@@ -1,13 +1,13 @@
-name: golang-ci
+name: CI for Go
 
 on:
   pull_request:
     paths:
       - "**.go"
-      - ./.github/workflows/golangci.yml
+      - ./.github/workflows/ci-go.yml
 
 jobs:
-  golangci-lint:
+  lint-restapi:
     name: golangci-lint
     runs-on: ubuntu-latest
     steps:
@@ -17,6 +17,6 @@ jobs:
         uses: reviewdog/action-golangci-lint@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          golangci_lint_flags: "--config=./restapi/.golangci.yml ./restapi/**"
+          golangci_lint_flags: "--config=./.golangci.yml ./restapi/**"
           fail_on_error: true
           reporter: "github-pr-review"

@@ -1,10 +1,10 @@
-name: next-ci
+name: CI for TypeScript
 on:
   pull_request:
     paths:
       - "**/*.ts"
       - "**/*.tsx"
-      - ./.github/workflows/next-test.yml
+      - ./.github/workflows/ci-ts.yml
 
 jobs:
   nextci-lint:
