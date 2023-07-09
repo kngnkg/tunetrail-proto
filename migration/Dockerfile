@@ -28,7 +28,7 @@ RUN apt-get update && \
 
 ENV GO111MODULE on
 
-RUN go install github.com/k0kubun/sqldef/cmd/psqldef@latest && \
+RUN go get github.com/k0kubun/sqldef/cmd/psqldef@latest && \
     apt-get remove -y golang-go && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
