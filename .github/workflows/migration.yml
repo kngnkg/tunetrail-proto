@@ -2,7 +2,7 @@ name: Migration
 
 on:
   workflow_run:
-    workflows: ["Migration"]
+    workflows: ["Deploy Migration"]
     types:
       - completed
 
