@@ -120,4 +120,5 @@ jobs:
           -var "webapp_image_tag=${{ github.sha }}" \
           -var "restapi_image_tag=${{ steps.get-restapi-tag.outputs.tag }}" \
           -var "migration_image_tag=${{ steps.get-migration-tag.outputs.tag }}" \
-          -var "db_password=${{ secrets.DB_PASSWORD }}"
+          -var "db_password=${{ secrets.DB_PASSWORD }}"\
+          -var "db_schema_bucket_name=${{ secrets.TUNETRAIL_S3_BUCKET }}"
