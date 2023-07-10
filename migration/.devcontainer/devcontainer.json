@@ -4,7 +4,8 @@
         "../../docker-compose.yml"
     ],
     "service": "migration",
-    "workspaceFolder": "/workspace/database",
+    "workspaceFolder": "/workspace/migration",
+    "postCreateCommand": "sh ./.devcontainer/devcontainer-post-create.sh",
     "customizations": {
         "vscode": {
             "settings": {
