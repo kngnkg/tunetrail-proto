@@ -114,7 +114,7 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-# マイグレーション時に起動するlambda用のセキュリティグループ
+# マイグレーション時に起動するLambda用のセキュリティグループ
 resource "aws_security_group" "migration_sg" {
   name        = "migration_sg"
   description = "Security Group for migration"
