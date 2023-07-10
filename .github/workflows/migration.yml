@@ -1,12 +1,10 @@
 name: Migration
 
 on:
-  push:
-    branches:
-      - "main"
-    paths:
-    - "migration/**"
-    - ".github/workflows/migration.yml"
+  workflow_run:
+    workflows: ["Deploy Migration"]
+    types:
+      - completed
 
 env:
   AWS_REGION: ap-northeast-1
@@ -14,6 +12,7 @@ env:
 jobs:
   migration:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
