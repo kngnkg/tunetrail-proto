@@ -13,7 +13,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.files.*.filename, 'migration/')
+    if: contains(github.event.pull_request.files.*.filename, 'migration/') || contains(github.event.pull_request.files.*.filename, '.github/workflows/deploy-migration.yml')
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -43,7 +43,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.files.*.filename, 'migration/')
+    if: contains(github.event.pull_request.files.*.filename, 'migration/') || contains(github.event.pull_request.files.*.filename, '.github/workflows/deploy-migration.yml')
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -100,3 +100,10 @@ jobs:
           -var "migration_image_tag=${{ github.sha }}" \
           -var "db_password=${{ secrets.DB_PASSWORD }}" \
           -var "db_schema_bucket_name=${{ secrets.TUNETRAIL_S3_BUCKET }}"
+
+  # ダミージョブ
+  finish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: finish
+      run: echo "Workflow finished."

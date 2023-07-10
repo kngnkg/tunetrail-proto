@@ -39,3 +39,10 @@ jobs:
           echo "$output"
           exit 1
         fi
+
+  # ダミージョブ
+  finish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: finish
+      run: echo "Workflow finished."
