@@ -40,12 +40,13 @@ var (
 	ErrorUnableToDownloadItem = errors.New("s3download: unable to download item")
 )
 
-// S3からファイルをダウンロードする
+// S3からファイルを/tmp/にダウンロードする
 // item: バケット内のオブジェクトのキー
 func (d *S3Downloader) Download(ctx context.Context, item string) (*os.File, error) {
 	filename := filepath.Base(item) // ファイル名のみを抽出
 
-	file, err := os.Create(filename)
+	// Lambdaの/tmpディレクトリにファイルを作成
+	file, err := os.Create("/tmp/" + filename)
 	if err != nil {
 		return nil, fmt.Errorf("%w: item=%v: %w", ErrUnableToCreateFile, item, err)
 	}

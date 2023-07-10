@@ -25,6 +25,11 @@ variable "db_password" {
   type        = string
 }
 
+variable "db_schema_bucket_name" {
+  description = "The name of the S3 bucket"
+  type        = string
+}
+
 variable "webapp_domain" {
   description = "The domain name for the webapp"
   type        = string
