@@ -30,7 +30,7 @@ func TestS3Downloader_Download(t *testing.T) {
 
 	want := func(item string) *os.File {
 		filename := filepath.Base(item)
-		file, err := os.Create(filename)
+		file, err := os.Create("/tmp/" + filename)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -83,7 +83,8 @@ func TestS3Downloader_Download(t *testing.T) {
 			got, err := s3dl.Download(tt.args.ctx, tt.args.item)
 			// テスト終了後にファイルを削除
 			t.Cleanup(func() {
-				if err = os.Remove(filepath.Base(tt.args.item)); err != nil {
+				fileName := filepath.Base(tt.args.item)
+				if err = os.Remove("/tmp/" + fileName); err != nil {
 					t.Fatal(err)
 				}
 			})
@@ -98,7 +99,11 @@ func TestS3Downloader_Download(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, got.Name(), tt.want.Name())
+			// 正常系の場合はファイルが作成される
+			assert.Equal(t, tt.want.Name(), got.Name())
+
+			// // ファイルが/tmp/に作成される
+			// assert.Equal(t, got.Name(), tt.want.Name())
 		})
 	}
 }
