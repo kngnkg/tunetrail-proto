@@ -29,7 +29,7 @@ jobs:
     - name: Upload schema file
       run: |
         set -e
-        aws s3 cp migration/schema.sql s3://${{ secrets.TUNETRAIL_S3_BUCKET }}/schema.sql
+        aws s3 cp migration/_tools/postgres/schema.sql s3://${{ secrets.TUNETRAIL_S3_BUCKET }}/schema.sql
 
     - name: Invoke Lambda function
       run: |
