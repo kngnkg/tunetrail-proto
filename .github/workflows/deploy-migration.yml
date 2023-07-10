@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - "main"
-    paths:
-    - "migration/**"
-    - ".github/workflows/deploy-migration.yml"
 
 env:
   AWS_REGION: ap-northeast-1
@@ -16,6 +13,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.files.*.filename, 'migration/')
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -45,6 +43,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.files.*.filename, 'migration/')
     steps:
     - name: Checkout
       uses: actions/checkout@v2
