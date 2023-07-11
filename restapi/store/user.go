@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/kwtryo/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/model"
 	"github.com/lib/pq"
 )
 

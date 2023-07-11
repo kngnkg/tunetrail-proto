@@ -3,7 +3,7 @@
 
 DOCKER_TAG := latest
 build: ## Build docker image to deploy
-	docker build -t kwtryo/tunetrail/api:${DOCKER_TAG} \
+	docker build -t kngnkg/tunetrail/api:${DOCKER_TAG} \
 		--target deploy ./
 
 test: ## Execute tests

@@ -3,8 +3,8 @@ name: Migration
 on:
   workflow_run:
     workflows: ["Deploy Migration"]
-    types:
-      - completed
+    # types:
+    #   - completed
 
 env:
   AWS_REGION: ap-northeast-1

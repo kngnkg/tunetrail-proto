@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/tunetrail/restapi/model"
-	"github.com/kwtryo/tunetrail/restapi/service"
+	"github.com/kngnkg/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/service"
 )
 
 type UserService interface {

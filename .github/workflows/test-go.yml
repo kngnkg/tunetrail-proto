@@ -43,7 +43,11 @@ jobs:
       - name: migrate DB
         run: |
           go install github.com/k0kubun/sqldef/cmd/psqldef@latest
-          psqldef --host=127.0.0.1 --port=5432 --user=tunetrail --password=tunetrail tunetrail < ../migration/_tools/postgres/schema.sql
+          psqldef --host=${{ secrets.TEST_DB_HOST }} \
+            --port=${{ secrets.TEST_DB_PORT }} \
+            --user=${{ secrets.TEST_DB_USER }} \
+            --password=${{ secrets.TEST_DB_PASSWORD }} \
+            ${{ secrets.TEST_DB_NAME }} < ../migration/_tools/postgres/schema.sql
       - name: run tests
         run: go test ./... -coverprofile=coverage.out
       - name: report coverage
@@ -78,7 +82,11 @@ jobs:
       - name: migrate DB
         run: |
           go install github.com/k0kubun/sqldef/cmd/psqldef@latest
-          psqldef --host=127.0.0.1 --port=5432 --user=tunetrail --password=tunetrail tunetrail < ../migration/_tools/postgres/schema.sql
+          psqldef --host=${{ secrets.TEST_DB_HOST }} \
+            --port=${{ secrets.TEST_DB_PORT }} \
+            --user=${{ secrets.TEST_DB_USER }} \
+            --password=${{ secrets.TEST_DB_PASSWORD }} \
+            ${{ secrets.TEST_DB_NAME }} < ../migration/_tools/postgres/schema.sql
       - name: run tests
         run: go test ./... -coverprofile=coverage.out
       - name: report coverage

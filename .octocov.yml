@@ -1,4 +1,4 @@
-repository: kwtryo/tunetrail/api
+repository: kngnkg/tunetrail/api
 coverage:
   paths:
     - ./restapi/coverage.out

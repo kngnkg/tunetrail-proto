@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kwtryo/tunetrail/restapi/clock"
-	"github.com/kwtryo/tunetrail/restapi/model"
-	"github.com/kwtryo/tunetrail/restapi/service"
-	"github.com/kwtryo/tunetrail/restapi/testutil"
-	"github.com/kwtryo/tunetrail/restapi/validate"
+	"github.com/kngnkg/tunetrail/restapi/clock"
+	"github.com/kngnkg/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/service"
+	"github.com/kngnkg/tunetrail/restapi/testutil"
+	"github.com/kngnkg/tunetrail/restapi/validate"
 )
 
 func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {

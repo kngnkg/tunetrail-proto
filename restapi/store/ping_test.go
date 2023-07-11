@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kwtryo/tunetrail/restapi/clock"
-	"github.com/kwtryo/tunetrail/restapi/testutil"
+	"github.com/kngnkg/tunetrail/restapi/clock"
+	"github.com/kngnkg/tunetrail/restapi/testutil"
 )
 
 func TestRepository_Ping(t *testing.T) {

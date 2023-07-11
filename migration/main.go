@@ -7,8 +7,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/kwtryo/tunetrail/database/config"
-	"github.com/kwtryo/tunetrail/database/s3downloader"
+	"github.com/kngnkg/tunetrail/database/config"
+	"github.com/kngnkg/tunetrail/database/s3downloader"
 )
 
 type Event struct {
