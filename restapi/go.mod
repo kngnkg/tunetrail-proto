@@ -1,4 +1,4 @@
-module github.com/kwtryo/tunetrail/restapi
+module github.com/kngnkg/tunetrail/restapi
 
 go 1.20
 

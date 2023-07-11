@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kwtryo/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/model"
 )
 
 // Userはテスト用のユーザーを作成する

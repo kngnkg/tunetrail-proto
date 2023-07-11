@@ -8,8 +8,8 @@ import (
 	"log"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/kwtryo/tunetrail/restapi/clock"
-	"github.com/kwtryo/tunetrail/restapi/config"
+	"github.com/kngnkg/tunetrail/restapi/clock"
+	"github.com/kngnkg/tunetrail/restapi/config"
 	_ "github.com/lib/pq"
 )
 

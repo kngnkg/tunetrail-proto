@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/model"
 )
 
 type HealthService interface {

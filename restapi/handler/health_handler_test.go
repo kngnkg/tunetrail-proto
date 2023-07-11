@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/kwtryo/tunetrail/restapi/model"
-	"github.com/kwtryo/tunetrail/restapi/testutil"
+	"github.com/kngnkg/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/testutil"
 )
 
 func TestHealthHandler_HealthCheck(t *testing.T) {

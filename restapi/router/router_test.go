@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kwtryo/tunetrail/restapi/config"
-	"github.com/kwtryo/tunetrail/restapi/testutil"
+	"github.com/kngnkg/tunetrail/restapi/config"
+	"github.com/kngnkg/tunetrail/restapi/testutil"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,7 +5,7 @@ package handler
 
 import (
 	"context"
-	"github.com/kwtryo/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/model"
 	"sync"
 )
 

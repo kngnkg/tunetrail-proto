@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/kwtryo/tunetrail/restapi/model"
-	"github.com/kwtryo/tunetrail/restapi/store"
+	"github.com/kngnkg/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/store"
 )
 
 func TestHealthService_HealthCheck(t *testing.T) {

@@ -1,8 +1,8 @@
 name: Deploy REST API
 
 on:
-  # workflow_run:
-    # workflows: ["Migration"]
+  workflow_run:
+    workflows: ["Migration"]
   push:
     branches:
       - "main"

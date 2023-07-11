@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/kwtryo/tunetrail/restapi/clock"
-	"github.com/kwtryo/tunetrail/restapi/model"
-	"github.com/kwtryo/tunetrail/restapi/store"
-	"github.com/kwtryo/tunetrail/restapi/testutil/fixture"
+	"github.com/kngnkg/tunetrail/restapi/clock"
+	"github.com/kngnkg/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/store"
+	"github.com/kngnkg/tunetrail/restapi/testutil/fixture"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )

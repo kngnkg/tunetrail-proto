@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/kwtryo/tunetrail/restapi/config"
-	"github.com/kwtryo/tunetrail/restapi/router"
-	"github.com/kwtryo/tunetrail/restapi/runner"
-	"github.com/kwtryo/tunetrail/restapi/validate"
+	"github.com/kngnkg/tunetrail/restapi/config"
+	"github.com/kngnkg/tunetrail/restapi/router"
+	"github.com/kngnkg/tunetrail/restapi/runner"
+	"github.com/kngnkg/tunetrail/restapi/validate"
 )
 
 func main() {

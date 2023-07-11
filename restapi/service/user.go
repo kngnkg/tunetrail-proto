@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/kwtryo/tunetrail/restapi/model"
-	"github.com/kwtryo/tunetrail/restapi/store"
+	"github.com/kngnkg/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/store"
 )
 
 var (

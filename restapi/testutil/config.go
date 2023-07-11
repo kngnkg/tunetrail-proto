@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/caarlos0/env"
-	"github.com/kwtryo/tunetrail/restapi/config"
+	"github.com/kngnkg/tunetrail/restapi/config"
 )
 
 // テスト用のconfigを返す

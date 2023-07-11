@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/tunetrail/restapi/config"
+	"github.com/kngnkg/tunetrail/restapi/config"
 	"golang.org/x/sync/errgroup"
 )
 

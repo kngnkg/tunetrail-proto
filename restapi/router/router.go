@@ -5,11 +5,11 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/kwtryo/tunetrail/restapi/clock"
-	"github.com/kwtryo/tunetrail/restapi/config"
-	"github.com/kwtryo/tunetrail/restapi/handler"
-	"github.com/kwtryo/tunetrail/restapi/service"
-	"github.com/kwtryo/tunetrail/restapi/store"
+	"github.com/kngnkg/tunetrail/restapi/clock"
+	"github.com/kngnkg/tunetrail/restapi/config"
+	"github.com/kngnkg/tunetrail/restapi/handler"
+	"github.com/kngnkg/tunetrail/restapi/service"
+	"github.com/kngnkg/tunetrail/restapi/store"
 )
 
 func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {

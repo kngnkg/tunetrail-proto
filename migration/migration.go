@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/kwtryo/tunetrail/database/config"
+	"github.com/kngnkg/tunetrail/database/config"
 )
 
 func migration(cfg *config.Config, file *os.File) error {

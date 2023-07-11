@@ -1,4 +1,4 @@
-module github.com/kwtryo/tunetrail/database
+module github.com/kngnkg/tunetrail/database
 
 go 1.20
 
