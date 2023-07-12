@@ -40,13 +40,14 @@ jobs:
 
   deploy:
     needs: prepare
-    if: needs.prepare.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
     steps:
+      if: needs.prepare.outputs.should_deploy == 'true'
     - name: Checkout
       uses: actions/checkout@v2
 
     - name: Configure AWS credentials
+      if: needs.prepare.outputs.should_deploy == 'true'
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -54,10 +55,12 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR (migration)
+      if: needs.prepare.outputs.should_deploy == 'true'
       id: login-ecr-migration
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, tag, and push migration image to Amazon ECR
+      if: needs.prepare.outputs.should_deploy == 'true'
       id: build-image-migration
       env:
         ECR_REGISTRY: ${{ steps.login-ecr-migration.outputs.registry }}
@@ -70,6 +73,7 @@ jobs:
 
     # webappのイメージタグを取得する
     - name: Get the latest webapp image tag
+      if: needs.prepare.outputs.should_deploy == 'true'
       id: get-webapp-tag
       run: |
         set -e
@@ -83,6 +87,7 @@ jobs:
 
     # restapiのイメージタグを取得する
     - name: Get the latest restapi image tag
+      if: needs.prepare.outputs.should_deploy == 'true'
       id: get-restapi-tag
       run: |
         set -e
@@ -95,12 +100,14 @@ jobs:
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
     - name: Setup Terraform
+      if: needs.prepare.outputs.should_deploy == 'true'
       uses: hashicorp/setup-terraform@v1
       with:
         terraform_version: ${{ env.TF_VERSION }}
 
     # 先程pushしたイメージのタグをterraform applyに渡すことで、Lambda関数を更新する
     - name: Terraform Apply
+      if: needs.prepare.outputs.should_deploy == 'true'
       working-directory: ${{ env.TF_WORKING_DIR }}
       run: |
         set -e
@@ -113,12 +120,22 @@ jobs:
           -var "db_password=${{ secrets.DB_PASSWORD }}" \
           -var "db_schema_bucket_name=${{ secrets.TUNETRAIL_S3_BUCKET }}"
 
+    - name: Finish
+      run: echo "Finished deploying."
+
   migration:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
 
     - name: Upload schema file
       run: |
