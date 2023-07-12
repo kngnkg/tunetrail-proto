@@ -42,8 +42,8 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      if: needs.prepare.outputs.should_deploy == 'true'
     - name: Checkout
+      if: needs.prepare.outputs.should_deploy == 'true'
       uses: actions/checkout@v2
 
     - name: Configure AWS credentials
