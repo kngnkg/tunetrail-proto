@@ -3,7 +3,7 @@ package config
 import "github.com/caarlos0/env/v6"
 
 type Config struct {
-	Env        string `env:"TUNETRAIL_ENV" envDefault:"dev"`
+	Env        string `env:"ENV" envDefault:"dev"`
 	S3Bucket   string `env:"TUNETRAIL_S3_BUCKET" envDefault:"tunetrail"`
 	DBHost     string `env:"TUNETRAIL_DB_HOST" envDefault:"tunetrail-db"`
 	DBPort     int    `env:"TUNETRAIL_DB_PORT" envDefault:"5432"`

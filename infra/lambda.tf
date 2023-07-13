@@ -16,6 +16,7 @@ resource "aws_lambda_function" "migration" {
 
   environment {
     variables = {
+      ENV                   = "prod"
       TUNETRAIL_S3_BUCKET   = "${aws_s3_bucket.schema.bucket}"
       TUNETRAIL_DB_HOST     = "${aws_db_instance.tunetrail.address}"
       TUNETRAIL_DB_PORT     = tostring(aws_db_instance.tunetrail.port)
