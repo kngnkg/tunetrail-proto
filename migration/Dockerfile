@@ -17,6 +17,10 @@ FROM debian:bullseye-slim as deploy
 
 COPY --from=deploy-builder /app/app .
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 CMD ["./app"]
 
 # ---------------------------------------------------
