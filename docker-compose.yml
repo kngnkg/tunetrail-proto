@@ -56,6 +56,7 @@ services:
       TUNETRAIL_DB_USER: tunetrail
       TUNETRAIL_DB_PASSWORD: tunetrail
       TUNETRAIL_DB_NAME: tunetrail
+      DRY_RUN: true
     volumes:
       # .gitを含むルートディレクトリを指定する
       - .:/workspace:cached
