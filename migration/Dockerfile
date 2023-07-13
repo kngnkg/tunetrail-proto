@@ -1,6 +1,3 @@
-# RDSをマイグレーションするためのコンテナ
-
-# ---------------------------------------------------
 # リリース用のビルドを行うコンテナイメージを作成するステージ
 FROM golang:1.20.3-bullseye as deploy-builder
 
@@ -11,20 +8,14 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -ldflags "-w -s" -o app
+RUN go build -trimpath -ldflags "-w -s" -o app
 
 # ---------------------------------------------------
 # リリース用のコンテナイメージを作成するステージ
 
-FROM golang:1.20.3-bullseye as deploy
-
-WORKDIR /app
+FROM debian:bullseye-slim as deploy
 
 COPY --from=deploy-builder /app/app .
-
-ENV GO111MODULE on
-
-RUN go install github.com/k0kubun/sqldef/cmd/psqldef@latest
 
 CMD ["./app"]
 
@@ -44,8 +35,6 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-
-RUN go install github.com/k0kubun/sqldef/cmd/psqldef@latest
 
 RUN go build -ldflags "-w -s" -o app
 
@@ -76,5 +65,4 @@ RUN go install github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest && \
     go install github.com/cweill/gotests/gotests@latest && \
     go install github.com/k0kubun/sqldef/cmd/psqldef@latest
 
-# ENTRYPOINT [ "/usr/local/bin/aws-lambda-rie" ]
 ENTRYPOINT ["sleep", "infinity"]
