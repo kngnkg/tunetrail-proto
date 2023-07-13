@@ -145,7 +145,7 @@ jobs:
     - name: Invoke Lambda function
       run: |
         set -e
-        output=$(aws lambda invoke --function-name migration_lambda --payload $(echo '{ "item": "schema.sql" }' | base64) response.json)
+        output=$(aws lambda invoke --function-name migration_lambda --payload $(echo '{ "items": ["schema.sql"] }' | base64) response.json)
         if echo "$output" | grep -q "FunctionError"; then
           echo "Lambda function execution failed."
           echo "$output"
