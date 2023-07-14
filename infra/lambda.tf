@@ -23,6 +23,7 @@ resource "aws_lambda_function" "migration" {
       TUNETRAIL_DB_USER     = "${aws_db_instance.tunetrail.username}"
       TUNETRAIL_DB_PASSWORD = "${aws_db_instance.tunetrail.password}"
       TUNETRAIL_DB_NAME     = "${aws_db_instance.tunetrail.name}"
+      DRY_RUN               = "false"
     }
   }
 }
