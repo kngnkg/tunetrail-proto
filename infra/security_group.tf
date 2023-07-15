@@ -91,28 +91,28 @@ resource "aws_security_group" "restapi_sg" {
   }
 }
 
-# RDS用のセキュリティグループ
-resource "aws_security_group" "rds_sg" {
-  name        = "rds_sg"
-  description = "Security Group for RDS Instance"
-  vpc_id      = aws_vpc.main.id
+# # RDS用のセキュリティグループ
+# resource "aws_security_group" "rds_sg" {
+#   name        = "rds_sg"
+#   description = "Security Group for RDS Instance"
+#   vpc_id      = aws_vpc.main.id
 
-  # RDSへのアクセス用のインバウンドルールの設定
-  ingress {
-    from_port   = var.db_port # DBのポート番号
-    to_port     = var.db_port
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
-  }
+#   # RDSへのアクセス用のインバウンドルールの設定
+#   ingress {
+#     from_port   = var.db_port # DBのポート番号
+#     to_port     = var.db_port
+#     protocol    = "tcp"
+#     cidr_blocks = ["10.0.0.0/16"] # VPC内からのアクセスのみ許可
+#   }
 
-  # アウトバウンドルールの設定
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"] # 任意のIPへのアクセスを許可
-  }
-}
+#   # アウトバウンドルールの設定
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"] # 任意のIPへのアクセスを許可
+#   }
+# }
 
 # マイグレーション時に起動するLambda用のセキュリティグループ
 resource "aws_security_group" "migration_sg" {

@@ -94,23 +94,23 @@ resource "aws_ecs_task_definition" "restapi" {
       },
       {
         name  = "TUNETRAIL_DB_HOST"
-        value = "${aws_db_instance.tunetrail.address}"
+        value = module.database.address
       },
       {
         name  = "TUNETRAIL_DB_PORT"
-        value = tostring(aws_db_instance.tunetrail.port)
+        value = tostring(module.database.port)
       },
       {
         name  = "TUNETRAIL_DB_USER"
-        value = "${aws_db_instance.tunetrail.username}"
+        value = module.database.username
       },
       {
         name  = "TUNETRAIL_DB_PASSWORD"
-        value = "${aws_db_instance.tunetrail.password}"
+        value = var.db_password
       },
       {
         name  = "TUNETRAIL_DB_NAME"
-        value = "${aws_db_instance.tunetrail.name}"
+        value = module.database.name
       },
     ],
     logConfiguration = {

@@ -18,11 +18,11 @@ resource "aws_lambda_function" "migration" {
     variables = {
       ENV                   = "prod"
       TUNETRAIL_S3_BUCKET   = "${aws_s3_bucket.schema.bucket}"
-      TUNETRAIL_DB_HOST     = "${aws_db_instance.tunetrail.address}"
-      TUNETRAIL_DB_PORT     = tostring(aws_db_instance.tunetrail.port)
-      TUNETRAIL_DB_USER     = "${aws_db_instance.tunetrail.username}"
-      TUNETRAIL_DB_PASSWORD = "${aws_db_instance.tunetrail.password}"
-      TUNETRAIL_DB_NAME     = "${aws_db_instance.tunetrail.name}"
+      TUNETRAIL_DB_HOST     = module.database.address
+      TUNETRAIL_DB_PORT     = tostring(module.database.port)
+      TUNETRAIL_DB_USER     = module.database.username
+      TUNETRAIL_DB_PASSWORD = var.db_password
+      TUNETRAIL_DB_NAME     = module.database.name
       DRY_RUN               = "false"
     }
   }
