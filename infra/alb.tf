@@ -55,7 +55,7 @@ resource "aws_lb_listener_rule" "webapp" {
     host_header {
       values = [
         var.webapp_domain,
-        replace(var.webapp_domain, "www.", "")
+        "www.${var.webapp_domain}"
       ]
     }
   }
