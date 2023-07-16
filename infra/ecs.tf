@@ -90,7 +90,7 @@ resource "aws_ecs_task_definition" "restapi" {
       },
       {
         name  = "PORT"
-        value = "80"
+        value = tostring(var.restapi_port)
       },
       {
         name  = "TUNETRAIL_DB_HOST"
