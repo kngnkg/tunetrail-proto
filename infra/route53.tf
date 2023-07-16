@@ -42,6 +42,19 @@ resource "aws_acm_certificate_validation" "cert" {
   validation_record_fqdns = values(aws_route53_record.cert_validation)[*].fqdn
 }
 
+# ALBへのエイリアスレコード (root domain)
+resource "aws_route53_record" "root" {
+  zone_id = aws_route53_zone.tunetrail.zone_id
+  name    = replace(var.webapp_domain, "www.", "")
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.tunetrail.dns_name
+    zone_id                = aws_lb.tunetrail.zone_id
+    evaluate_target_health = true
+  }
+}
+
 # ALBへのエイリアスレコード (www)
 resource "aws_route53_record" "www" {
   zone_id = aws_route53_zone.tunetrail.zone_id

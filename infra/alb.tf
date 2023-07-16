@@ -53,7 +53,10 @@ resource "aws_lb_listener_rule" "webapp" {
 
   condition {
     host_header {
-      values = [var.webapp_domain]
+      values = [
+        var.webapp_domain,
+        replace(var.webapp_domain, "www.", "")
+      ]
     }
   }
 }
@@ -79,10 +82,23 @@ resource "aws_lb_listener_rule" "restapi" {
 # デフォルトのターゲットグループ
 # デフォルトではwebappに接続する
 resource "aws_lb_target_group" "alb_tg" {
-  name     = "default-target-group"
-  port     = var.webapp_port
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.main.id # VPCを指定
+  name        = "default-target-group"
+  port        = var.webapp_port
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id # VPCを指定
+  target_type = "ip"
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2  # 2回連続で正常なレスポンスを返すとヘルスチェックをパス
+    unhealthy_threshold = 2  # 2回連続で異常なレスポンスを返すとヘルスチェックを不合格
+    timeout             = 5  # 5秒以内にレスポンスを返さない場合はヘルスチェックを不合格
+    interval            = 60 # 60秒ごとにヘルスチェックを実施
+    path                = "/health"
+    matcher             = "200-399" # 200番台と300番台のレスポンスを正常とする
+    port                = var.webapp_port
+    protocol            = "HTTP"
+  }
 }
 
 # webapp用のターゲットグループ
@@ -95,12 +111,12 @@ resource "aws_lb_target_group" "alb_tg_webapp" {
 
   health_check {
     enabled             = true
-    healthy_threshold   = 2  # 2回連続で正常なレスポンスを返すとヘルスチェックをパス
-    unhealthy_threshold = 2  # 2回連続で異常なレスポンスを返すとヘルスチェックを不合格
-    timeout             = 5  # 5秒以内にレスポンスを返さない場合はヘルスチェックを不合格
-    interval            = 30 # 30秒ごとにヘルスチェックを実施
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+    interval            = 60
     path                = "/health"
-    matcher             = "200-399" # 200番台と300番台のレスポンスを正常とする
+    matcher             = "200-399"
     port                = var.webapp_port
     protocol            = "HTTP"
   }
