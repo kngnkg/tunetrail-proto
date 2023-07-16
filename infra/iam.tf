@@ -27,74 +27,6 @@ resource "aws_iam_policy" "cloudwatch_logs_policy" {
 EOF
 }
 
-# Lambda用のCloudWatch Logs への書き込み権限を持つポリシー
-resource "aws_iam_policy" "lambda_cloudwatch" {
-  name        = "CloudWatchLogsPolicyLambda"
-  description = "Allow writing to CloudWatch Logs"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ],
-        Resource = "${aws_cloudwatch_log_group.migration_log_group.arn}:*",
-        Effect   = "Allow"
-      }
-    ]
-  })
-}
-
-# LambdaがVPC内で動作するために必要な権限を持つポリシー
-resource "aws_iam_role_policy" "lambda_vpc_access" {
-  name = "lambda_vpc_access"
-  role = aws_iam_role.lambda_exec.id
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "ec2:CreateNetworkInterface",
-          "ec2:DescribeNetworkInterfaces",
-          "ec2:DeleteNetworkInterface"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# LambdaがS3にアクセスするために必要な権限を持つポリシー
-resource "aws_iam_policy" "lambda_s3_access" {
-  name        = "lambda_s3_access"
-  description = "Allows lambda function to access S3"
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:ListBucket"
-      ],
-      "Resource": [
-        "${aws_s3_bucket.schema.arn}/*",
-        "${aws_s3_bucket.schema.arn}"
-      ]
-    }
-  ]
-}
-EOF
-}
-
 # ------------------------------
 # IAM ロール
 # ------------------------------
@@ -143,24 +75,6 @@ resource "aws_iam_role" "task_role" {
 EOF
 }
 
-# lambdaの実行ロール
-resource "aws_iam_role" "lambda_exec" {
-  name = "lambda_exec_role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Action = "sts:AssumeRole",
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        },
-        Effect = "Allow",
-      },
-    ]
-  })
-}
-
 # ------------------------------
 # IAM ロールポリシーアタッチメント
 # ------------------------------
@@ -182,16 +96,4 @@ resource "aws_iam_role_policy_attachment" "s3_read_only" {
 resource "aws_iam_role_policy_attachment" "cloudwatch_logs_policy_attach" {
   role       = aws_iam_role.execution_role.name
   policy_arn = aws_iam_policy.cloudwatch_logs_policy.arn
-}
-
-# Lambdaの実行ロールに CloudWatch Logs への書き込み権限を持つポリシーをアタッチ
-resource "aws_iam_role_policy_attachment" "cloudwatch_logs_policy_attach_lambda" {
-  role       = aws_iam_role.lambda_exec.name
-  policy_arn = aws_iam_policy.lambda_cloudwatch.arn
-}
-
-# Lambdaの実行ロールにS3へのアクセス権限をアタッチ
-resource "aws_iam_role_policy_attachment" "lambda_s3_access_policy_attach_" {
-  role       = aws_iam_role.lambda_exec.name
-  policy_arn = aws_iam_policy.lambda_s3_access.arn
 }

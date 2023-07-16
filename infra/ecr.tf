@@ -11,9 +11,3 @@ resource "aws_ecr_repository" "restapi" {
   name                 = "tunetrail-restapi"
   image_tag_mutability = "MUTABLE"
 }
-
-
-resource "aws_ecr_repository" "migration" {
-  name                 = "tunetrail-migration"
-  image_tag_mutability = "MUTABLE"
-}
