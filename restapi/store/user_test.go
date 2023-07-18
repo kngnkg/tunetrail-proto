@@ -316,7 +316,7 @@ func (s *UserStoreTestSuite) TestUpdateUser() {
 			// 存在しないidの場合はエラーを返す
 			"errIdNotExists",
 			fixture.User(&model.User{
-				Id: 999,
+				Id: "999",
 			}),
 			nil,
 			ErrUserNotFound,
