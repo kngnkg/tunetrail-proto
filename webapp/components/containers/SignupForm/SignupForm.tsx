@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 
-import { apiContext } from "@/config/api-context"
+import { env } from "@/env.mjs"
 import { MESSAGE } from "@/config/messages"
 import { mergeClasses } from "@/lib/utils"
 import { userAuthSchema } from "@/lib/validations/auth.schema"
@@ -37,7 +37,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       return
     }
 
-    const error = await signup(apiContext, {
+    const error = await signup(env.NEXT_PUBLIC_API_ROOT, {
       userName: data.userName,
       name: data.name,
       password: data.password,

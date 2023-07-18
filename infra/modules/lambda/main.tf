@@ -30,6 +30,7 @@ resource "aws_lambda_function" "migration" {
       TUNETRAIL_DB_PASSWORD = var.db_password
       TUNETRAIL_DB_NAME     = var.db_name
       DRY_RUN               = "false"
+      ENABLE_DROP_TABLE     = "true"
     }
   }
 }

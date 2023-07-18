@@ -1,4 +1,3 @@
-import { ApiContext } from "@/types/api-context"
 import { FetchError, isApiError } from "@/types/error"
 import { MESSAGE } from "@/config/messages"
 
@@ -19,16 +18,16 @@ export const isSignupData = (arg: any): arg is SignupData => {
 
 /**
  * サインアップ処理
- * @param context // APIのルートパス
+ * @param apiRoot // APIのルートパス
  * @param data // サインアップに必要なデータ
  * @returns // エラーがあればエラーメッセージを返す
  */
 export const signup = async (
-  context: ApiContext,
+  apiRoot: string,
   data: SignupData
 ): Promise<null | FetchError> => {
   try {
-    const response = await fetch(`${context.apiRoot}/user/register`, {
+    const response = await fetch(`${apiRoot}/user/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

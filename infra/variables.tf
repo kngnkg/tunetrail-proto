@@ -33,7 +33,7 @@ variable "db_schema_bucket_name" {
 variable "webapp_domain" {
   description = "The domain name for the webapp"
   type        = string
-  default     = "www.tune-trail.com"
+  default     = "tune-trail.com"
 }
 
 variable "webapp_port" {

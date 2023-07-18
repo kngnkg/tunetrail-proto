@@ -3,9 +3,7 @@ import { MESSAGE } from "@/config/messages"
 import { signup } from "./signup"
 
 describe("signup", () => {
-  const context = {
-    apiRoot: "ttp://localhost:3000",
-  }
+  const apiRoot = "ttp://localhost:3000"
 
   beforeEach(() => {
     jest.resetAllMocks()
@@ -36,7 +34,7 @@ describe("signup", () => {
       email: "test",
     }
 
-    const result = await signup(context, data)
+    const result = await signup(apiRoot, data)
     expect(result).toBeNull()
   })
 
@@ -58,7 +56,7 @@ describe("signup", () => {
         email: "test",
       }
 
-      const result = await signup(context, data)
+      const result = await signup(apiRoot, data)
       expect(result).toBe(MESSAGE.DUP_USERNAME)
     })
 
@@ -79,7 +77,7 @@ describe("signup", () => {
         email: "test",
       }
 
-      const result = await signup(context, data)
+      const result = await signup(apiRoot, data)
       expect(result).toBe(MESSAGE.DUP_EMAIL)
     })
   })
@@ -101,7 +99,7 @@ describe("signup", () => {
       email: "test",
     }
 
-    const result = await signup(context, data)
+    const result = await signup(apiRoot, data)
     expect(result).toBe(MESSAGE.UNKNOWN_ERROR)
   })
 })

@@ -52,8 +52,9 @@ func migrate(ctx context.Context, cfg *config.Config, files []string) error {
 	}
 
 	options := &sqldef.Options{
-		DesiredDDLs: desiredDDLs,
-		DryRun:      cfg.DryRun,
+		DesiredDDLs:     desiredDDLs,
+		DryRun:          cfg.DryRun,
+		EnableDropTable: cfg.EnableDropTable,
 	}
 
 	dbCfg := database.Config{
