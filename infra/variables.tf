@@ -35,10 +35,10 @@ variable "db_schema_bucket_name" {
   type        = string
 }
 
-# variable "cognito_client_secret" {
-#   description = "The secret for the Cognito user pool client"
-#   type        = string
-# }
+variable "cognito_client_secret" {
+  description = "The secret for the Cognito user pool client"
+  type        = string
+}
 
 variable "webapp_domain" {
   description = "The domain name for the webapp"

@@ -39,6 +39,6 @@ module "migration_lambda" {
   db_password = var.db_password
 }
 
-# module "auth" {
-#   source = "./modules/auth"
-# }
+module "auth" {
+  source = "./modules/auth"
+}

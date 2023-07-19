@@ -118,18 +118,16 @@ resource "aws_ecs_task_definition" "restapi" {
       },
       {
         name  = "COGNITO_USER_POOL_ID"
-        # value = module.auth.user_pool_id
-        value = ""
+        value = "${module.auth.user_pool_id}"
       },
       {
         name  = "COGNITO_CLIENT_ID"
-        # value = module.auth.user_pool_client_id
-        value = ""
+        value = "${module.auth.user_pool_client_id}"
       },
-      # {
-      #   name  = "COGNITO_CLIENT_SECRET"
-      #   value = var.cognito_client_secret
-      # },
+      {
+        name  = "COGNITO_CLIENT_SECRET"
+        value = var.cognito_client_secret
+      },
     ],
     logConfiguration = {
       logDriver = "awslogs", # CloudWatch Logsを使用する
