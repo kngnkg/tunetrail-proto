@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-northeast-1"
+  region = var.region
 }
 
 module "database" {
@@ -38,3 +38,7 @@ module "migration_lambda" {
   db_port     = var.db_port
   db_password = var.db_password
 }
+
+# module "auth" {
+#   source = "./modules/auth"
+# }
