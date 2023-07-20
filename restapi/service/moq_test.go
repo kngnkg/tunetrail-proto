@@ -496,3 +496,81 @@ func (mock *UserRepositoryMock) WithTransactionCalls() []struct {
 	mock.lockWithTransaction.RUnlock()
 	return calls
 }
+
+// Ensure, that AuthMock does implement Auth.
+// If this is not the case, regenerate this file with moq.
+var _ Auth = &AuthMock{}
+
+// AuthMock is a mock implementation of Auth.
+//
+//	func TestSomethingThatUsesAuth(t *testing.T) {
+//
+//		// make and configure a mocked Auth
+//		mockedAuth := &AuthMock{
+//			SignUpFunc: func(ctx context.Context, email string, password string) (string, error) {
+//				panic("mock out the SignUp method")
+//			},
+//		}
+//
+//		// use mockedAuth in code that requires Auth
+//		// and then make assertions.
+//
+//	}
+type AuthMock struct {
+	// SignUpFunc mocks the SignUp method.
+	SignUpFunc func(ctx context.Context, email string, password string) (string, error)
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// SignUp holds details about calls to the SignUp method.
+		SignUp []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Email is the email argument value.
+			Email string
+			// Password is the password argument value.
+			Password string
+		}
+	}
+	lockSignUp sync.RWMutex
+}
+
+// SignUp calls SignUpFunc.
+func (mock *AuthMock) SignUp(ctx context.Context, email string, password string) (string, error) {
+	if mock.SignUpFunc == nil {
+		panic("AuthMock.SignUpFunc: method is nil but Auth.SignUp was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		Email    string
+		Password string
+	}{
+		Ctx:      ctx,
+		Email:    email,
+		Password: password,
+	}
+	mock.lockSignUp.Lock()
+	mock.calls.SignUp = append(mock.calls.SignUp, callInfo)
+	mock.lockSignUp.Unlock()
+	return mock.SignUpFunc(ctx, email, password)
+}
+
+// SignUpCalls gets all the calls that were made to SignUp.
+// Check the length with:
+//
+//	len(mockedAuth.SignUpCalls())
+func (mock *AuthMock) SignUpCalls() []struct {
+	Ctx      context.Context
+	Email    string
+	Password string
+} {
+	var calls []struct {
+		Ctx      context.Context
+		Email    string
+		Password string
+	}
+	mock.lockSignUp.RLock()
+	calls = mock.calls.SignUp
+	mock.lockSignUp.RUnlock()
+	return calls
+}
