@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/kngnkg/tunetrail/restapi/auth"
 	"github.com/kngnkg/tunetrail/restapi/clock"
 	"github.com/kngnkg/tunetrail/restapi/config"
 	"github.com/kngnkg/tunetrail/restapi/handler"
@@ -13,31 +14,49 @@ import (
 )
 
 func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
-	router := gin.Default()
-
 	db, cleanup, err := store.New(cfg)
 	if err != nil {
 		return nil, cleanup, err
 	}
 
+	a := auth.NewAuth(cfg.AWSRegion, cfg.CognitoUserPoolId, cfg.CognitoClientId)
+
 	cl := clock.RealClocker{}
+
 	r := &store.Repository{Clocker: cl}
 
 	hh := &handler.HealthHandler{
 		Service: &service.HealthService{DB: db, Repo: r},
 	}
 	uh := &handler.UserHandler{
-		Service: &service.UserService{DB: db, Repo: r},
+		Service: &service.UserService{
+			DB:   db,
+			Repo: r,
+			Auth: a,
+		},
 	}
+	// ah := &handler.AuthHandler{
+	// 	Service: &service.AuthService{DB: db, Repo: r},
+	// }
+
+	router := gin.Default()
 
 	router.Use(CorsMiddleware())
 
 	router.GET("/health", hh.HealthCheck)
+
+	// auth := router.Group("/auth")
+	// {
+	// 	auth.POST("/login", uh.LoginUser) // ログイン
+	// 	auth.POST("/logout", uh.LogoutUser) // ログアウト
+	// }
+
 	user := router.Group("/user")
 	{
-		user.POST("/register", uh.RegisterUser)
-		user.GET("/:user_name", uh.GetUserByUserName)
-		user.PUT("/update", uh.UpdateUser)
+		user.POST("/", uh.RegisterUser) // TODO: 改修予定
+		// auth.GET("/me", uh.GetMe)                     // ログインユーザー情報取得
+		user.GET("/:user_name", uh.GetUserByUserName) // ログインユーザ以外のユーザー情報取得
+		user.PUT("/", uh.UpdateUser)                  // TODO: 改修予定
 		user.DELETE("/:user_name", uh.DeleteUserByUserName)
 	}
 
