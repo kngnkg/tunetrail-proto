@@ -11,11 +11,9 @@ import (
 )
 
 type UserService interface {
-	RegisterUser(
-		ctx context.Context, userName, name, password, email string,
-	) (*model.User, error)
+	RegisterUser(ctx context.Context, data *model.UserRegistrationData) (*model.User, error)
 	GetUserByUserName(ctx context.Context, userName string) (*model.User, error)
-	UpdateUser(ctx context.Context, u *model.User) error
+	UpdateUser(ctx context.Context, u *model.UserUpdateData) error
 	DeleteUserByUserName(ctx context.Context, userName string) error
 }
 
@@ -23,18 +21,16 @@ type UserHandler struct {
 	Service UserService
 }
 
-// POST /user/register
+// POST /user
 // ユーザーを登録する
 func (uh *UserHandler) RegisterUser(c *gin.Context) {
-	var req model.UserRegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var data *model.UserRegistrationData
+	if err := c.ShouldBindJSON(&data); err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": BadRequestMessage})
 		return
 	}
-	u, err := uh.Service.RegisterUser(
-		c.Request.Context(), req.UserName, req.Name, req.Password, req.Email,
-	)
+	u, err := uh.Service.RegisterUser(c.Request.Context(), data)
 	if err != nil {
 		c.Error(err)
 		// ユーザー名が既に登録されている場合
@@ -72,16 +68,16 @@ func (uh *UserHandler) GetUserByUserName(c *gin.Context) {
 	c.JSON(http.StatusOK, u)
 }
 
-// PUT /user/update
+// PUT /user
 // ユーザーを更新する
 func (uh *UserHandler) UpdateUser(c *gin.Context) {
-	var u *model.User
-	if err := c.ShouldBindJSON(&u); err != nil {
+	var data *model.UserUpdateData
+	if err := c.ShouldBindJSON(&data); err != nil {
 		c.Error(err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": BadRequestMessage})
 		return
 	}
-	err := uh.Service.UpdateUser(c.Request.Context(), u)
+	err := uh.Service.UpdateUser(c.Request.Context(), data)
 	if err != nil {
 		c.Error(err)
 		// ユーザーが存在しない場合

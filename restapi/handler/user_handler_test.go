@@ -18,22 +18,20 @@ func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
 	t.Helper()
 
 	fc := &clock.FixedClocker{}
-	moqService.RegisterUserFunc = func(ctx context.Context, userName, name, password, email string) (*model.User, error) {
+	moqService.RegisterUserFunc = func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {
 		// ユーザー名またはメールアドレスが既に存在する場合はエラーを返す
-		if userName == "alreadyExists" {
+		if data.UserName == "alreadyExists" {
 			t.Log("username already exists")
 			return nil, service.ErrUserNameAlreadyExists
 		}
-		if email == "alreadyExists@example.com" {
+		if data.Email == "alreadyExists@example.com" {
 			t.Log("email already exists")
 			return nil, service.ErrEmailAlreadyExists
 		}
 		u := &model.User{
 			Id:        "1",
-			UserName:  userName,
-			Name:      name,
-			Password:  password,
-			Email:     email,
+			UserName:  data.UserName,
+			Name:      data.Name,
 			CreatedAt: fc.Now(),
 			UpdatedAt: fc.Now(),
 		}
@@ -45,8 +43,6 @@ func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
 			Id:        "1",
 			UserName:  "dummy",
 			Name:      "dummy",
-			Password:  "ynJwP8sA",
-			Email:     "dummy@example.com",
 			IconUrl:   "https://example.com/icon.png",
 			Bio:       "dummy",
 			CreatedAt: fc.Now(),
@@ -58,7 +54,7 @@ func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
 		return u, nil
 	}
 
-	moqService.UpdateUserFunc = func(ctx context.Context, u *model.User) error {
+	moqService.UpdateUserFunc = func(ctx context.Context, u *model.UserUpdateData) error {
 		if u.Id != "1" {
 			return service.ErrUserNotFound
 		}
@@ -132,7 +128,7 @@ func TestRegisterUser(t *testing.T) {
 				Service: moqService,
 			}
 
-			url := testutil.RunTestServer(t, "POST", "/user/register", uh.RegisterUser)
+			url := testutil.RunTestServer(t, "POST", "/user", uh.RegisterUser)
 			reqBody := testutil.LoadFile(t, tt.reqFile)
 			resp := testutil.SendRequest(t, "POST", url, reqBody)
 			// 期待するレスポンスボディのファイルをロードする
@@ -242,7 +238,7 @@ func TestUpdateUser(t *testing.T) {
 				Service: moqService,
 			}
 
-			url := testutil.RunTestServer(t, "PUT", "/user/update", uh.UpdateUser)
+			url := testutil.RunTestServer(t, "PUT", "/user", uh.UpdateUser)
 			reqBody := testutil.LoadFile(t, tt.reqFile)
 			resp := testutil.SendRequest(t, "PUT", url, reqBody)
 			// 期待するレスポンスボディのファイルをロードする
