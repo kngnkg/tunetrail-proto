@@ -39,6 +39,7 @@ func (s *UserStoreTestSuite) SetupTest() {
 
 	// テスト用のダミーユーザー
 	s.dummy = fixture.User(&model.User{
+		Id:       "1",
 		UserName: "dummy",
 		Email:    "dummy@example.com",
 		// タイムスタンプを固定する
