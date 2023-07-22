@@ -13,7 +13,7 @@ func User(u *model.User) *model.User {
 	random := strconv.Itoa(rand.Int())[:3]
 
 	result := &model.User{
-		Id:        rand.Int(),
+		Id:        random,
 		UserName:  "test" + random,
 		Name:      "test" + random,
 		Password:  "test" + random,
@@ -29,7 +29,7 @@ func User(u *model.User) *model.User {
 	}
 
 	// 初期値がある場合は上書きする
-	if u.Id != 0 {
+	if u.Id != "" {
 		result.Id = u.Id
 	}
 	if u.UserName != "" {

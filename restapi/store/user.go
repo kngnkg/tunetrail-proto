@@ -20,12 +20,10 @@ const (
 func (r *Repository) RegisterUser(ctx context.Context, db Queryer, u *model.User) error {
 	u.CreatedAt = r.Clocker.Now()
 	u.UpdatedAt = r.Clocker.Now()
-	query := `INSERT INTO users (user_name, name, password, email, icon_url, bio, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-			RETURNING id;`
+	query := `INSERT INTO users (id, user_name, name, password, email, icon_url, bio, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`
 
-	err := db.QueryRowxContext(ctx, query, u.UserName, u.Name, u.Password, u.Email, u.IconUrl, u.Bio, u.CreatedAt, u.UpdatedAt).
-		Scan(&u.Id)
+	_, err := db.ExecContext(ctx, query, u.Id, u.UserName, u.Name, u.Password, u.Email, u.IconUrl, u.Bio, u.CreatedAt, u.UpdatedAt)
 	if err != nil {
 		var pqError *pq.Error
 		// 重複エラーの場合はエラーをラップして返す
@@ -40,6 +38,7 @@ func (r *Repository) RegisterUser(ctx context.Context, db Queryer, u *model.User
 		}
 		return err
 	}
+
 	return nil
 }
 

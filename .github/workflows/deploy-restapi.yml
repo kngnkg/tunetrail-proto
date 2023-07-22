@@ -85,4 +85,5 @@ jobs:
           -var "restapi_image_tag=${{ github.sha }}" \
           -var "migration_image_tag=${{ steps.get-migration-tag.outputs.tag }}" \
           -var "db_password=${{ secrets.DB_PASSWORD }}"\
-          -var "db_schema_bucket_name=${{ secrets.TUNETRAIL_S3_BUCKET }}"
+          -var "db_schema_bucket_name=${{ secrets.TUNETRAIL_S3_BUCKET }}" \
+          -var "cognito_client_secret=${{ secrets.COGNITO_CLIENT_SECRET }}"

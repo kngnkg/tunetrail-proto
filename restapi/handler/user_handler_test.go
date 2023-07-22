@@ -18,73 +18,69 @@ func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
 	t.Helper()
 
 	fc := &clock.FixedClocker{}
-	moqService.RegisterUserFunc =
-		func(ctx context.Context, userName, name, password, email string) (*model.User, error) {
-			// ユーザー名またはメールアドレスが既に存在する場合はエラーを返す
-			if userName == "alreadyExists" {
-				t.Log("username already exists")
-				return nil, service.ErrUserNameAlreadyExists
-			}
-			if email == "alreadyExists@example.com" {
-				t.Log("email already exists")
-				return nil, service.ErrEmailAlreadyExists
-			}
-			u := &model.User{
-				Id:        1,
-				UserName:  userName,
-				Name:      name,
-				Password:  password,
-				Email:     email,
-				CreatedAt: fc.Now(),
-				UpdatedAt: fc.Now(),
-			}
-			return u, nil
+	moqService.RegisterUserFunc = func(ctx context.Context, userName, name, password, email string) (*model.User, error) {
+		// ユーザー名またはメールアドレスが既に存在する場合はエラーを返す
+		if userName == "alreadyExists" {
+			t.Log("username already exists")
+			return nil, service.ErrUserNameAlreadyExists
 		}
-
-	moqService.GetUserByUserNameFunc =
-		func(ctx context.Context, userName string) (*model.User, error) {
-			u := &model.User{
-				Id:        1,
-				UserName:  "dummy",
-				Name:      "dummy",
-				Password:  "ynJwP8sA",
-				Email:     "dummy@example.com",
-				IconUrl:   "https://example.com/icon.png",
-				Bio:       "dummy",
-				CreatedAt: fc.Now(),
-				UpdatedAt: fc.Now(),
-			}
-			if userName == "notFound" {
-				return nil, service.ErrUserNotFound
-			}
-			return u, nil
+		if email == "alreadyExists@example.com" {
+			t.Log("email already exists")
+			return nil, service.ErrEmailAlreadyExists
 		}
+		u := &model.User{
+			Id:        "1",
+			UserName:  userName,
+			Name:      name,
+			Password:  password,
+			Email:     email,
+			CreatedAt: fc.Now(),
+			UpdatedAt: fc.Now(),
+		}
+		return u, nil
+	}
 
-	moqService.UpdateUserFunc =
-		func(ctx context.Context, u *model.User) error {
-			if u.Id != 1 {
-				return service.ErrUserNotFound
-			}
-			if u.UserName == "exists" {
-				return service.ErrUserNameAlreadyExists
-			}
-			if u.Email == "exists@example.com" {
-				return service.ErrEmailAlreadyExists
-			}
+	moqService.GetUserByUserNameFunc = func(ctx context.Context, userName string) (*model.User, error) {
+		u := &model.User{
+			Id:        "1",
+			UserName:  "dummy",
+			Name:      "dummy",
+			Password:  "ynJwP8sA",
+			Email:     "dummy@example.com",
+			IconUrl:   "https://example.com/icon.png",
+			Bio:       "dummy",
+			CreatedAt: fc.Now(),
+			UpdatedAt: fc.Now(),
+		}
+		if userName == "notFound" {
+			return nil, service.ErrUserNotFound
+		}
+		return u, nil
+	}
+
+	moqService.UpdateUserFunc = func(ctx context.Context, u *model.User) error {
+		if u.Id != "1" {
+			return service.ErrUserNotFound
+		}
+		if u.UserName == "exists" {
+			return service.ErrUserNameAlreadyExists
+		}
+		if u.Email == "exists@example.com" {
+			return service.ErrEmailAlreadyExists
+		}
+		return nil
+	}
+
+	moqService.DeleteUserByUserNameFunc = func(ctx context.Context, userName string) error {
+		switch userName {
+		case "notFound":
+			return service.ErrUserNotFound
+		case "dummy":
 			return nil
+		default:
+			return errors.New("unexpected error")
 		}
-
-	moqService.DeleteUserByUserNameFunc =
-		func(ctx context.Context, userName string) error {
-			switch userName {
-			case "notFound":
-				return service.ErrUserNotFound
-			case "dummy":
-				return nil
-			default:
-				return errors.New("unexpected error")
-			}
-		}
+	}
 }
 
 func TestRegisterUser(t *testing.T) {

@@ -39,6 +39,7 @@ func (s *UserStoreTestSuite) SetupTest() {
 
 	// テスト用のダミーユーザー
 	s.dummy = fixture.User(&model.User{
+		Id:       "1",
 		UserName: "dummy",
 		Email:    "dummy@example.com",
 		// タイムスタンプを固定する
@@ -316,7 +317,7 @@ func (s *UserStoreTestSuite) TestUpdateUser() {
 			// 存在しないidの場合はエラーを返す
 			"errIdNotExists",
 			fixture.User(&model.User{
-				Id: 999,
+				Id: "999",
 			}),
 			nil,
 			ErrUserNotFound,

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/kngnkg/tunetrail/restapi/auth"
 	"github.com/kngnkg/tunetrail/restapi/model"
 	"github.com/kngnkg/tunetrail/restapi/store"
 )
@@ -36,18 +37,31 @@ type UserRepository interface {
 	DeleteUserByUserName(ctx context.Context, db store.Queryer, userName string) error
 }
 
+type Auth interface {
+	SignUp(ctx context.Context, email, password string) (string, error)
+}
+
 type UserService struct {
 	DB   store.Beginner
 	Repo UserRepository
+	Auth Auth
 }
 
 // RegisterUserはユーザーを登録する
 func (us *UserService) RegisterUser(
 	ctx context.Context, userName, name, password, email string,
 ) (*model.User, error) {
+	id, err := us.Auth.SignUp(ctx, email, password)
+	if err != nil {
+		if errors.Is(err, auth.ErrEmailAlreadyExists) {
+			return nil, fmt.Errorf("%w: %w", ErrEmailAlreadyExists, err)
+		}
+		return nil, err
+	}
+
 	registeredUser := &model.User{}
 	// トランザクション開始
-	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
+	err = us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
 		// ユーザー名が既に存在するかどうかを確認
 		exists, err := us.Repo.UserExistsByUserName(ctx, tx, userName)
 		if err != nil {
@@ -56,20 +70,13 @@ func (us *UserService) RegisterUser(
 		if exists {
 			return ErrUserNameAlreadyExists
 		}
-		// メールアドレスが既に存在するかどうかを確認
-		exists, err = us.Repo.UserExistsByEmail(ctx, tx, email)
-		if err != nil {
-			return err
-		}
-		if exists {
-			return ErrEmailAlreadyExists
-		}
 
 		u := &model.User{
+			Id:       id,
 			UserName: userName,
 			Name:     name,
-			Password: password,
 			Email:    email,
+			Password: password,
 			IconUrl:  "",
 			Bio:      "",
 		}

@@ -5,6 +5,11 @@ variable "use_resources" {
   default     = true
 }
 
+variable "region" {
+  type    = string
+  default = "ap-northeast-1"
+}
+
 variable "webapp_image_tag" {
   description = "value of the tag for the webapp image"
   type        = string
@@ -27,6 +32,11 @@ variable "db_password" {
 
 variable "db_schema_bucket_name" {
   description = "The name of the S3 bucket"
+  type        = string
+}
+
+variable "cognito_client_secret" {
+  description = "The secret for the Cognito user pool client"
   type        = string
 }
 
