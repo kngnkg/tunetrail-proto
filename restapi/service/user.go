@@ -27,8 +27,6 @@ type UserRepository interface {
 	RegisterUser(ctx context.Context, db store.Queryer, u *model.User) error
 	// UserExistsByUserNameはユーザー名が既に存在するかどうかを返す
 	UserExistsByUserName(ctx context.Context, db store.Queryer, userName string) (bool, error)
-	// UserExistsByEmailはメールアドレスが既に存在するかどうかを返す
-	UserExistsByEmail(ctx context.Context, db store.Queryer, email string) (bool, error)
 	// GetUserByUserNameはユーザー名からユーザーを取得する
 	GetUserByUserName(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
 	// UpdateUserはユーザーを更新する
@@ -48,10 +46,8 @@ type UserService struct {
 }
 
 // RegisterUserはユーザーを登録する
-func (us *UserService) RegisterUser(
-	ctx context.Context, userName, name, password, email string,
-) (*model.User, error) {
-	id, err := us.Auth.SignUp(ctx, email, password)
+func (us *UserService) RegisterUser(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {
+	id, err := us.Auth.SignUp(ctx, data.Email, data.Password)
 	if err != nil {
 		if errors.Is(err, auth.ErrEmailAlreadyExists) {
 			return nil, fmt.Errorf("%w: %w", ErrEmailAlreadyExists, err)
@@ -63,7 +59,7 @@ func (us *UserService) RegisterUser(
 	// トランザクション開始
 	err = us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
 		// ユーザー名が既に存在するかどうかを確認
-		exists, err := us.Repo.UserExistsByUserName(ctx, tx, userName)
+		exists, err := us.Repo.UserExistsByUserName(ctx, tx, data.UserName)
 		if err != nil {
 			return err
 		}
@@ -73,10 +69,8 @@ func (us *UserService) RegisterUser(
 
 		u := &model.User{
 			Id:       id,
-			UserName: userName,
-			Name:     name,
-			Email:    email,
-			Password: password,
+			UserName: data.UserName,
+			Name:     data.Name,
 			IconUrl:  "",
 			Bio:      "",
 		}
@@ -114,10 +108,10 @@ func (us *UserService) GetUserByUserName(ctx context.Context, userName string) (
 }
 
 // UpdateUserはユーザーを更新する
-func (us *UserService) UpdateUser(ctx context.Context, u *model.User) error {
+func (us *UserService) UpdateUser(ctx context.Context, data *model.UserUpdateData) error {
 	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
 		// ユーザー名が既に存在するかどうかを確認
-		exists, err := us.Repo.UserExistsByUserName(ctx, tx, u.UserName)
+		exists, err := us.Repo.UserExistsByUserName(ctx, tx, data.UserName)
 		if err != nil {
 			return err
 		}
@@ -125,18 +119,20 @@ func (us *UserService) UpdateUser(ctx context.Context, u *model.User) error {
 			return ErrUserNameAlreadyExists
 		}
 		// メールアドレスが既に存在するかどうかを確認
-		exists, err = us.Repo.UserExistsByEmail(ctx, tx, u.Email)
-		if err != nil {
-			return err
-		}
-		if exists {
-			return ErrEmailAlreadyExists
-		}
 
+		// メールアドレス、パスワードを更新する処理(Cognito)
+
+		user := &model.User{
+			Id:       data.Id,
+			UserName: data.UserName,
+			Name:     data.Name,
+			IconUrl:  data.IconUrl,
+			Bio:      data.Bio,
+		}
 		// ユーザーを更新する
-		if err := us.Repo.UpdateUser(ctx, tx, u); err != nil {
+		if err := us.Repo.UpdateUser(ctx, tx, user); err != nil {
 			if errors.Is(err, store.ErrUserNotFound) {
-				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, u.UserName, err)
+				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, data.UserName, err)
 			}
 			return err
 		}

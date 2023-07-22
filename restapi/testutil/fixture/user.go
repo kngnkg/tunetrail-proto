@@ -16,8 +16,6 @@ func User(u *model.User) *model.User {
 		Id:        random,
 		UserName:  "test" + random,
 		Name:      "test" + random,
-		Password:  "test" + random,
-		Email:     "test" + random + "@example.com",
 		IconUrl:   "test" + random,
 		Bio:       "test" + random,
 		CreatedAt: time.Now(),
@@ -37,12 +35,6 @@ func User(u *model.User) *model.User {
 	}
 	if u.Name != "" {
 		result.Name = u.Name
-	}
-	if u.Password != "" {
-		result.Password = u.Password
-	}
-	if u.Email != "" {
-		result.Email = u.Email
 	}
 	if u.IconUrl != "" {
 		result.IconUrl = u.IconUrl

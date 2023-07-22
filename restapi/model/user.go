@@ -24,7 +24,11 @@ type UserRegistrationData struct {
 }
 
 type UserUpdateData struct {
-	User
+	Id       string `json:"id" db:"id" binding:"required"`
+	UserName string `json:"userName" db:"user_name" binding:"required,min=3,max=20"`
+	Name     string `json:"name" db:"name" binding:"required,min=3,max=20"`
+	IconUrl  string `json:"iconUrl" db:"icon_url" binding:"required,url"`
+	Bio      string `json:"bio" db:"bio" binding:"required,max=1000"`
 	Password string `json:"password" db:"password" binding:"required,password"`
 	Email    string `json:"email" db:"email" binding:"required,email"`
 }

@@ -31,10 +31,12 @@ var (
 	DUMMY_1_USER_ID  = "dummy1id"
 	DUMMY_1_USERNAME = "dummy1"
 	DUMMY_1_EMAIL    = "dummy1@example.com"
+	DUMMY_1_PASSWORD = "dummy1"
 
 	DUMMY_2_USER_ID  = "dummy2id"
 	DUMMY_2_USERNAME = "dummy2"
 	DUMMY_2_EMAIL    = "dummy2@example.com"
+	DUMMY_2_PASSWORD = "dummy2"
 )
 
 func TestUserServiceTestSuite(t *testing.T) {
@@ -51,8 +53,6 @@ func TestUserServiceTestSuite(t *testing.T) {
 			Id:       DUMMY_1_USER_ID,
 			UserName: DUMMY_1_USERNAME,
 			Name:     "dummy1",
-			Password: VALID_PASSWORD,
-			Email:    DUMMY_1_EMAIL,
 			IconUrl:  "https://example.com/icon.png",
 			Bio:      "dummy1",
 			// タイムスタンプを固定する
@@ -63,8 +63,6 @@ func TestUserServiceTestSuite(t *testing.T) {
 			Id:       DUMMY_2_USER_ID,
 			UserName: DUMMY_2_USERNAME,
 			Name:     "dummy2",
-			Password: VALID_PASSWORD,
-			Email:    DUMMY_2_EMAIL,
 			IconUrl:  "https://example.com/icon.png",
 			Bio:      "dummy2",
 			// タイムスタンプを固定する
@@ -130,9 +128,6 @@ func TestUserServiceTestSuite(t *testing.T) {
 		if u.UserName == DUMMY_2_USERNAME {
 			return store.ErrUserNameAlreadyExists
 		}
-		if u.Email == DUMMY_2_EMAIL {
-			return store.ErrEmailAlreadyExists
-		}
 		u.UpdatedAt = fc.Now()
 		return nil
 	}
@@ -146,6 +141,9 @@ func TestUserServiceTestSuite(t *testing.T) {
 
 	moqAuth.SignUpFunc = func(ctx context.Context, email, password string) (string, error) {
 		if password != VALID_PASSWORD {
+			return "", auth.ErrInvalidPassword
+		}
+		if password == DUMMY_1_PASSWORD || password == DUMMY_2_PASSWORD {
 			return "", auth.ErrInvalidPassword
 		}
 		if email == DUMMY_1_EMAIL || email == DUMMY_2_EMAIL {
@@ -169,11 +167,8 @@ func (s *UserServiceTestSuite) SetupTest() {}
 
 func (s *UserServiceTestSuite) TestRegisterUser() {
 	type args struct {
-		ctx      context.Context
-		userName string
-		name     string
-		password string
-		email    string
+		ctx  context.Context
+		data *model.UserRegistrationData
 	}
 
 	tests := []struct {
@@ -185,18 +180,18 @@ func (s *UserServiceTestSuite) TestRegisterUser() {
 		{
 			"ok",
 			args{
-				ctx:      context.Background(),
-				userName: "test",
-				name:     "test",
-				password: VALID_PASSWORD,
-				email:    "test@example.com",
+				ctx: context.Background(),
+				data: &model.UserRegistrationData{
+					UserName: "test",
+					Name:     "test",
+					Password: VALID_PASSWORD,
+					Email:    "test@example.com",
+				},
 			},
 			&model.User{
 				Id:        VALID_USER_ID,
 				UserName:  "test",
 				Name:      "test",
-				Password:  VALID_PASSWORD,
-				Email:     "test@example.com",
 				IconUrl:   "",
 				Bio:       "",
 				CreatedAt: s.fc.Now(),
@@ -208,11 +203,13 @@ func (s *UserServiceTestSuite) TestRegisterUser() {
 			// ユーザー名が重複している場合
 			"errUserNameAlreadyExists",
 			args{
-				ctx:      context.Background(),
-				userName: DUMMY_1_USERNAME, // ダミーユーザーのユーザー名と重複させる
-				name:     "test",
-				password: VALID_PASSWORD,
-				email:    "test@example.com",
+				ctx: context.Background(),
+				data: &model.UserRegistrationData{
+					UserName: DUMMY_1_USERNAME, // ダミーユーザーのユーザー名と重複させる
+					Name:     "test",
+					Password: VALID_PASSWORD,
+					Email:    "test@example.com",
+				},
 			},
 			nil,
 			ErrUserNameAlreadyExists,
@@ -221,11 +218,13 @@ func (s *UserServiceTestSuite) TestRegisterUser() {
 			// メールアドレスが重複している場合
 			"errEmailAlreadyExists",
 			args{
-				ctx:      context.Background(),
-				userName: "test",
-				name:     "test",
-				password: VALID_PASSWORD,
-				email:    DUMMY_1_EMAIL, // ダミーユーザーのメールアドレスと重複させる
+				ctx: context.Background(),
+				data: &model.UserRegistrationData{
+					UserName: "test",
+					Name:     "test",
+					Password: VALID_PASSWORD,
+					Email:    DUMMY_1_EMAIL, // ダミーユーザーのメールアドレスと重複させる
+				},
 			},
 			nil,
 			ErrEmailAlreadyExists,
@@ -235,9 +234,7 @@ func (s *UserServiceTestSuite) TestRegisterUser() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got, err := s.us.RegisterUser(
-				tt.args.ctx, tt.args.userName, tt.args.name, tt.args.password, tt.args.email,
-			)
+			got, err := s.us.RegisterUser(tt.args.ctx, tt.args.data)
 			if !errors.Is(err, tt.wantErr) {
 				s.T().Errorf("UserService.RegisterUser() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -297,7 +294,7 @@ func (s *UserServiceTestSuite) TestGetUserByUserName() {
 func (s *UserServiceTestSuite) TestUpdateUser() {
 	type args struct {
 		ctx  context.Context
-		user *model.User
+		data *model.UserUpdateData
 	}
 
 	// ダミーユーザー1を更新することを想定
@@ -310,11 +307,15 @@ func (s *UserServiceTestSuite) TestUpdateUser() {
 			"ok",
 			args{
 				ctx: context.Background(),
-				user: fixture.User(&model.User{
-					Id:        DUMMY_1_USER_ID,
-					CreatedAt: s.fc.Now(),
-					UpdatedAt: s.fc.Now(),
-				}),
+				data: &model.UserUpdateData{
+					Id:       DUMMY_1_USER_ID,
+					UserName: "update",
+					Name:     "test",
+					IconUrl:  "https://example.com/icon.png",
+					Bio:      "test",
+					Password: VALID_PASSWORD,
+					Email:    "email@example.com",
+				},
 			},
 			nil,
 		},
@@ -323,11 +324,15 @@ func (s *UserServiceTestSuite) TestUpdateUser() {
 			"errUserNotFound",
 			args{
 				ctx: context.Background(),
-				user: fixture.User(&model.User{
-					Id:        "0",
-					CreatedAt: s.fc.Now(),
-					UpdatedAt: s.fc.Now(),
-				}),
+				data: &model.UserUpdateData{
+					Id:       "0",
+					UserName: "update",
+					Name:     "test",
+					IconUrl:  "https://example.com/icon.png",
+					Bio:      "test",
+					Password: VALID_PASSWORD,
+					Email:    "email@example.com",
+				},
 			},
 			ErrUserNotFound,
 		},
@@ -336,30 +341,40 @@ func (s *UserServiceTestSuite) TestUpdateUser() {
 			"errUserNameAlreadyExists",
 			args{
 				ctx: context.Background(),
-				user: fixture.User(&model.User{
+				data: &model.UserUpdateData{
 					Id:       DUMMY_1_USER_ID,
-					UserName: DUMMY_1_USERNAME,
-				}),
+					UserName: DUMMY_2_USERNAME,
+					Name:     "test",
+					IconUrl:  "https://example.com/icon.png",
+					Bio:      "test",
+					Password: VALID_PASSWORD,
+					Email:    "email@example.com",
+				},
 			},
 			ErrUserNameAlreadyExists,
 		},
-		{
-			// メールアドレスが重複している場合
-			"errEmailNameAlreadyExists",
-			args{
-				ctx: context.Background(),
-				user: fixture.User(&model.User{
-					Id:    DUMMY_1_USER_ID,
-					Email: DUMMY_2_EMAIL,
-				}),
-			},
-			ErrEmailAlreadyExists,
-		},
+		// {
+		// 	// メールアドレスが重複している場合
+		// 	"errEmailNameAlreadyExists",
+		// 	args{
+		// 		ctx: context.Background(),
+		// 		data: &model.UserUpdateData{
+		// 			Id:       DUMMY_1_USER_ID,
+		// 			UserName: DUMMY_2_USERNAME,
+		// 			Name:     "test",
+		// 			IconUrl:  "https://example.com/icon.png",
+		// 			Bio:      "test",
+		// 			Password: VALID_PASSWORD,
+		// 			Email:    DUMMY_2_EMAIL,
+		// 		},
+		// 	},
+		// 	ErrEmailAlreadyExists,
+		// },
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			err := s.us.UpdateUser(tt.args.ctx, tt.args.user)
+			err := s.us.UpdateUser(tt.args.ctx, tt.args.data)
 			if !errors.Is(err, tt.wantErr) {
 				s.T().Errorf("UserService.UpdateUser() error = %v, wantErr %v", err, tt.wantErr)
 			}
