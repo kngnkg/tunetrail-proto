@@ -41,7 +41,6 @@ func (s *UserStoreTestSuite) SetupTest() {
 	s.dummy = fixture.User(&model.User{
 		Id:       "1",
 		UserName: "dummy",
-		Email:    "dummy@example.com",
 		// タイムスタンプを固定する
 		CreatedAt: s.fc.Now(),
 		UpdatedAt: s.fc.Now(),
@@ -93,17 +92,6 @@ func (s *UserStoreTestSuite) TestRegisterUser() {
 				UpdatedAt: s.fc.Now(),
 			}),
 			ErrUserNameAlreadyExists,
-		},
-		{
-			// メールアドレスが既に存在する場合はエラーになる
-			"errEmailAlreadyExists",
-			fixture.User(&model.User{
-				// ダミーユーザーと同じメールアドレスを設定する
-				Email:     "dummy@example.com",
-				CreatedAt: s.fc.Now(),
-				UpdatedAt: s.fc.Now(),
-			}),
-			ErrEmailAlreadyExists,
 		},
 	}
 
@@ -163,43 +151,6 @@ func (s *UserStoreTestSuite) TestUserExistsByUserName() {
 	}
 }
 
-func (s *UserStoreTestSuite) TestUserExistsByEmail() {
-	tests := []struct {
-		name    string
-		email   string
-		want    bool
-		wantErr error
-	}{
-		{
-			// メールアドレスが存在する場合はtrueを返す
-			"okExists",
-			// ダミーユーザーのメールアドレスを設定する
-			"dummy@example.com",
-			true,
-			nil,
-		},
-		{
-			// メールアドレスが存在しない場合はfalseを返す
-			"okNotExists",
-			// 存在しないメールアドレスを設定する
-			"notExists@example.com",
-			false,
-			nil,
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			tx := initUserStoreTest(s.T(), s.ctx, s.db, s.r, s.dummy)
-			got, err := s.r.UserExistsByEmail(s.ctx, tx, tt.email)
-			if !errors.Is(err, tt.wantErr) {
-				s.T().Errorf("Repository.UserExistsByEmail() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			assert.Equal(s.T(), tt.want, got)
-		})
-	}
-}
-
 func (s *UserStoreTestSuite) TestGetUserByUserName() {
 	tests := []struct {
 		name     string
@@ -237,47 +188,9 @@ func (s *UserStoreTestSuite) TestGetUserByUserName() {
 	}
 }
 
-func (s *UserStoreTestSuite) TestGetUserByEmail() {
-	tests := []struct {
-		name    string
-		email   string
-		want    *model.User
-		wantErr error
-	}{
-		{
-			// メールアドレスが存在する場合は該当するユーザーを返す
-			"ok",
-			// ダミーユーザーのメールアドレスを設定する
-			"dummy@example.com",
-			s.dummy,
-			nil,
-		},
-		{
-			// メールアドレスが存在しない場合はnilを返す
-			"errNotExists",
-			// 存在しないメールアドレスを設定する
-			"notExists@example.com",
-			nil,
-			ErrUserNotFound,
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			tx := initUserStoreTest(s.T(), s.ctx, s.db, s.r, s.dummy)
-			got, err := s.r.GetUserByEmail(s.ctx, tx, tt.email)
-			if !errors.Is(err, tt.wantErr) {
-				s.T().Errorf("Repository.GetUserByEmail() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			assert.Equal(s.T(), tt.want, got)
-		})
-	}
-}
-
 func (s *UserStoreTestSuite) TestUpdateUser() {
 	targetUser := fixture.User(&model.User{
 		UserName:  "target",
-		Email:     "target@example.com",
 		CreatedAt: s.fc.Now(),
 		UpdatedAt: s.fc.Now(),
 	})
@@ -295,8 +208,6 @@ func (s *UserStoreTestSuite) TestUpdateUser() {
 				Id:       targetUser.Id,
 				UserName: "updated",
 				Name:     "updated",
-				Password: "N7v7XhAe",
-				Email:    "updated@example.com",
 				IconUrl:  "https://example.com/updated.png",
 				Bio:      "updated",
 			},
@@ -304,8 +215,6 @@ func (s *UserStoreTestSuite) TestUpdateUser() {
 				Id:        targetUser.Id,
 				UserName:  "updated",
 				Name:      "updated",
-				Password:  "N7v7XhAe",
-				Email:     "updated@example.com",
 				IconUrl:   "https://example.com/updated.png",
 				Bio:       "updated",
 				CreatedAt: targetUser.CreatedAt,
@@ -330,15 +239,6 @@ func (s *UserStoreTestSuite) TestUpdateUser() {
 			}),
 			nil,
 			ErrUserNameAlreadyExists,
-		},
-		{
-			// 存在するメールアドレスの場合はエラーを返す
-			"errEmailExists",
-			fixture.User(&model.User{
-				Email: "dummy@example.com",
-			}),
-			nil,
-			ErrEmailAlreadyExists,
 		},
 	}
 	for _, tt := range tests {
