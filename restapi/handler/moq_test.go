@@ -91,10 +91,10 @@ var _ UserService = &UserServiceMock{}
 //			GetUserByUserNameFunc: func(ctx context.Context, userName string) (*model.User, error) {
 //				panic("mock out the GetUserByUserName method")
 //			},
-//			RegisterUserFunc: func(ctx context.Context, userName string, name string, password string, email string) (*model.User, error) {
+//			RegisterUserFunc: func(ctx context.Context, details *model.UserRegistrationData) (*model.User, error) {
 //				panic("mock out the RegisterUser method")
 //			},
-//			UpdateUserFunc: func(ctx context.Context, u *model.User) error {
+//			UpdateUserFunc: func(ctx context.Context, u *model.UserUpdateData) error {
 //				panic("mock out the UpdateUser method")
 //			},
 //		}
@@ -111,10 +111,10 @@ type UserServiceMock struct {
 	GetUserByUserNameFunc func(ctx context.Context, userName string) (*model.User, error)
 
 	// RegisterUserFunc mocks the RegisterUser method.
-	RegisterUserFunc func(ctx context.Context, userName string, name string, password string, email string) (*model.User, error)
+	RegisterUserFunc func(ctx context.Context, details *model.UserRegistrationData) (*model.User, error)
 
 	// UpdateUserFunc mocks the UpdateUser method.
-	UpdateUserFunc func(ctx context.Context, u *model.User) error
+	UpdateUserFunc func(ctx context.Context, u *model.UserUpdateData) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -136,21 +136,15 @@ type UserServiceMock struct {
 		RegisterUser []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// UserName is the userName argument value.
-			UserName string
-			// Name is the name argument value.
-			Name string
-			// Password is the password argument value.
-			Password string
-			// Email is the email argument value.
-			Email string
+			// Details is the details argument value.
+			Details *model.UserRegistrationData
 		}
 		// UpdateUser holds details about calls to the UpdateUser method.
 		UpdateUser []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// U is the u argument value.
-			U *model.User
+			U *model.UserUpdateData
 		}
 	}
 	lockDeleteUserByUserName sync.RWMutex
@@ -232,27 +226,21 @@ func (mock *UserServiceMock) GetUserByUserNameCalls() []struct {
 }
 
 // RegisterUser calls RegisterUserFunc.
-func (mock *UserServiceMock) RegisterUser(ctx context.Context, userName string, name string, password string, email string) (*model.User, error) {
+func (mock *UserServiceMock) RegisterUser(ctx context.Context, details *model.UserRegistrationData) (*model.User, error) {
 	if mock.RegisterUserFunc == nil {
 		panic("UserServiceMock.RegisterUserFunc: method is nil but UserService.RegisterUser was just called")
 	}
 	callInfo := struct {
-		Ctx      context.Context
-		UserName string
-		Name     string
-		Password string
-		Email    string
+		Ctx     context.Context
+		Details *model.UserRegistrationData
 	}{
-		Ctx:      ctx,
-		UserName: userName,
-		Name:     name,
-		Password: password,
-		Email:    email,
+		Ctx:     ctx,
+		Details: details,
 	}
 	mock.lockRegisterUser.Lock()
 	mock.calls.RegisterUser = append(mock.calls.RegisterUser, callInfo)
 	mock.lockRegisterUser.Unlock()
-	return mock.RegisterUserFunc(ctx, userName, name, password, email)
+	return mock.RegisterUserFunc(ctx, details)
 }
 
 // RegisterUserCalls gets all the calls that were made to RegisterUser.
@@ -260,18 +248,12 @@ func (mock *UserServiceMock) RegisterUser(ctx context.Context, userName string, 
 //
 //	len(mockedUserService.RegisterUserCalls())
 func (mock *UserServiceMock) RegisterUserCalls() []struct {
-	Ctx      context.Context
-	UserName string
-	Name     string
-	Password string
-	Email    string
+	Ctx     context.Context
+	Details *model.UserRegistrationData
 } {
 	var calls []struct {
-		Ctx      context.Context
-		UserName string
-		Name     string
-		Password string
-		Email    string
+		Ctx     context.Context
+		Details *model.UserRegistrationData
 	}
 	mock.lockRegisterUser.RLock()
 	calls = mock.calls.RegisterUser
@@ -280,13 +262,13 @@ func (mock *UserServiceMock) RegisterUserCalls() []struct {
 }
 
 // UpdateUser calls UpdateUserFunc.
-func (mock *UserServiceMock) UpdateUser(ctx context.Context, u *model.User) error {
+func (mock *UserServiceMock) UpdateUser(ctx context.Context, u *model.UserUpdateData) error {
 	if mock.UpdateUserFunc == nil {
 		panic("UserServiceMock.UpdateUserFunc: method is nil but UserService.UpdateUser was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		U   *model.User
+		U   *model.UserUpdateData
 	}{
 		Ctx: ctx,
 		U:   u,
@@ -303,11 +285,11 @@ func (mock *UserServiceMock) UpdateUser(ctx context.Context, u *model.User) erro
 //	len(mockedUserService.UpdateUserCalls())
 func (mock *UserServiceMock) UpdateUserCalls() []struct {
 	Ctx context.Context
-	U   *model.User
+	U   *model.UserUpdateData
 } {
 	var calls []struct {
 		Ctx context.Context
-		U   *model.User
+		U   *model.UserUpdateData
 	}
 	mock.lockUpdateUser.RLock()
 	calls = mock.calls.UpdateUser

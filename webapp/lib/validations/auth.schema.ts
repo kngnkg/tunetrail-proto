@@ -3,20 +3,19 @@ import * as z from "zod"
 import { MESSAGE } from "@/config/messages"
 
 // パスワードのバリデーションルールを定義する
-// 最低8文字、最大20文字
-// 少なくとも1つの小文字、大文字、数字
-// 英数字のみ
+// 最低8文字、最大64文字
+// 少なくとも1つの小文字、大文字、数字、記号
 const passwordSchema = z
   .string()
-  .min(8)
-  .max(20)
+  .min(8, MESSAGE.VALIDATION.USER.PASSWORD_TOO_SHORT)
+  .max(64, MESSAGE.VALIDATION.USER.PASSWORD_TOO_LONG)
   .refine(
     (value) =>
       /[a-z]+/.test(value) &&
       /[A-Z]+/.test(value) &&
       /[0-9]+/.test(value) &&
-      /^[a-zA-Z0-9]+$/.test(value),
-    MESSAGE.VALIDATION.USER.PASSWORD
+      /[!@#\$%\^&\*\(\)-_=\+{}\[\]:;"'<>,\.\?/\\~\|]/.test(value),
+    MESSAGE.VALIDATION.USER.PASSWORD_COMPLEXITY
   )
 
 const passwordConfirmationSchema = z

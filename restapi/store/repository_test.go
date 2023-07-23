@@ -40,7 +40,6 @@ func (s *RepositoryTestSuite) SetupTest() {
 	// テスト用のダミーユーザー
 	s.dummy = fixture.User(&model.User{
 		UserName: "dummy",
-		Email:    "dummy@example.com",
 		// タイムスタンプを固定する
 		CreatedAt: s.fc.Now(),
 		UpdatedAt: s.fc.Now(),
@@ -58,7 +57,6 @@ func (s *RepositoryTestSuite) TestWithTransaction() {
 			"ok",
 			fixture.User(&model.User{
 				UserName: "tranTest",
-				Email:    "tranTest@email.com",
 				// タイムスタンプを固定する
 				CreatedAt: s.fc.Now(),
 				UpdatedAt: s.fc.Now(),
@@ -70,7 +68,6 @@ func (s *RepositoryTestSuite) TestWithTransaction() {
 			"rollback",
 			fixture.User(&model.User{
 				UserName: "tranTest",
-				Email:    "tranTest@email.com",
 				// タイムスタンプを固定する
 				CreatedAt: s.fc.Now(),
 				UpdatedAt: s.fc.Now(),

@@ -9,6 +9,11 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+const (
+	MinPasswordLength = 8
+	MaxPasswordLength = 64
+)
+
 func InitValidation() error {
 	// カスタムバリデーションルールを登録
 	validate := binding.Validator.Engine().(*validator.Validate)
@@ -24,32 +29,26 @@ func InitValidation() error {
 func passwordValidation(fl validator.FieldLevel) bool {
 	password := fl.Field().String()
 
-	// 8文字以上20文字以下である
-	if len(password) < 8 || len(password) > 20 {
+	if len(password) < MinPasswordLength || len(password) > MaxPasswordLength {
 		return false
 	}
 
-	// 英数字のみである
-	alphanumeric := regexp.MustCompile("^[a-zA-Z0-9]*$")
-	if !alphanumeric.MatchString(password) {
-		return false
-	}
+	symbol := regexp.MustCompile(`[!@#\$%\^&\*\(\)-_=\+{}\[\]:;"'<>,\.\?/\\~\|]`)
 
-	hasUpper, hasLower, hasNumber := false, false, false
+	hasUpper, hasLower, hasNumber, hasSymbol := false, false, false, false
 
 	for _, r := range password {
 		switch {
 		case unicode.IsUpper(r):
-			hasUpper = true
+			hasUpper = true // 1文字以上の大文字が含まれている
 		case unicode.IsLower(r):
-			hasLower = true
+			hasLower = true // 1文字以上の小文字が含まれている
 		case unicode.IsNumber(r):
-			hasNumber = true
+			hasNumber = true // 1文字以上の数字が含まれている
+		case symbol.MatchString(string(r)):
+			hasSymbol = true // 1文字以上の記号が含まれている
 		}
 	}
 
-	// 1文字以上の大文字が含まれている
-	// 1文字以上の小文字が含まれている
-	// 1文字以上の数字が含まれている
-	return hasUpper && hasLower && hasNumber
+	return hasUpper && hasLower && hasNumber && hasSymbol
 }
