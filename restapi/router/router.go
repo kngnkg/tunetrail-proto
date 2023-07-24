@@ -31,15 +31,15 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		Service: &service.HealthService{DB: db, Repo: r},
 	}
 	uh := &handler.UserHandler{
-		Service: &service.UserService{
+		Service: &service.UserService{DB: db, Repo: r},
+	}
+	ah := &handler.AuthHandler{
+		Service: &service.AuthService{
 			DB:   db,
 			Repo: r,
 			Auth: a,
 		},
 	}
-	// ah := &handler.AuthHandler{
-	// 	Service: &service.AuthService{DB: db, Repo: r},
-	// }
 
 	router := gin.Default()
 
@@ -47,18 +47,20 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 
 	router.GET("/health", hh.HealthCheck)
 
-	// auth := router.Group("/auth")
-	// {
-	// 	auth.POST("/login", uh.LoginUser) // ログイン
-	// 	auth.POST("/logout", uh.LogoutUser) // ログアウト
-	// }
+	auth := router.Group("/auth")
+	{
+		auth.POST("/register", ah.RegisterUser)
+		// auth.PUT("/confirm", ah.ConfirmEmail)   // TODO: 改修予定
+		// auth.POST("/login", ah.Login)           // ログイン
+		// auth.POST("/logout", ah.Logout)         // ログアウト
+	}
 
 	user := router.Group("/user")
 	{
-		user.POST("/", uh.RegisterUser) // TODO: 改修予定
-		// auth.GET("/me", uh.GetMe)                     // ログインユーザー情報取得
 		user.GET("/:user_name", uh.GetUserByUserName) // ログインユーザ以外のユーザー情報取得
-		user.PUT("/", uh.UpdateUser)                  // TODO: 改修予定
+		// auth.GET("/me", uh.GetMe)                     // ログインユーザー情報取得
+		user.PUT("/", uh.UpdateUser) // TODO: 改修予定
+		// user.PUT("/:user_name", uh.UpdateUser)        // TODO: 改修予定
 		user.DELETE("/:user_name", uh.DeleteUserByUserName)
 	}
 

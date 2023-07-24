@@ -105,9 +105,6 @@ var _ UserRepository = &UserRepositoryMock{}
 //			UpdateUserFunc: func(ctx context.Context, db store.Queryer, u *model.User) error {
 //				panic("mock out the UpdateUser method")
 //			},
-//			UserExistsByEmailFunc: func(ctx context.Context, db store.Queryer, email string) (bool, error) {
-//				panic("mock out the UserExistsByEmail method")
-//			},
 //			UserExistsByUserNameFunc: func(ctx context.Context, db store.Queryer, userName string) (bool, error) {
 //				panic("mock out the UserExistsByUserName method")
 //			},
@@ -132,9 +129,6 @@ type UserRepositoryMock struct {
 
 	// UpdateUserFunc mocks the UpdateUser method.
 	UpdateUserFunc func(ctx context.Context, db store.Queryer, u *model.User) error
-
-	// UserExistsByEmailFunc mocks the UserExistsByEmail method.
-	UserExistsByEmailFunc func(ctx context.Context, db store.Queryer, email string) (bool, error)
 
 	// UserExistsByUserNameFunc mocks the UserExistsByUserName method.
 	UserExistsByUserNameFunc func(ctx context.Context, db store.Queryer, userName string) (bool, error)
@@ -180,15 +174,6 @@ type UserRepositoryMock struct {
 			// U is the u argument value.
 			U *model.User
 		}
-		// UserExistsByEmail holds details about calls to the UserExistsByEmail method.
-		UserExistsByEmail []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Db is the db argument value.
-			Db store.Queryer
-			// Email is the email argument value.
-			Email string
-		}
 		// UserExistsByUserName holds details about calls to the UserExistsByUserName method.
 		UserExistsByUserName []struct {
 			// Ctx is the ctx argument value.
@@ -212,7 +197,6 @@ type UserRepositoryMock struct {
 	lockGetUserByUserName    sync.RWMutex
 	lockRegisterUser         sync.RWMutex
 	lockUpdateUser           sync.RWMutex
-	lockUserExistsByEmail    sync.RWMutex
 	lockUserExistsByUserName sync.RWMutex
 	lockWithTransaction      sync.RWMutex
 }
@@ -374,46 +358,6 @@ func (mock *UserRepositoryMock) UpdateUserCalls() []struct {
 	mock.lockUpdateUser.RLock()
 	calls = mock.calls.UpdateUser
 	mock.lockUpdateUser.RUnlock()
-	return calls
-}
-
-// UserExistsByEmail calls UserExistsByEmailFunc.
-func (mock *UserRepositoryMock) UserExistsByEmail(ctx context.Context, db store.Queryer, email string) (bool, error) {
-	if mock.UserExistsByEmailFunc == nil {
-		panic("UserRepositoryMock.UserExistsByEmailFunc: method is nil but UserRepository.UserExistsByEmail was just called")
-	}
-	callInfo := struct {
-		Ctx   context.Context
-		Db    store.Queryer
-		Email string
-	}{
-		Ctx:   ctx,
-		Db:    db,
-		Email: email,
-	}
-	mock.lockUserExistsByEmail.Lock()
-	mock.calls.UserExistsByEmail = append(mock.calls.UserExistsByEmail, callInfo)
-	mock.lockUserExistsByEmail.Unlock()
-	return mock.UserExistsByEmailFunc(ctx, db, email)
-}
-
-// UserExistsByEmailCalls gets all the calls that were made to UserExistsByEmail.
-// Check the length with:
-//
-//	len(mockedUserRepository.UserExistsByEmailCalls())
-func (mock *UserRepositoryMock) UserExistsByEmailCalls() []struct {
-	Ctx   context.Context
-	Db    store.Queryer
-	Email string
-} {
-	var calls []struct {
-		Ctx   context.Context
-		Db    store.Queryer
-		Email string
-	}
-	mock.lockUserExistsByEmail.RLock()
-	calls = mock.calls.UserExistsByEmail
-	mock.lockUserExistsByEmail.RUnlock()
 	return calls
 }
 
