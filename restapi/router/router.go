@@ -19,7 +19,9 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		return nil, cleanup, err
 	}
 
-	a := auth.NewAuth(cfg.AWSRegion, cfg.CognitoUserPoolId, cfg.CognitoClientId)
+	a := auth.NewAuth(
+		cfg.AWSRegion, cfg.CognitoUserPoolId, cfg.CognitoClientId, cfg.CognitoClientSecret,
+	)
 
 	cl := clock.RealClocker{}
 
