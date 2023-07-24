@@ -28,28 +28,6 @@ func TestAuth_SignUp(t *testing.T) {
 		VALID_PASSWORD  = "password"
 	)
 
-	apm := &AuthProviderMock{}
-	// モックの設定
-	apm.SignUpWithContextFunc = func(ctx context.Context, input *cognitoidentityprovider.SignUpInput, opts ...request.Option) (*cognitoidentityprovider.SignUpOutput, error) {
-		if *input.Username == DUPLICATE_EMAIL {
-			awserr := &cognitoidentityprovider.UsernameExistsException{
-				Message_: aws.String("mock"),
-			}
-			return nil, awserr
-		}
-		if *input.Password != VALID_PASSWORD {
-			awserr := &cognitoidentityprovider.InvalidPasswordException{
-				Message_: aws.String("mock"),
-			}
-			return nil, awserr
-		}
-		output := &cognitoidentityprovider.SignUpOutput{
-			UserSub:       aws.String(VALID_USER_SUB),
-			UserConfirmed: aws.Bool(true),
-		}
-		return output, nil
-	}
-
 	type args struct {
 		ctx      context.Context
 		email    string
@@ -94,6 +72,29 @@ func TestAuth_SignUp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			apm := &AuthProviderMock{}
+			// モックの設定
+			apm.SignUpWithContextFunc = func(ctx context.Context, input *cognitoidentityprovider.SignUpInput, opts ...request.Option) (*cognitoidentityprovider.SignUpOutput, error) {
+				if *input.UserAttributes[0].Value == DUPLICATE_EMAIL {
+					awserr := &cognitoidentityprovider.AliasExistsException{
+						Message_: aws.String("mock"),
+					}
+					return nil, awserr
+				}
+				if *input.Password != VALID_PASSWORD {
+					awserr := &cognitoidentityprovider.InvalidPasswordException{
+						Message_: aws.String("mock"),
+					}
+					return nil, awserr
+				}
+				output := &cognitoidentityprovider.SignUpOutput{
+					UserSub:       aws.String(VALID_USER_SUB),
+					UserConfirmed: aws.Bool(true),
+				}
+				return output, nil
+			}
+
 			a := createAuthFortest(t, apm)
 
 			got, err := a.SignUp(tt.args.ctx, tt.args.email, tt.args.password)
