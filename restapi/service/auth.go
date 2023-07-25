@@ -11,21 +11,13 @@ import (
 	"github.com/kngnkg/tunetrail/restapi/store"
 )
 
-// var (
-// // エラー
-// )
-
 type AuthService struct {
-	DB   store.Beginner
+	DB   store.DBConnection
 	Repo UserRepository
 	Auth Auth
 }
 
 // type Token struct{}
-
-type Auth interface {
-	SignUp(ctx context.Context, email, password string) (string, error)
-}
 
 // RegisterUserはユーザーを登録する
 func (as *AuthService) RegisterUser(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {

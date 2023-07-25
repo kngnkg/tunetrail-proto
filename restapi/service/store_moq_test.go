@@ -10,6 +10,472 @@ import (
 	"sync"
 )
 
+// DBConnectionMock is a mock implementation of store.DBConnection.
+//
+//	func TestSomethingThatUsesDBConnection(t *testing.T) {
+//
+//		// make and configure a mocked store.DBConnection
+//		mockedDBConnection := &DBConnectionMock{
+//			BeginTxxFunc: func(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error) {
+//				panic("mock out the BeginTxx method")
+//			},
+//			ExecContextFunc: func(ctx context.Context, query string, args ...any) (sql.Result, error) {
+//				panic("mock out the ExecContext method")
+//			},
+//			GetContextFunc: func(ctx context.Context, dest interface{}, query string, args ...any) error {
+//				panic("mock out the GetContext method")
+//			},
+//			NamedExecContextFunc: func(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
+//				panic("mock out the NamedExecContext method")
+//			},
+//			PreparexContextFunc: func(ctx context.Context, query string) (*sqlx.Stmt, error) {
+//				panic("mock out the PreparexContext method")
+//			},
+//			QueryRowxContextFunc: func(ctx context.Context, query string, args ...any) *sqlx.Row {
+//				panic("mock out the QueryRowxContext method")
+//			},
+//			QueryxContextFunc: func(ctx context.Context, query string, args ...any) (*sqlx.Rows, error) {
+//				panic("mock out the QueryxContext method")
+//			},
+//			SelectContextFunc: func(ctx context.Context, dest interface{}, query string, args ...any) error {
+//				panic("mock out the SelectContext method")
+//			},
+//		}
+//
+//		// use mockedDBConnection in code that requires store.DBConnection
+//		// and then make assertions.
+//
+//	}
+type DBConnectionMock struct {
+	// BeginTxxFunc mocks the BeginTxx method.
+	BeginTxxFunc func(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error)
+
+	// ExecContextFunc mocks the ExecContext method.
+	ExecContextFunc func(ctx context.Context, query string, args ...any) (sql.Result, error)
+
+	// GetContextFunc mocks the GetContext method.
+	GetContextFunc func(ctx context.Context, dest interface{}, query string, args ...any) error
+
+	// NamedExecContextFunc mocks the NamedExecContext method.
+	NamedExecContextFunc func(ctx context.Context, query string, arg interface{}) (sql.Result, error)
+
+	// PreparexContextFunc mocks the PreparexContext method.
+	PreparexContextFunc func(ctx context.Context, query string) (*sqlx.Stmt, error)
+
+	// QueryRowxContextFunc mocks the QueryRowxContext method.
+	QueryRowxContextFunc func(ctx context.Context, query string, args ...any) *sqlx.Row
+
+	// QueryxContextFunc mocks the QueryxContext method.
+	QueryxContextFunc func(ctx context.Context, query string, args ...any) (*sqlx.Rows, error)
+
+	// SelectContextFunc mocks the SelectContext method.
+	SelectContextFunc func(ctx context.Context, dest interface{}, query string, args ...any) error
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// BeginTxx holds details about calls to the BeginTxx method.
+		BeginTxx []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Opts is the opts argument value.
+			Opts *sql.TxOptions
+		}
+		// ExecContext holds details about calls to the ExecContext method.
+		ExecContext []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Query is the query argument value.
+			Query string
+			// Args is the args argument value.
+			Args []any
+		}
+		// GetContext holds details about calls to the GetContext method.
+		GetContext []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Dest is the dest argument value.
+			Dest interface{}
+			// Query is the query argument value.
+			Query string
+			// Args is the args argument value.
+			Args []any
+		}
+		// NamedExecContext holds details about calls to the NamedExecContext method.
+		NamedExecContext []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Query is the query argument value.
+			Query string
+			// Arg is the arg argument value.
+			Arg interface{}
+		}
+		// PreparexContext holds details about calls to the PreparexContext method.
+		PreparexContext []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Query is the query argument value.
+			Query string
+		}
+		// QueryRowxContext holds details about calls to the QueryRowxContext method.
+		QueryRowxContext []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Query is the query argument value.
+			Query string
+			// Args is the args argument value.
+			Args []any
+		}
+		// QueryxContext holds details about calls to the QueryxContext method.
+		QueryxContext []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Query is the query argument value.
+			Query string
+			// Args is the args argument value.
+			Args []any
+		}
+		// SelectContext holds details about calls to the SelectContext method.
+		SelectContext []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Dest is the dest argument value.
+			Dest interface{}
+			// Query is the query argument value.
+			Query string
+			// Args is the args argument value.
+			Args []any
+		}
+	}
+	lockBeginTxx         sync.RWMutex
+	lockExecContext      sync.RWMutex
+	lockGetContext       sync.RWMutex
+	lockNamedExecContext sync.RWMutex
+	lockPreparexContext  sync.RWMutex
+	lockQueryRowxContext sync.RWMutex
+	lockQueryxContext    sync.RWMutex
+	lockSelectContext    sync.RWMutex
+}
+
+// BeginTxx calls BeginTxxFunc.
+func (mock *DBConnectionMock) BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error) {
+	if mock.BeginTxxFunc == nil {
+		panic("DBConnectionMock.BeginTxxFunc: method is nil but DBConnection.BeginTxx was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Opts *sql.TxOptions
+	}{
+		Ctx:  ctx,
+		Opts: opts,
+	}
+	mock.lockBeginTxx.Lock()
+	mock.calls.BeginTxx = append(mock.calls.BeginTxx, callInfo)
+	mock.lockBeginTxx.Unlock()
+	return mock.BeginTxxFunc(ctx, opts)
+}
+
+// BeginTxxCalls gets all the calls that were made to BeginTxx.
+// Check the length with:
+//
+//	len(mockedDBConnection.BeginTxxCalls())
+func (mock *DBConnectionMock) BeginTxxCalls() []struct {
+	Ctx  context.Context
+	Opts *sql.TxOptions
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Opts *sql.TxOptions
+	}
+	mock.lockBeginTxx.RLock()
+	calls = mock.calls.BeginTxx
+	mock.lockBeginTxx.RUnlock()
+	return calls
+}
+
+// ExecContext calls ExecContextFunc.
+func (mock *DBConnectionMock) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	if mock.ExecContextFunc == nil {
+		panic("DBConnectionMock.ExecContextFunc: method is nil but DBConnection.ExecContext was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Query string
+		Args  []any
+	}{
+		Ctx:   ctx,
+		Query: query,
+		Args:  args,
+	}
+	mock.lockExecContext.Lock()
+	mock.calls.ExecContext = append(mock.calls.ExecContext, callInfo)
+	mock.lockExecContext.Unlock()
+	return mock.ExecContextFunc(ctx, query, args...)
+}
+
+// ExecContextCalls gets all the calls that were made to ExecContext.
+// Check the length with:
+//
+//	len(mockedDBConnection.ExecContextCalls())
+func (mock *DBConnectionMock) ExecContextCalls() []struct {
+	Ctx   context.Context
+	Query string
+	Args  []any
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Query string
+		Args  []any
+	}
+	mock.lockExecContext.RLock()
+	calls = mock.calls.ExecContext
+	mock.lockExecContext.RUnlock()
+	return calls
+}
+
+// GetContext calls GetContextFunc.
+func (mock *DBConnectionMock) GetContext(ctx context.Context, dest interface{}, query string, args ...any) error {
+	if mock.GetContextFunc == nil {
+		panic("DBConnectionMock.GetContextFunc: method is nil but DBConnection.GetContext was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Dest  interface{}
+		Query string
+		Args  []any
+	}{
+		Ctx:   ctx,
+		Dest:  dest,
+		Query: query,
+		Args:  args,
+	}
+	mock.lockGetContext.Lock()
+	mock.calls.GetContext = append(mock.calls.GetContext, callInfo)
+	mock.lockGetContext.Unlock()
+	return mock.GetContextFunc(ctx, dest, query, args...)
+}
+
+// GetContextCalls gets all the calls that were made to GetContext.
+// Check the length with:
+//
+//	len(mockedDBConnection.GetContextCalls())
+func (mock *DBConnectionMock) GetContextCalls() []struct {
+	Ctx   context.Context
+	Dest  interface{}
+	Query string
+	Args  []any
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Dest  interface{}
+		Query string
+		Args  []any
+	}
+	mock.lockGetContext.RLock()
+	calls = mock.calls.GetContext
+	mock.lockGetContext.RUnlock()
+	return calls
+}
+
+// NamedExecContext calls NamedExecContextFunc.
+func (mock *DBConnectionMock) NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
+	if mock.NamedExecContextFunc == nil {
+		panic("DBConnectionMock.NamedExecContextFunc: method is nil but DBConnection.NamedExecContext was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Query string
+		Arg   interface{}
+	}{
+		Ctx:   ctx,
+		Query: query,
+		Arg:   arg,
+	}
+	mock.lockNamedExecContext.Lock()
+	mock.calls.NamedExecContext = append(mock.calls.NamedExecContext, callInfo)
+	mock.lockNamedExecContext.Unlock()
+	return mock.NamedExecContextFunc(ctx, query, arg)
+}
+
+// NamedExecContextCalls gets all the calls that were made to NamedExecContext.
+// Check the length with:
+//
+//	len(mockedDBConnection.NamedExecContextCalls())
+func (mock *DBConnectionMock) NamedExecContextCalls() []struct {
+	Ctx   context.Context
+	Query string
+	Arg   interface{}
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Query string
+		Arg   interface{}
+	}
+	mock.lockNamedExecContext.RLock()
+	calls = mock.calls.NamedExecContext
+	mock.lockNamedExecContext.RUnlock()
+	return calls
+}
+
+// PreparexContext calls PreparexContextFunc.
+func (mock *DBConnectionMock) PreparexContext(ctx context.Context, query string) (*sqlx.Stmt, error) {
+	if mock.PreparexContextFunc == nil {
+		panic("DBConnectionMock.PreparexContextFunc: method is nil but DBConnection.PreparexContext was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Query string
+	}{
+		Ctx:   ctx,
+		Query: query,
+	}
+	mock.lockPreparexContext.Lock()
+	mock.calls.PreparexContext = append(mock.calls.PreparexContext, callInfo)
+	mock.lockPreparexContext.Unlock()
+	return mock.PreparexContextFunc(ctx, query)
+}
+
+// PreparexContextCalls gets all the calls that were made to PreparexContext.
+// Check the length with:
+//
+//	len(mockedDBConnection.PreparexContextCalls())
+func (mock *DBConnectionMock) PreparexContextCalls() []struct {
+	Ctx   context.Context
+	Query string
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Query string
+	}
+	mock.lockPreparexContext.RLock()
+	calls = mock.calls.PreparexContext
+	mock.lockPreparexContext.RUnlock()
+	return calls
+}
+
+// QueryRowxContext calls QueryRowxContextFunc.
+func (mock *DBConnectionMock) QueryRowxContext(ctx context.Context, query string, args ...any) *sqlx.Row {
+	if mock.QueryRowxContextFunc == nil {
+		panic("DBConnectionMock.QueryRowxContextFunc: method is nil but DBConnection.QueryRowxContext was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Query string
+		Args  []any
+	}{
+		Ctx:   ctx,
+		Query: query,
+		Args:  args,
+	}
+	mock.lockQueryRowxContext.Lock()
+	mock.calls.QueryRowxContext = append(mock.calls.QueryRowxContext, callInfo)
+	mock.lockQueryRowxContext.Unlock()
+	return mock.QueryRowxContextFunc(ctx, query, args...)
+}
+
+// QueryRowxContextCalls gets all the calls that were made to QueryRowxContext.
+// Check the length with:
+//
+//	len(mockedDBConnection.QueryRowxContextCalls())
+func (mock *DBConnectionMock) QueryRowxContextCalls() []struct {
+	Ctx   context.Context
+	Query string
+	Args  []any
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Query string
+		Args  []any
+	}
+	mock.lockQueryRowxContext.RLock()
+	calls = mock.calls.QueryRowxContext
+	mock.lockQueryRowxContext.RUnlock()
+	return calls
+}
+
+// QueryxContext calls QueryxContextFunc.
+func (mock *DBConnectionMock) QueryxContext(ctx context.Context, query string, args ...any) (*sqlx.Rows, error) {
+	if mock.QueryxContextFunc == nil {
+		panic("DBConnectionMock.QueryxContextFunc: method is nil but DBConnection.QueryxContext was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Query string
+		Args  []any
+	}{
+		Ctx:   ctx,
+		Query: query,
+		Args:  args,
+	}
+	mock.lockQueryxContext.Lock()
+	mock.calls.QueryxContext = append(mock.calls.QueryxContext, callInfo)
+	mock.lockQueryxContext.Unlock()
+	return mock.QueryxContextFunc(ctx, query, args...)
+}
+
+// QueryxContextCalls gets all the calls that were made to QueryxContext.
+// Check the length with:
+//
+//	len(mockedDBConnection.QueryxContextCalls())
+func (mock *DBConnectionMock) QueryxContextCalls() []struct {
+	Ctx   context.Context
+	Query string
+	Args  []any
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Query string
+		Args  []any
+	}
+	mock.lockQueryxContext.RLock()
+	calls = mock.calls.QueryxContext
+	mock.lockQueryxContext.RUnlock()
+	return calls
+}
+
+// SelectContext calls SelectContextFunc.
+func (mock *DBConnectionMock) SelectContext(ctx context.Context, dest interface{}, query string, args ...any) error {
+	if mock.SelectContextFunc == nil {
+		panic("DBConnectionMock.SelectContextFunc: method is nil but DBConnection.SelectContext was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Dest  interface{}
+		Query string
+		Args  []any
+	}{
+		Ctx:   ctx,
+		Dest:  dest,
+		Query: query,
+		Args:  args,
+	}
+	mock.lockSelectContext.Lock()
+	mock.calls.SelectContext = append(mock.calls.SelectContext, callInfo)
+	mock.lockSelectContext.Unlock()
+	return mock.SelectContextFunc(ctx, dest, query, args...)
+}
+
+// SelectContextCalls gets all the calls that were made to SelectContext.
+// Check the length with:
+//
+//	len(mockedDBConnection.SelectContextCalls())
+func (mock *DBConnectionMock) SelectContextCalls() []struct {
+	Ctx   context.Context
+	Dest  interface{}
+	Query string
+	Args  []any
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Dest  interface{}
+		Query string
+		Args  []any
+	}
+	mock.lockSelectContext.RLock()
+	calls = mock.calls.SelectContext
+	mock.lockSelectContext.RUnlock()
+	return calls
+}
+
 // BeginnerMock is a mock implementation of store.Beginner.
 //
 //	func TestSomethingThatUsesBeginner(t *testing.T) {
@@ -152,14 +618,8 @@ func (mock *PreparerMock) PreparexContextCalls() []struct {
 //
 //		// make and configure a mocked store.Queryer
 //		mockedQueryer := &QueryerMock{
-//			ExecContextFunc: func(ctx context.Context, query string, args ...any) (sql.Result, error) {
-//				panic("mock out the ExecContext method")
-//			},
 //			GetContextFunc: func(ctx context.Context, dest interface{}, query string, args ...any) error {
 //				panic("mock out the GetContext method")
-//			},
-//			NamedExecContextFunc: func(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
-//				panic("mock out the NamedExecContext method")
 //			},
 //			PreparexContextFunc: func(ctx context.Context, query string) (*sqlx.Stmt, error) {
 //				panic("mock out the PreparexContext method")
@@ -180,14 +640,8 @@ func (mock *PreparerMock) PreparexContextCalls() []struct {
 //
 //	}
 type QueryerMock struct {
-	// ExecContextFunc mocks the ExecContext method.
-	ExecContextFunc func(ctx context.Context, query string, args ...any) (sql.Result, error)
-
 	// GetContextFunc mocks the GetContext method.
 	GetContextFunc func(ctx context.Context, dest interface{}, query string, args ...any) error
-
-	// NamedExecContextFunc mocks the NamedExecContext method.
-	NamedExecContextFunc func(ctx context.Context, query string, arg interface{}) (sql.Result, error)
 
 	// PreparexContextFunc mocks the PreparexContext method.
 	PreparexContextFunc func(ctx context.Context, query string) (*sqlx.Stmt, error)
@@ -203,15 +657,6 @@ type QueryerMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// ExecContext holds details about calls to the ExecContext method.
-		ExecContext []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Query is the query argument value.
-			Query string
-			// Args is the args argument value.
-			Args []any
-		}
 		// GetContext holds details about calls to the GetContext method.
 		GetContext []struct {
 			// Ctx is the ctx argument value.
@@ -222,15 +667,6 @@ type QueryerMock struct {
 			Query string
 			// Args is the args argument value.
 			Args []any
-		}
-		// NamedExecContext holds details about calls to the NamedExecContext method.
-		NamedExecContext []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Query is the query argument value.
-			Query string
-			// Arg is the arg argument value.
-			Arg interface{}
 		}
 		// PreparexContext holds details about calls to the PreparexContext method.
 		PreparexContext []struct {
@@ -269,53 +705,11 @@ type QueryerMock struct {
 			Args []any
 		}
 	}
-	lockExecContext      sync.RWMutex
 	lockGetContext       sync.RWMutex
-	lockNamedExecContext sync.RWMutex
 	lockPreparexContext  sync.RWMutex
 	lockQueryRowxContext sync.RWMutex
 	lockQueryxContext    sync.RWMutex
 	lockSelectContext    sync.RWMutex
-}
-
-// ExecContext calls ExecContextFunc.
-func (mock *QueryerMock) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	if mock.ExecContextFunc == nil {
-		panic("QueryerMock.ExecContextFunc: method is nil but Queryer.ExecContext was just called")
-	}
-	callInfo := struct {
-		Ctx   context.Context
-		Query string
-		Args  []any
-	}{
-		Ctx:   ctx,
-		Query: query,
-		Args:  args,
-	}
-	mock.lockExecContext.Lock()
-	mock.calls.ExecContext = append(mock.calls.ExecContext, callInfo)
-	mock.lockExecContext.Unlock()
-	return mock.ExecContextFunc(ctx, query, args...)
-}
-
-// ExecContextCalls gets all the calls that were made to ExecContext.
-// Check the length with:
-//
-//	len(mockedQueryer.ExecContextCalls())
-func (mock *QueryerMock) ExecContextCalls() []struct {
-	Ctx   context.Context
-	Query string
-	Args  []any
-} {
-	var calls []struct {
-		Ctx   context.Context
-		Query string
-		Args  []any
-	}
-	mock.lockExecContext.RLock()
-	calls = mock.calls.ExecContext
-	mock.lockExecContext.RUnlock()
-	return calls
 }
 
 // GetContext calls GetContextFunc.
@@ -359,46 +753,6 @@ func (mock *QueryerMock) GetContextCalls() []struct {
 	mock.lockGetContext.RLock()
 	calls = mock.calls.GetContext
 	mock.lockGetContext.RUnlock()
-	return calls
-}
-
-// NamedExecContext calls NamedExecContextFunc.
-func (mock *QueryerMock) NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
-	if mock.NamedExecContextFunc == nil {
-		panic("QueryerMock.NamedExecContextFunc: method is nil but Queryer.NamedExecContext was just called")
-	}
-	callInfo := struct {
-		Ctx   context.Context
-		Query string
-		Arg   interface{}
-	}{
-		Ctx:   ctx,
-		Query: query,
-		Arg:   arg,
-	}
-	mock.lockNamedExecContext.Lock()
-	mock.calls.NamedExecContext = append(mock.calls.NamedExecContext, callInfo)
-	mock.lockNamedExecContext.Unlock()
-	return mock.NamedExecContextFunc(ctx, query, arg)
-}
-
-// NamedExecContextCalls gets all the calls that were made to NamedExecContext.
-// Check the length with:
-//
-//	len(mockedQueryer.NamedExecContextCalls())
-func (mock *QueryerMock) NamedExecContextCalls() []struct {
-	Ctx   context.Context
-	Query string
-	Arg   interface{}
-} {
-	var calls []struct {
-		Ctx   context.Context
-		Query string
-		Arg   interface{}
-	}
-	mock.lockNamedExecContext.RLock()
-	calls = mock.calls.NamedExecContext
-	mock.lockNamedExecContext.RUnlock()
 	return calls
 }
 

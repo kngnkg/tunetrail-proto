@@ -72,7 +72,6 @@ func TestAuth_SignUp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			apm := &AuthProviderMock{}
 			// モックの設定
 			apm.SignUpWithContextFunc = func(ctx context.Context, input *cognitoidentityprovider.SignUpInput, opts ...request.Option) (*cognitoidentityprovider.SignUpOutput, error) {
@@ -103,6 +102,80 @@ func TestAuth_SignUp(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestAuth_ConfirmSignUp(t *testing.T) {
+	var (
+		MISMATCH_CODE = "000000"
+		EXPIRED_CODE  = "111111"
+	)
+
+	type args struct {
+		ctx             context.Context
+		cognitoUserName string
+		code            string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "success",
+			args: args{
+				ctx:             context.Background(),
+				cognitoUserName: "test-userName",
+				code:            "123456",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "code mismatch",
+			args: args{
+				ctx:             context.Background(),
+				cognitoUserName: "test-userName",
+				code:            MISMATCH_CODE,
+			},
+			wantErr: ErrCodeMismatch,
+		},
+		{
+			name: "code is expired",
+			args: args{
+				ctx:             context.Background(),
+				cognitoUserName: "test-userName",
+				code:            EXPIRED_CODE,
+			},
+			wantErr: ErrCodeExpired,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			apm := &AuthProviderMock{}
+			apm.ConfirmSignUpWithContextFunc = func(ctx context.Context, input *cognitoidentityprovider.ConfirmSignUpInput, opts ...request.Option) (*cognitoidentityprovider.ConfirmSignUpOutput, error) {
+				if *input.ConfirmationCode == MISMATCH_CODE {
+					awserr := &cognitoidentityprovider.CodeMismatchException{
+						Message_: aws.String("mock"),
+					}
+					return nil, awserr
+				}
+				if *input.ConfirmationCode == EXPIRED_CODE {
+					awserr := &cognitoidentityprovider.ExpiredCodeException{
+						Message_: aws.String("mock"),
+					}
+					return nil, awserr
+				}
+				output := &cognitoidentityprovider.ConfirmSignUpOutput{}
+				return output, nil
+			}
+
+			a := createAuthFortest(t, apm)
+
+			err := a.ConfirmSignUp(tt.args.ctx, tt.args.cognitoUserName, tt.args.code)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("Auth.ConfirmSignUp() error = %v, wantErr %v", err, tt.wantErr)
+			}
 		})
 	}
 }

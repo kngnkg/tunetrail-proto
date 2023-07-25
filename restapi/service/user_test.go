@@ -40,7 +40,7 @@ var (
 
 func TestUserServiceTestSuite(t *testing.T) {
 	t.Parallel()
-	moqDB := &BeginnerMock{}
+	moqDB := &DBConnectionMock{}
 	moqRepo := &UserRepositoryMock{}
 	fc := &clock.FixedClocker{}
 
@@ -104,7 +104,7 @@ func TestUserServiceTestSuite(t *testing.T) {
 	}
 
 	// ダミーユーザー1を更新する場合を想定
-	moqRepo.UpdateUserFunc = func(ctx context.Context, db store.Queryer, u *model.User) error {
+	moqRepo.UpdateUserFunc = func(ctx context.Context, db store.Execer, u *model.User) error {
 		if u.Id != DUMMY_1_USER_ID && u.Id != DUMMY_2_USER_ID {
 			return store.ErrUserNotFound
 		}
@@ -115,7 +115,7 @@ func TestUserServiceTestSuite(t *testing.T) {
 		return nil
 	}
 
-	moqRepo.DeleteUserByUserNameFunc = func(ctx context.Context, db store.Queryer, userName string) error {
+	moqRepo.DeleteUserByUserNameFunc = func(ctx context.Context, db store.Execer, userName string) error {
 		if userName == DUMMY_1_USERNAME || userName == DUMMY_2_USERNAME {
 			return nil
 		}

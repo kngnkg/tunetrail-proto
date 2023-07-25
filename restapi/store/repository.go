@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 
@@ -13,36 +12,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Postgresのエラーコード
-const (
-	// 重複エラーコード
-	ErrCodePostgresDuplicate = "23505"
-)
-
-// storeパッケージで用いるエラー
-var (
-	// DBとの疎通が取れない
-	ErrCannotCommunicateWithDB = errors.New("store: cannot communicate with db")
-	// トランザクション開始に失敗
-	ErrBeginTxFailed = errors.New("store: begin tx failed")
-	// ロールバックに失敗
-	ErrRollbackFailed = errors.New("store: rollback failed")
-	// コミットに失敗
-	ErrCommitFailed = errors.New("store: commit failed")
-	// ユーザーが見つからない
-	ErrUserNotFound = errors.New("store: user not found")
-	// ユーザー名が既に存在する
-	ErrUserNameAlreadyExists = errors.New("store: user name already exists")
-	// メールアドレスが既に存在する
-	ErrEmailAlreadyExists = errors.New("store: email already exists")
-)
-
 type Repository struct {
 	Clocker clock.Clocker
 }
 
-// NewはconfigからDBオブジェクトを返す
-func New(cfg *config.Config) (*sqlx.DB, func(), error) {
+// NewはconfigからDBコネクションを返す
+func New(cfg *config.Config) (DBConnection, func(), error) {
 	driver := "postgres"
 
 	sslMode := "require"
@@ -68,6 +43,12 @@ func New(cfg *config.Config) (*sqlx.DB, func(), error) {
 	return xdb, func() { _ = db.Close() }, nil
 }
 
+type DBConnection interface {
+	Beginner
+	Queryer
+	Execer
+}
+
 // トランザクションを実行するためのインターフェース
 type Beginner interface {
 	BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error)
@@ -77,23 +58,32 @@ type Preparer interface {
 	PreparexContext(ctx context.Context, query string) (*sqlx.Stmt, error)
 }
 
-// Queryerはsqlx.DBとsqlx.Txのインターフェースを統一するためのインターフェース
+// Queryer、Execerはsqlx.DBとsqlx.Txのインターフェースを統一するためのインターフェース
+
+// Queryerは参照系のクエリを実行するためのインターフェース
 type Queryer interface {
 	Preparer
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
 	QueryxContext(ctx context.Context, query string, args ...any) (*sqlx.Rows, error)
 	QueryRowxContext(ctx context.Context, query string, args ...any) *sqlx.Row
 	GetContext(ctx context.Context, dest interface{}, query string, args ...any) error
 	SelectContext(ctx context.Context, dest interface{}, query string, args ...any) error
 }
 
+// Execerは更新系のクエリを実行するためのインターフェース
+type Execer interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	NamedExecContext(ctx context.Context, query string, arg interface{}) (sql.Result, error)
+}
+
 // インターフェースが期待通りに宣言されているか確認
 var (
-	_ Beginner = (*sqlx.DB)(nil)
-	_ Preparer = (*sqlx.DB)(nil)
-	_ Queryer  = (*sqlx.DB)(nil)
-	_ Queryer  = (*sqlx.Tx)(nil)
+	_ DBConnection = (*sqlx.DB)(nil)
+	_ Beginner     = (*sqlx.DB)(nil)
+	_ Preparer     = (*sqlx.DB)(nil)
+	_ Queryer      = (*sqlx.DB)(nil)
+	_ Queryer      = (*sqlx.Tx)(nil)
+	_ Execer       = (*sqlx.DB)(nil)
+	_ Execer       = (*sqlx.Tx)(nil)
 )
 
 // WithTransactionはトランザクションを実行する

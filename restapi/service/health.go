@@ -9,12 +9,8 @@ import (
 	"github.com/kngnkg/tunetrail/restapi/store"
 )
 
-type HealthRepository interface {
-	Ping(ctx context.Context, db store.Queryer) error
-}
-
 type HealthService struct {
-	DB   store.Queryer
+	DB   store.DBConnection
 	Repo HealthRepository
 }
 

@@ -23,6 +23,9 @@ var _ AuthProvider = &AuthProviderMock{}
 //			AdminInitiateAuthFunc: func(input *cognitoidentityprovider.AdminInitiateAuthInput) (*cognitoidentityprovider.AdminInitiateAuthOutput, error) {
 //				panic("mock out the AdminInitiateAuth method")
 //			},
+//			ConfirmSignUpWithContextFunc: func(ctx context.Context, input *cognitoidentityprovider.ConfirmSignUpInput, opts ...request.Option) (*cognitoidentityprovider.ConfirmSignUpOutput, error) {
+//				panic("mock out the ConfirmSignUpWithContext method")
+//			},
 //			SignUpWithContextFunc: func(ctx context.Context, input *cognitoidentityprovider.SignUpInput, opts ...request.Option) (*cognitoidentityprovider.SignUpOutput, error) {
 //				panic("mock out the SignUpWithContext method")
 //			},
@@ -36,6 +39,9 @@ type AuthProviderMock struct {
 	// AdminInitiateAuthFunc mocks the AdminInitiateAuth method.
 	AdminInitiateAuthFunc func(input *cognitoidentityprovider.AdminInitiateAuthInput) (*cognitoidentityprovider.AdminInitiateAuthOutput, error)
 
+	// ConfirmSignUpWithContextFunc mocks the ConfirmSignUpWithContext method.
+	ConfirmSignUpWithContextFunc func(ctx context.Context, input *cognitoidentityprovider.ConfirmSignUpInput, opts ...request.Option) (*cognitoidentityprovider.ConfirmSignUpOutput, error)
+
 	// SignUpWithContextFunc mocks the SignUpWithContext method.
 	SignUpWithContextFunc func(ctx context.Context, input *cognitoidentityprovider.SignUpInput, opts ...request.Option) (*cognitoidentityprovider.SignUpOutput, error)
 
@@ -45,6 +51,15 @@ type AuthProviderMock struct {
 		AdminInitiateAuth []struct {
 			// Input is the input argument value.
 			Input *cognitoidentityprovider.AdminInitiateAuthInput
+		}
+		// ConfirmSignUpWithContext holds details about calls to the ConfirmSignUpWithContext method.
+		ConfirmSignUpWithContext []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Input is the input argument value.
+			Input *cognitoidentityprovider.ConfirmSignUpInput
+			// Opts is the opts argument value.
+			Opts []request.Option
 		}
 		// SignUpWithContext holds details about calls to the SignUpWithContext method.
 		SignUpWithContext []struct {
@@ -56,8 +71,9 @@ type AuthProviderMock struct {
 			Opts []request.Option
 		}
 	}
-	lockAdminInitiateAuth sync.RWMutex
-	lockSignUpWithContext sync.RWMutex
+	lockAdminInitiateAuth        sync.RWMutex
+	lockConfirmSignUpWithContext sync.RWMutex
+	lockSignUpWithContext        sync.RWMutex
 }
 
 // AdminInitiateAuth calls AdminInitiateAuthFunc.
@@ -89,6 +105,46 @@ func (mock *AuthProviderMock) AdminInitiateAuthCalls() []struct {
 	mock.lockAdminInitiateAuth.RLock()
 	calls = mock.calls.AdminInitiateAuth
 	mock.lockAdminInitiateAuth.RUnlock()
+	return calls
+}
+
+// ConfirmSignUpWithContext calls ConfirmSignUpWithContextFunc.
+func (mock *AuthProviderMock) ConfirmSignUpWithContext(ctx context.Context, input *cognitoidentityprovider.ConfirmSignUpInput, opts ...request.Option) (*cognitoidentityprovider.ConfirmSignUpOutput, error) {
+	if mock.ConfirmSignUpWithContextFunc == nil {
+		panic("AuthProviderMock.ConfirmSignUpWithContextFunc: method is nil but AuthProvider.ConfirmSignUpWithContext was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		Input *cognitoidentityprovider.ConfirmSignUpInput
+		Opts  []request.Option
+	}{
+		Ctx:   ctx,
+		Input: input,
+		Opts:  opts,
+	}
+	mock.lockConfirmSignUpWithContext.Lock()
+	mock.calls.ConfirmSignUpWithContext = append(mock.calls.ConfirmSignUpWithContext, callInfo)
+	mock.lockConfirmSignUpWithContext.Unlock()
+	return mock.ConfirmSignUpWithContextFunc(ctx, input, opts...)
+}
+
+// ConfirmSignUpWithContextCalls gets all the calls that were made to ConfirmSignUpWithContext.
+// Check the length with:
+//
+//	len(mockedAuthProvider.ConfirmSignUpWithContextCalls())
+func (mock *AuthProviderMock) ConfirmSignUpWithContextCalls() []struct {
+	Ctx   context.Context
+	Input *cognitoidentityprovider.ConfirmSignUpInput
+	Opts  []request.Option
+} {
+	var calls []struct {
+		Ctx   context.Context
+		Input *cognitoidentityprovider.ConfirmSignUpInput
+		Opts  []request.Option
+	}
+	mock.lockConfirmSignUpWithContext.RLock()
+	calls = mock.calls.ConfirmSignUpWithContext
+	mock.lockConfirmSignUpWithContext.RUnlock()
 	return calls
 }
 

@@ -20,6 +20,7 @@ import (
 //go:generate go run github.com/matryer/moq -out moq_test.go . AuthProvider
 type AuthProvider interface {
 	SignUpWithContext(ctx context.Context, input *cognitoidentityprovider.SignUpInput, opts ...request.Option) (*cognitoidentityprovider.SignUpOutput, error)
+	ConfirmSignUpWithContext(ctx context.Context, input *cognitoidentityprovider.ConfirmSignUpInput, opts ...request.Option) (*cognitoidentityprovider.ConfirmSignUpOutput, error)
 	AdminInitiateAuth(input *cognitoidentityprovider.AdminInitiateAuthInput) (*cognitoidentityprovider.AdminInitiateAuthOutput, error)
 }
 
@@ -46,6 +47,8 @@ var (
 	ErrInvalidPassword    = errors.New("auth: invalid password")
 	ErrUserNotConfirmed   = errors.New("auth: user not confirmed")
 	ErrUserSubIsNil       = errors.New("auth: user sub is nil")
+	ErrCodeMismatch       = errors.New("auth: code mismatch")
+	ErrCodeExpired        = errors.New("auth: code expired")
 )
 
 func NewAuth(region, userPoolId, cognitoClientId, cognitoClientSecret string) *Auth {
@@ -121,6 +124,36 @@ func (a *Auth) SignUp(ctx context.Context, email, password string) (string, erro
 	}
 
 	return signUpWithRetry(0)
+}
+
+func (a *Auth) ConfirmSignUp(ctx context.Context, cognitoUserName, code string) error {
+	secretHash := a.getSecretHash(cognitoUserName)
+
+	param := &cognitoidentityprovider.ConfirmSignUpInput{
+		ClientId:         aws.String(a.cognitoClientId),
+		SecretHash:       aws.String(secretHash),
+		Username:         aws.String(cognitoUserName),
+		ConfirmationCode: aws.String(code),
+	}
+
+	_, err := a.provider.ConfirmSignUpWithContext(ctx, param)
+	if err != nil {
+		if awserr, ok := err.(awserr.Error); ok {
+			log.Println("awserr.Code(): " + awserr.Code())
+			log.Println("awserr.Message(): " + awserr.Message())
+			switch awserr.(type) {
+			case *cognitoidentityprovider.CodeMismatchException:
+				return fmt.Errorf("%w: %w", ErrCodeMismatch, awserr)
+			case *cognitoidentityprovider.ExpiredCodeException:
+				return fmt.Errorf("%w: %w", ErrCodeExpired, awserr)
+			default:
+				return fmt.Errorf("error from aws: %w", awserr)
+			}
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (a *Auth) Login(ctx context.Context, email, password string) (*Tokens, error) {

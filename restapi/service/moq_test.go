@@ -93,16 +93,16 @@ var _ UserRepository = &UserRepositoryMock{}
 //
 //		// make and configure a mocked UserRepository
 //		mockedUserRepository := &UserRepositoryMock{
-//			DeleteUserByUserNameFunc: func(ctx context.Context, db store.Queryer, userName string) error {
+//			DeleteUserByUserNameFunc: func(ctx context.Context, db store.Execer, userName string) error {
 //				panic("mock out the DeleteUserByUserName method")
 //			},
 //			GetUserByUserNameFunc: func(ctx context.Context, db store.Queryer, userName string) (*model.User, error) {
 //				panic("mock out the GetUserByUserName method")
 //			},
-//			RegisterUserFunc: func(ctx context.Context, db store.Queryer, u *model.User) error {
+//			RegisterUserFunc: func(ctx context.Context, db store.Execer, u *model.User) error {
 //				panic("mock out the RegisterUser method")
 //			},
-//			UpdateUserFunc: func(ctx context.Context, db store.Queryer, u *model.User) error {
+//			UpdateUserFunc: func(ctx context.Context, db store.Execer, u *model.User) error {
 //				panic("mock out the UpdateUser method")
 //			},
 //			UserExistsByUserNameFunc: func(ctx context.Context, db store.Queryer, userName string) (bool, error) {
@@ -119,16 +119,16 @@ var _ UserRepository = &UserRepositoryMock{}
 //	}
 type UserRepositoryMock struct {
 	// DeleteUserByUserNameFunc mocks the DeleteUserByUserName method.
-	DeleteUserByUserNameFunc func(ctx context.Context, db store.Queryer, userName string) error
+	DeleteUserByUserNameFunc func(ctx context.Context, db store.Execer, userName string) error
 
 	// GetUserByUserNameFunc mocks the GetUserByUserName method.
 	GetUserByUserNameFunc func(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
 
 	// RegisterUserFunc mocks the RegisterUser method.
-	RegisterUserFunc func(ctx context.Context, db store.Queryer, u *model.User) error
+	RegisterUserFunc func(ctx context.Context, db store.Execer, u *model.User) error
 
 	// UpdateUserFunc mocks the UpdateUser method.
-	UpdateUserFunc func(ctx context.Context, db store.Queryer, u *model.User) error
+	UpdateUserFunc func(ctx context.Context, db store.Execer, u *model.User) error
 
 	// UserExistsByUserNameFunc mocks the UserExistsByUserName method.
 	UserExistsByUserNameFunc func(ctx context.Context, db store.Queryer, userName string) (bool, error)
@@ -143,7 +143,7 @@ type UserRepositoryMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Db is the db argument value.
-			Db store.Queryer
+			Db store.Execer
 			// UserName is the userName argument value.
 			UserName string
 		}
@@ -161,7 +161,7 @@ type UserRepositoryMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Db is the db argument value.
-			Db store.Queryer
+			Db store.Execer
 			// U is the u argument value.
 			U *model.User
 		}
@@ -170,7 +170,7 @@ type UserRepositoryMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Db is the db argument value.
-			Db store.Queryer
+			Db store.Execer
 			// U is the u argument value.
 			U *model.User
 		}
@@ -202,13 +202,13 @@ type UserRepositoryMock struct {
 }
 
 // DeleteUserByUserName calls DeleteUserByUserNameFunc.
-func (mock *UserRepositoryMock) DeleteUserByUserName(ctx context.Context, db store.Queryer, userName string) error {
+func (mock *UserRepositoryMock) DeleteUserByUserName(ctx context.Context, db store.Execer, userName string) error {
 	if mock.DeleteUserByUserNameFunc == nil {
 		panic("UserRepositoryMock.DeleteUserByUserNameFunc: method is nil but UserRepository.DeleteUserByUserName was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
-		Db       store.Queryer
+		Db       store.Execer
 		UserName string
 	}{
 		Ctx:      ctx,
@@ -227,12 +227,12 @@ func (mock *UserRepositoryMock) DeleteUserByUserName(ctx context.Context, db sto
 //	len(mockedUserRepository.DeleteUserByUserNameCalls())
 func (mock *UserRepositoryMock) DeleteUserByUserNameCalls() []struct {
 	Ctx      context.Context
-	Db       store.Queryer
+	Db       store.Execer
 	UserName string
 } {
 	var calls []struct {
 		Ctx      context.Context
-		Db       store.Queryer
+		Db       store.Execer
 		UserName string
 	}
 	mock.lockDeleteUserByUserName.RLock()
@@ -282,13 +282,13 @@ func (mock *UserRepositoryMock) GetUserByUserNameCalls() []struct {
 }
 
 // RegisterUser calls RegisterUserFunc.
-func (mock *UserRepositoryMock) RegisterUser(ctx context.Context, db store.Queryer, u *model.User) error {
+func (mock *UserRepositoryMock) RegisterUser(ctx context.Context, db store.Execer, u *model.User) error {
 	if mock.RegisterUserFunc == nil {
 		panic("UserRepositoryMock.RegisterUserFunc: method is nil but UserRepository.RegisterUser was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		Db  store.Queryer
+		Db  store.Execer
 		U   *model.User
 	}{
 		Ctx: ctx,
@@ -307,12 +307,12 @@ func (mock *UserRepositoryMock) RegisterUser(ctx context.Context, db store.Query
 //	len(mockedUserRepository.RegisterUserCalls())
 func (mock *UserRepositoryMock) RegisterUserCalls() []struct {
 	Ctx context.Context
-	Db  store.Queryer
+	Db  store.Execer
 	U   *model.User
 } {
 	var calls []struct {
 		Ctx context.Context
-		Db  store.Queryer
+		Db  store.Execer
 		U   *model.User
 	}
 	mock.lockRegisterUser.RLock()
@@ -322,13 +322,13 @@ func (mock *UserRepositoryMock) RegisterUserCalls() []struct {
 }
 
 // UpdateUser calls UpdateUserFunc.
-func (mock *UserRepositoryMock) UpdateUser(ctx context.Context, db store.Queryer, u *model.User) error {
+func (mock *UserRepositoryMock) UpdateUser(ctx context.Context, db store.Execer, u *model.User) error {
 	if mock.UpdateUserFunc == nil {
 		panic("UserRepositoryMock.UpdateUserFunc: method is nil but UserRepository.UpdateUser was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		Db  store.Queryer
+		Db  store.Execer
 		U   *model.User
 	}{
 		Ctx: ctx,
@@ -347,12 +347,12 @@ func (mock *UserRepositoryMock) UpdateUser(ctx context.Context, db store.Queryer
 //	len(mockedUserRepository.UpdateUserCalls())
 func (mock *UserRepositoryMock) UpdateUserCalls() []struct {
 	Ctx context.Context
-	Db  store.Queryer
+	Db  store.Execer
 	U   *model.User
 } {
 	var calls []struct {
 		Ctx context.Context
-		Db  store.Queryer
+		Db  store.Execer
 		U   *model.User
 	}
 	mock.lockUpdateUser.RLock()
@@ -451,6 +451,9 @@ var _ Auth = &AuthMock{}
 //
 //		// make and configure a mocked Auth
 //		mockedAuth := &AuthMock{
+//			ConfirmSignUpFunc: func(ctx context.Context, cognitoUserName string, code string) error {
+//				panic("mock out the ConfirmSignUp method")
+//			},
 //			SignUpFunc: func(ctx context.Context, email string, password string) (string, error) {
 //				panic("mock out the SignUp method")
 //			},
@@ -461,11 +464,23 @@ var _ Auth = &AuthMock{}
 //
 //	}
 type AuthMock struct {
+	// ConfirmSignUpFunc mocks the ConfirmSignUp method.
+	ConfirmSignUpFunc func(ctx context.Context, cognitoUserName string, code string) error
+
 	// SignUpFunc mocks the SignUp method.
 	SignUpFunc func(ctx context.Context, email string, password string) (string, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// ConfirmSignUp holds details about calls to the ConfirmSignUp method.
+		ConfirmSignUp []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// CognitoUserName is the cognitoUserName argument value.
+			CognitoUserName string
+			// Code is the code argument value.
+			Code string
+		}
 		// SignUp holds details about calls to the SignUp method.
 		SignUp []struct {
 			// Ctx is the ctx argument value.
@@ -476,7 +491,48 @@ type AuthMock struct {
 			Password string
 		}
 	}
-	lockSignUp sync.RWMutex
+	lockConfirmSignUp sync.RWMutex
+	lockSignUp        sync.RWMutex
+}
+
+// ConfirmSignUp calls ConfirmSignUpFunc.
+func (mock *AuthMock) ConfirmSignUp(ctx context.Context, cognitoUserName string, code string) error {
+	if mock.ConfirmSignUpFunc == nil {
+		panic("AuthMock.ConfirmSignUpFunc: method is nil but Auth.ConfirmSignUp was just called")
+	}
+	callInfo := struct {
+		Ctx             context.Context
+		CognitoUserName string
+		Code            string
+	}{
+		Ctx:             ctx,
+		CognitoUserName: cognitoUserName,
+		Code:            code,
+	}
+	mock.lockConfirmSignUp.Lock()
+	mock.calls.ConfirmSignUp = append(mock.calls.ConfirmSignUp, callInfo)
+	mock.lockConfirmSignUp.Unlock()
+	return mock.ConfirmSignUpFunc(ctx, cognitoUserName, code)
+}
+
+// ConfirmSignUpCalls gets all the calls that were made to ConfirmSignUp.
+// Check the length with:
+//
+//	len(mockedAuth.ConfirmSignUpCalls())
+func (mock *AuthMock) ConfirmSignUpCalls() []struct {
+	Ctx             context.Context
+	CognitoUserName string
+	Code            string
+} {
+	var calls []struct {
+		Ctx             context.Context
+		CognitoUserName string
+		Code            string
+	}
+	mock.lockConfirmSignUp.RLock()
+	calls = mock.calls.ConfirmSignUp
+	mock.lockConfirmSignUp.RUnlock()
+	return calls
 }
 
 // SignUp calls SignUpFunc.
