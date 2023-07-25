@@ -45,7 +45,7 @@ func TestHealthService_HealthCheck(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			moqDB := &QueryerMock{}
+			moqDB := &DBConnectionMock{}
 			moqRepo := &HealthRepositoryMock{}
 			moqRepo.PingFunc = func(ctx context.Context, db store.Queryer) error {
 				if tt.name == "errCannotCommunicateWithDB" {

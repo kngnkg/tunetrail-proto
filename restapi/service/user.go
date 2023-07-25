@@ -11,7 +11,7 @@ import (
 )
 
 type UserService struct {
-	DB   store.Beginner
+	DB   store.DBConnection
 	Repo UserRepository
 }
 

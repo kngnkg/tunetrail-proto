@@ -15,40 +15,6 @@ const (
 	ConstraintUserName = "users_user_name_key"
 )
 
-// RegisterUser はユーザーを登録する
-func (r *Repository) RegisterUser(ctx context.Context, db Queryer, u *model.User) error {
-	u.CreatedAt = r.Clocker.Now()
-	u.UpdatedAt = r.Clocker.Now()
-	query := `INSERT INTO users (id, user_name, name, icon_url, bio, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7);`
-
-	_, err := db.ExecContext(ctx, query, u.Id, u.UserName, u.Name, u.IconUrl, u.Bio, u.CreatedAt, u.UpdatedAt)
-	if err != nil {
-		var pqError *pq.Error
-		// 重複エラーの場合はエラーをラップして返す
-		if errors.As(err, &pqError) && pqError.Code == ErrCodePostgresDuplicate {
-			if pqError.Constraint == ConstraintUserName {
-				return fmt.Errorf("%w: %w", ErrUserNameAlreadyExists, err)
-			}
-		}
-		return err
-	}
-
-	return nil
-}
-
-// UserExistsByUserName はユーザー名が既に存在するかどうかを返す
-func (r *Repository) UserExistsByUserName(ctx context.Context, db Queryer, userName string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM users WHERE user_name = $1);`
-
-	var exists bool
-	err := db.QueryRowxContext(ctx, query, userName).Scan(&exists)
-	if err != nil {
-		return false, err
-	}
-	return exists, nil
-}
-
 // GetUserByUserName はユーザー名からユーザーを取得する
 func (r *Repository) GetUserByUserName(ctx context.Context, db Queryer, userName string) (*model.User, error) {
 	u := &model.User{}
@@ -69,8 +35,42 @@ func (r *Repository) GetUserByUserName(ctx context.Context, db Queryer, userName
 	return u, nil
 }
 
+// UserExistsByUserName はユーザー名が既に存在するかどうかを返す
+func (r *Repository) UserExistsByUserName(ctx context.Context, db Queryer, userName string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE user_name = $1);`
+
+	var exists bool
+	err := db.QueryRowxContext(ctx, query, userName).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+// RegisterUser はユーザーを登録する
+func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User) error {
+	u.CreatedAt = r.Clocker.Now()
+	u.UpdatedAt = r.Clocker.Now()
+	query := `INSERT INTO users (id, user_name, name, icon_url, bio, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7);`
+
+	_, err := db.ExecContext(ctx, query, u.Id, u.UserName, u.Name, u.IconUrl, u.Bio, u.CreatedAt, u.UpdatedAt)
+	if err != nil {
+		var pqError *pq.Error
+		// 重複エラーの場合はエラーをラップして返す
+		if errors.As(err, &pqError) && pqError.Code == ErrCodePostgresDuplicate {
+			if pqError.Constraint == ConstraintUserName {
+				return fmt.Errorf("%w: %w", ErrUserNameAlreadyExists, err)
+			}
+		}
+		return err
+	}
+
+	return nil
+}
+
 // UpdateUser はユーザーを更新する
-func (r *Repository) UpdateUser(ctx context.Context, db Queryer, u *model.User) error {
+func (r *Repository) UpdateUser(ctx context.Context, db Execer, u *model.User) error {
 	u.UpdatedAt = r.Clocker.Now()
 	query := `UPDATE users
 			SET user_name = $2, name = $3, icon_url = $4, bio = $5, updated_at = $6
@@ -105,7 +105,7 @@ func (r *Repository) UpdateUser(ctx context.Context, db Queryer, u *model.User) 
 }
 
 // DeleteUserByUserName はユーザー名からユーザーを削除する
-func (r *Repository) DeleteUserByUserName(ctx context.Context, db Queryer, userName string) error {
+func (r *Repository) DeleteUserByUserName(ctx context.Context, db Execer, userName string) error {
 	query := `DELETE FROM users WHERE user_name = $1;`
 
 	row, err := db.ExecContext(ctx, query, userName)

@@ -26,7 +26,7 @@ type AuthServiceTestSuite struct {
 
 func TestAuthServiceTestSuite(t *testing.T) {
 	t.Parallel()
-	moqDB := &BeginnerMock{}
+	moqDB := &DBConnectionMock{}
 	moqRepo := &UserRepositoryMock{}
 	moqAuth := &AuthMock{}
 	fc := &clock.FixedClocker{}
@@ -73,7 +73,7 @@ func TestAuthServiceTestSuite(t *testing.T) {
 		return nil
 	}
 
-	moqRepo.RegisterUserFunc = func(ctx context.Context, db store.Queryer, u *model.User) error {
+	moqRepo.RegisterUserFunc = func(ctx context.Context, db store.Execer, u *model.User) error {
 		// ダミーの値を設定
 		u.Id = "1"
 		u.CreatedAt = fc.Now()

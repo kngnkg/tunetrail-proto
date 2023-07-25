@@ -8,10 +8,11 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/kngnkg/tunetrail/restapi/auth"
 	"github.com/kngnkg/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/store"
 )
 
 type AuthService struct {
-	DB   *sqlx.DB
+	DB   store.DBConnection
 	Repo UserRepository
 	Auth Auth
 }

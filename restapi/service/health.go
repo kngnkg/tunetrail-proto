@@ -10,7 +10,7 @@ import (
 )
 
 type HealthService struct {
-	DB   store.Queryer
+	DB   store.DBConnection
 	Repo HealthRepository
 }
 
