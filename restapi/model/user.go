@@ -10,11 +10,11 @@ type User struct {
 	Name      string    `json:"name" db:"name" binding:"required,min=3,max=20"`
 	IconUrl   string    `json:"iconUrl" db:"icon_url" binding:"required,url"`
 	Bio       string    `json:"bio" db:"bio" binding:"required,max=1000"`
+	Password  string    `json:"password" binding:"password"`
+	Email     string    `json:"email" binding:"email"`
 	CreatedAt time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
 }
-
-type Users []User
 
 type UserRegistrationData struct {
 	UserName string `json:"userName" binding:"required,min=3,max=20"`
