@@ -60,3 +60,25 @@ func (as *AuthService) RegisterUser(ctx context.Context, data *model.UserRegistr
 
 	return registeredUser, nil
 }
+
+func (as *AuthService) ConfirmEmail(ctx context.Context, userName, code string) error {
+	user, err := as.Repo.GetUserByUserName(ctx, as.DB, userName)
+	if err != nil {
+		if errors.Is(err, store.ErrUserNotFound) {
+			return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, userName, err)
+		}
+		return err
+	}
+
+	if err := as.Auth.ConfirmSignUp(ctx, user.Id, code); err != nil {
+		if errors.Is(err, auth.ErrCodeMismatch) {
+			return fmt.Errorf("%w: %w", ErrCodeMismatch, err)
+		}
+		if errors.Is(err, auth.ErrCodeExpired) {
+			return fmt.Errorf("%w: %w", ErrCodeExpired, err)
+		}
+		return err
+	}
+
+	return nil
+}
