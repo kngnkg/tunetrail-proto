@@ -102,14 +102,18 @@ func (s *UserStoreTestSuite) TestRegisterUser() {
 			if !errors.Is(err, tt.wantErr) {
 				s.T().Errorf("Repository.RegisterUser() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if tt.wantErr == nil {
-				// ユーザーが登録されているか確認する
-				got, err := s.r.GetUserByUserName(s.ctx, tx, tt.user.Name)
-				if err != nil {
-					s.T().Fatal(err)
-				}
-				assert.Equal(s.T(), tt.user, got)
+
+			if tt.wantErr != nil {
+				// 異常系の場合はここでテストを終了する
+				return
 			}
+
+			// ユーザーが登録されているか確認する
+			got, err := s.r.GetUserByUserName(s.ctx, tx, tt.user.Name)
+			if err != nil {
+				s.T().Fatal(err)
+			}
+			testutil.AssertUser(s.T(), tt.user, got)
 		})
 	}
 }
@@ -183,7 +187,7 @@ func (s *UserStoreTestSuite) TestGetUserByUserName() {
 			if !errors.Is(err, tt.wantErr) {
 				s.T().Errorf("Repository.GetUserByUserName() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			assert.Equal(s.T(), tt.want, got)
+			testutil.AssertUser(s.T(), tt.want, got)
 		})
 	}
 }
