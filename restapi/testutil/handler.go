@@ -14,6 +14,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func SetGinTestMode(t *testing.T) {
+	t.Helper()
+	if gin.Mode() != gin.TestMode {
+		gin.SetMode(gin.TestMode)
+	}
+}
+
 // テスト用のサーバーを起動し、URLを返す。
 // t: テスト
 // reqMethod: 登録したいリクエストメソッド
@@ -21,7 +28,7 @@ import (
 // handler: 検証したいハンドラ
 func RunTestServer(t *testing.T, reqMethod string, endpoint string, handler gin.HandlerFunc) string {
 	t.Helper()
-	router := gin.Default()
+	router := gin.New()
 
 	// ハンドラの登録
 	switch reqMethod {
