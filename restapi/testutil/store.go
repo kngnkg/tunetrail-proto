@@ -5,9 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"reflect"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/kngnkg/tunetrail/restapi/model"
+	"github.com/stretchr/testify/assert"
 )
 
 // OpenDbForTestはテスト用のDBオブジェクトを返す。
@@ -39,5 +42,25 @@ func DeleteUserAll(t *testing.T, ctx context.Context, tx *sqlx.Tx) {
 
 	if _, err := tx.ExecContext(ctx, "DELETE FROM users"); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Password、Email以外のフィールドが一致することを確認する。
+func AssertUser(t *testing.T, expected, actial *model.User) {
+	t.Helper()
+
+	if expected == nil {
+		assert.Nil(t, actial)
+		return
+	}
+
+	ev := reflect.ValueOf(expected).Elem()
+	av := reflect.ValueOf(actial).Elem()
+	for i := 0; i < ev.NumField(); i++ {
+		field := ev.Type().Field(i)
+		if field.Name == "Password" || field.Name == "Email" {
+			continue
+		}
+		assert.Equal(t, ev.Field(i).Interface(), av.Field(i).Interface())
 	}
 }

@@ -78,7 +78,8 @@ func (a *Auth) SignUp(ctx context.Context, email, password string) (string, erro
 			return "", fmt.Errorf("maximum retry attempts exceeded")
 		}
 
-		cognitoUserName := generateCognitoUserName() // Cognito内でのみ使用するユーザー名
+		// TODO: service層でユーザーIdを生成するように変更する
+		cognitoUserName := generateUserId() // Cognitoのユーザー名はユーザーIDとする
 		secretHash := a.getSecretHash(cognitoUserName)
 
 		param := &cognitoidentityprovider.SignUpInput{
@@ -118,21 +119,19 @@ func (a *Auth) SignUp(ctx context.Context, email, password string) (string, erro
 			return "", ErrUserSubIsNil
 		}
 
-		log.Print("usersub: " + *res.UserSub)
-		// Cognitoから返されるUUIDを返す
 		return *res.UserSub, nil
 	}
 
 	return signUpWithRetry(0)
 }
 
-func (a *Auth) ConfirmSignUp(ctx context.Context, cognitoUserName, code string) error {
-	secretHash := a.getSecretHash(cognitoUserName)
+func (a *Auth) ConfirmSignUp(ctx context.Context, userId, code string) error {
+	secretHash := a.getSecretHash(userId)
 
 	param := &cognitoidentityprovider.ConfirmSignUpInput{
 		ClientId:         aws.String(a.cognitoClientId),
 		SecretHash:       aws.String(secretHash),
-		Username:         aws.String(cognitoUserName),
+		Username:         aws.String(userId),
 		ConfirmationCode: aws.String(code),
 	}
 
@@ -192,7 +191,7 @@ func (a *Auth) getSecretHash(username string) string {
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
 
-// Cognito内でのみ使用するユーザー名を生成する
-func generateCognitoUserName() string {
+// ユーザーIDを生成する
+func generateUserId() string {
 	return uuid.New().String()
 }

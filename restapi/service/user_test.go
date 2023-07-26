@@ -24,7 +24,6 @@ type UserServiceTestSuite struct {
 }
 
 var (
-	VALID_USER_ID  = "1"
 	VALID_PASSWORD = "password"
 
 	DUMMY_1_USER_ID  = "dummy1id"

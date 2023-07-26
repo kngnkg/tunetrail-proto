@@ -10,7 +10,7 @@ import (
 
 type Auth interface {
 	SignUp(ctx context.Context, email, password string) (string, error)
-	ConfirmSignUp(ctx context.Context, cognitoUserName, code string) error
+	ConfirmSignUp(ctx context.Context, userId, code string) error
 }
 
 type UserRepository interface {

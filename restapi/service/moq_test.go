@@ -451,7 +451,7 @@ var _ Auth = &AuthMock{}
 //
 //		// make and configure a mocked Auth
 //		mockedAuth := &AuthMock{
-//			ConfirmSignUpFunc: func(ctx context.Context, cognitoUserName string, code string) error {
+//			ConfirmSignUpFunc: func(ctx context.Context, userId string, code string) error {
 //				panic("mock out the ConfirmSignUp method")
 //			},
 //			SignUpFunc: func(ctx context.Context, email string, password string) (string, error) {
@@ -465,7 +465,7 @@ var _ Auth = &AuthMock{}
 //	}
 type AuthMock struct {
 	// ConfirmSignUpFunc mocks the ConfirmSignUp method.
-	ConfirmSignUpFunc func(ctx context.Context, cognitoUserName string, code string) error
+	ConfirmSignUpFunc func(ctx context.Context, userId string, code string) error
 
 	// SignUpFunc mocks the SignUp method.
 	SignUpFunc func(ctx context.Context, email string, password string) (string, error)
@@ -476,8 +476,8 @@ type AuthMock struct {
 		ConfirmSignUp []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// CognitoUserName is the cognitoUserName argument value.
-			CognitoUserName string
+			// UserId is the userId argument value.
+			UserId string
 			// Code is the code argument value.
 			Code string
 		}
@@ -496,23 +496,23 @@ type AuthMock struct {
 }
 
 // ConfirmSignUp calls ConfirmSignUpFunc.
-func (mock *AuthMock) ConfirmSignUp(ctx context.Context, cognitoUserName string, code string) error {
+func (mock *AuthMock) ConfirmSignUp(ctx context.Context, userId string, code string) error {
 	if mock.ConfirmSignUpFunc == nil {
 		panic("AuthMock.ConfirmSignUpFunc: method is nil but Auth.ConfirmSignUp was just called")
 	}
 	callInfo := struct {
-		Ctx             context.Context
-		CognitoUserName string
-		Code            string
+		Ctx    context.Context
+		UserId string
+		Code   string
 	}{
-		Ctx:             ctx,
-		CognitoUserName: cognitoUserName,
-		Code:            code,
+		Ctx:    ctx,
+		UserId: userId,
+		Code:   code,
 	}
 	mock.lockConfirmSignUp.Lock()
 	mock.calls.ConfirmSignUp = append(mock.calls.ConfirmSignUp, callInfo)
 	mock.lockConfirmSignUp.Unlock()
-	return mock.ConfirmSignUpFunc(ctx, cognitoUserName, code)
+	return mock.ConfirmSignUpFunc(ctx, userId, code)
 }
 
 // ConfirmSignUpCalls gets all the calls that were made to ConfirmSignUp.
@@ -520,14 +520,14 @@ func (mock *AuthMock) ConfirmSignUp(ctx context.Context, cognitoUserName string,
 //
 //	len(mockedAuth.ConfirmSignUpCalls())
 func (mock *AuthMock) ConfirmSignUpCalls() []struct {
-	Ctx             context.Context
-	CognitoUserName string
-	Code            string
+	Ctx    context.Context
+	UserId string
+	Code   string
 } {
 	var calls []struct {
-		Ctx             context.Context
-		CognitoUserName string
-		Code            string
+		Ctx    context.Context
+		UserId string
+		Code   string
 	}
 	mock.lockConfirmSignUp.RLock()
 	calls = mock.calls.ConfirmSignUp

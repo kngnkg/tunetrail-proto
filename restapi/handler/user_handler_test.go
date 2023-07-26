@@ -12,56 +12,29 @@ import (
 	"github.com/kngnkg/tunetrail/restapi/service"
 	"github.com/kngnkg/tunetrail/restapi/testutil"
 	"github.com/kngnkg/tunetrail/restapi/validate"
+	"github.com/stretchr/testify/suite"
 )
 
-func setupForUserHandlerTest(t *testing.T, moqService *UserServiceMock) {
-	t.Helper()
+type UserHandlerTestSuite struct {
+	suite.Suite
+	uh *UserHandler // テスト対象のハンドラ
+}
 
-	fc := &clock.FixedClocker{}
-	moqService.GetUserByUserNameFunc = func(ctx context.Context, userName string) (*model.User, error) {
-		u := &model.User{
-			Id:        "1",
-			UserName:  "dummy",
-			Name:      "dummy",
-			IconUrl:   "https://example.com/icon.png",
-			Bio:       "dummy",
-			CreatedAt: fc.Now(),
-			UpdatedAt: fc.Now(),
-		}
-		if userName == "notFound" {
-			return nil, service.ErrUserNotFound
-		}
-		return u, nil
-	}
+func TestUserHandlerTestSuite(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, new(UserHandlerTestSuite))
+}
 
-	moqService.UpdateUserFunc = func(ctx context.Context, u *model.UserUpdateData) error {
-		if u.Id != "1" {
-			return service.ErrUserNotFound
-		}
-		if u.UserName == "exists" {
-			return service.ErrUserNameAlreadyExists
-		}
-		if u.Email == "exists@example.com" {
-			return service.ErrEmailAlreadyExists
-		}
-		return nil
-	}
+func (s *UserHandlerTestSuite) SetupTest() {
+	testutil.SetGinTestMode(s.T())
 
-	moqService.DeleteUserByUserNameFunc = func(ctx context.Context, userName string) error {
-		switch userName {
-		case "notFound":
-			return service.ErrUserNotFound
-		case "dummy":
-			return nil
-		default:
-			return errors.New("unexpected error")
-		}
+	usm := setupUserServiceMock(s.T())
+	s.uh = &UserHandler{
+		Service: usm,
 	}
 }
 
-func TestGetUserByUserName(t *testing.T) {
-	t.Parallel()
-
+func (s *UserHandlerTestSuite) TestGetUserByUserName() {
 	tests := []struct {
 		name         string
 		userName     string // ユーザー名
@@ -85,27 +58,18 @@ func TestGetUserByUserName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Logf("userName: %s", tt.userName)
-			moqService := &UserServiceMock{}
-			setupForUserHandlerTest(t, moqService)
-			uh := &UserHandler{
-				Service: moqService,
-			}
-
-			url := testutil.RunTestServer(t, "GET", "/user/:user_name", uh.GetUserByUserName)
+		s.Run(tt.name, func() {
+			url := testutil.RunTestServer(s.T(), "GET", "/user/:user_name", s.uh.GetUserByUserName)
 			url = strings.Replace(url, ":user_name", tt.userName, 1)
-			resp := testutil.SendGetRequest(t, url)
+			resp := testutil.SendGetRequest(s.T(), url)
 			// 期待するレスポンスボディのファイルをロードする
-			wantResp := testutil.LoadFile(t, tt.wantRespFile)
-			testutil.AssertResponse(t, resp, tt.wantStatus, wantResp)
+			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
+			testutil.AssertResponse(s.T(), resp, tt.wantStatus, wantResp)
 		})
 	}
 }
 
-func TestUpdateUser(t *testing.T) {
-	t.Parallel()
-
+func (s *UserHandlerTestSuite) TestUpdateUser() {
 	// バリデーションの初期化
 	validate.InitValidation()
 	tests := []struct {
@@ -152,26 +116,18 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			moqService := &UserServiceMock{}
-			setupForUserHandlerTest(t, moqService)
-			uh := &UserHandler{
-				Service: moqService,
-			}
-
-			url := testutil.RunTestServer(t, "PUT", "/user", uh.UpdateUser)
-			reqBody := testutil.LoadFile(t, tt.reqFile)
-			resp := testutil.SendRequest(t, "PUT", url, reqBody)
+		s.Run(tt.name, func() {
+			url := testutil.RunTestServer(s.T(), "PUT", "/user", s.uh.UpdateUser)
+			reqBody := testutil.LoadFile(s.T(), tt.reqFile)
+			resp := testutil.SendRequest(s.T(), "PUT", url, reqBody)
 			// 期待するレスポンスボディのファイルをロードする
-			wantResp := testutil.LoadFile(t, tt.wantRespFile)
-			testutil.AssertResponse(t, resp, tt.wantStatus, wantResp)
+			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
+			testutil.AssertResponse(s.T(), resp, tt.wantStatus, wantResp)
 		})
 	}
 }
 
-func TestDeleteUserByUserName(t *testing.T) {
-	t.Parallel()
-
+func (s *UserHandlerTestSuite) TestDeleteUserByUserName() {
 	tests := []struct {
 		name         string
 		userName     string // ユーザー名
@@ -195,19 +151,59 @@ func TestDeleteUserByUserName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Logf("userName: %s", tt.userName)
-			moqService := &UserServiceMock{}
-			setupForUserHandlerTest(t, moqService)
-			uh := &UserHandler{
-				Service: moqService,
-			}
-
-			url := testutil.RunTestServer(t, "DELETE", "/user/:user_name", uh.DeleteUserByUserName)
+		s.Run(tt.name, func() {
+			url := testutil.RunTestServer(s.T(), "DELETE", "/user/:user_name", s.uh.DeleteUserByUserName)
 			url = strings.Replace(url, ":user_name", tt.userName, 1)
-			resp := testutil.SendRequest(t, "DELETE", url, nil)
-			wantResp := testutil.LoadFile(t, tt.wantRespFile)
-			testutil.AssertResponse(t, resp, tt.wantStatus, wantResp)
+			resp := testutil.SendRequest(s.T(), "DELETE", url, nil)
+			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
+			testutil.AssertResponse(s.T(), resp, tt.wantStatus, wantResp)
 		})
 	}
+}
+
+func setupUserServiceMock(t *testing.T) *UserServiceMock {
+	t.Helper()
+
+	fc := &clock.FixedClocker{}
+	mock := &UserServiceMock{
+		GetUserByUserNameFunc: func(ctx context.Context, userName string) (*model.User, error) {
+			u := &model.User{
+				Id:        "1",
+				UserName:  "dummy",
+				Name:      "dummy",
+				IconUrl:   "https://example.com/icon.png",
+				Bio:       "dummy",
+				CreatedAt: fc.Now(),
+				UpdatedAt: fc.Now(),
+			}
+			if userName == "notFound" {
+				return nil, service.ErrUserNotFound
+			}
+			return u, nil
+		},
+		UpdateUserFunc: func(ctx context.Context, u *model.UserUpdateData) error {
+			if u.Id != "1" {
+				return service.ErrUserNotFound
+			}
+			if u.UserName == "exists" {
+				return service.ErrUserNameAlreadyExists
+			}
+			if u.Email == "exists@example.com" {
+				return service.ErrEmailAlreadyExists
+			}
+			return nil
+		},
+		DeleteUserByUserNameFunc: func(ctx context.Context, userName string) error {
+			switch userName {
+			case "notFound":
+				return service.ErrUserNotFound
+			case "dummy":
+				return nil
+			default:
+				return errors.New("unexpected error")
+			}
+		},
+	}
+
+	return mock
 }
