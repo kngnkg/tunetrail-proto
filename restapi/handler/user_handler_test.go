@@ -12,6 +12,7 @@ import (
 	"github.com/kngnkg/tunetrail/restapi/service"
 	"github.com/kngnkg/tunetrail/restapi/testutil"
 	"github.com/kngnkg/tunetrail/restapi/validate"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -52,7 +53,7 @@ func (s *UserHandlerTestSuite) TestGetUserByUserName() {
 		{
 			"notFound",
 			"notFound",
-			http.StatusBadRequest,
+			http.StatusNotFound,
 			"testdata/user/get_by_username/not_found_response.json.golden",
 		},
 	}
@@ -62,9 +63,11 @@ func (s *UserHandlerTestSuite) TestGetUserByUserName() {
 			url := testutil.RunTestServer(s.T(), "GET", "/user/:user_name", s.uh.GetUserByUserName)
 			url = strings.Replace(url, ":user_name", tt.userName, 1)
 			resp := testutil.SendGetRequest(s.T(), url)
-			// 期待するレスポンスボディのファイルをロードする
+
+			assert.Equal(s.T(), tt.wantStatus, resp.StatusCode)
+
 			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
-			testutil.AssertResponse(s.T(), resp, tt.wantStatus, wantResp)
+			testutil.AssertResponseBody(s.T(), resp, wantResp)
 		})
 	}
 }
@@ -82,8 +85,8 @@ func (s *UserHandlerTestSuite) TestUpdateUser() {
 		{
 			"ok",
 			"testdata/user/update/ok_request.json.golden",
-			http.StatusOK,
-			"testdata/user/update/ok_response.json.golden",
+			http.StatusNoContent,
+			"",
 		},
 		// フィールドの値が不正な場合
 		{
@@ -96,21 +99,21 @@ func (s *UserHandlerTestSuite) TestUpdateUser() {
 		{
 			"notFound",
 			"testdata/user/update/not_found_request.json.golden",
-			http.StatusBadRequest,
+			http.StatusNotFound,
 			"testdata/user/update/not_found_response.json.golden",
 		},
 		// ユーザー名が既に存在する場合
 		{
 			"alreadyExistsUserName",
 			"testdata/user/update/user_name_exists_request.json.golden",
-			http.StatusBadRequest,
+			http.StatusConflict,
 			"testdata/user/update/user_name_exists_response.json.golden",
 		},
 		// メールアドレスが既に存在する場合
 		{
 			"alreadyExistsEmail",
 			"testdata/user/update/email_exists_request.json.golden",
-			http.StatusBadRequest,
+			http.StatusConflict,
 			"testdata/user/update/email_exists_response.json.golden",
 		},
 	}
@@ -120,9 +123,14 @@ func (s *UserHandlerTestSuite) TestUpdateUser() {
 			url := testutil.RunTestServer(s.T(), "PUT", "/user", s.uh.UpdateUser)
 			reqBody := testutil.LoadFile(s.T(), tt.reqFile)
 			resp := testutil.SendRequest(s.T(), "PUT", url, reqBody)
-			// 期待するレスポンスボディのファイルをロードする
+
+			assert.Equal(s.T(), tt.wantStatus, resp.StatusCode)
+
+			if tt.wantRespFile == "" {
+				return
+			}
 			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
-			testutil.AssertResponse(s.T(), resp, tt.wantStatus, wantResp)
+			testutil.AssertResponseBody(s.T(), resp, wantResp)
 		})
 	}
 }
@@ -138,14 +146,14 @@ func (s *UserHandlerTestSuite) TestDeleteUserByUserName() {
 		{
 			"ok",
 			"dummy",
-			http.StatusOK,
-			"testdata/user/delete_by_username/ok_response.json.golden",
+			http.StatusNoContent,
+			"",
 		},
 		// ユーザー名が存在しない場合
 		{
 			"notFound",
 			"notFound",
-			http.StatusBadRequest,
+			http.StatusNotFound,
 			"testdata/user/delete_by_username/not_found_response.json.golden",
 		},
 	}
@@ -155,8 +163,14 @@ func (s *UserHandlerTestSuite) TestDeleteUserByUserName() {
 			url := testutil.RunTestServer(s.T(), "DELETE", "/user/:user_name", s.uh.DeleteUserByUserName)
 			url = strings.Replace(url, ":user_name", tt.userName, 1)
 			resp := testutil.SendRequest(s.T(), "DELETE", url, nil)
+
+			assert.Equal(s.T(), tt.wantStatus, resp.StatusCode)
+
+			if tt.wantRespFile == "" {
+				return
+			}
 			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
-			testutil.AssertResponse(s.T(), resp, tt.wantStatus, wantResp)
+			testutil.AssertResponseBody(s.T(), resp, wantResp)
 		})
 	}
 }

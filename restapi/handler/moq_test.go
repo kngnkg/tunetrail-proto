@@ -257,6 +257,9 @@ var _ AuthService = &AuthServiceMock{}
 //
 //		// make and configure a mocked AuthService
 //		mockedAuthService := &AuthServiceMock{
+//			ConfirmEmailFunc: func(ctx context.Context, userName string, code string) error {
+//				panic("mock out the ConfirmEmail method")
+//			},
 //			RegisterUserFunc: func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {
 //				panic("mock out the RegisterUser method")
 //			},
@@ -267,11 +270,23 @@ var _ AuthService = &AuthServiceMock{}
 //
 //	}
 type AuthServiceMock struct {
+	// ConfirmEmailFunc mocks the ConfirmEmail method.
+	ConfirmEmailFunc func(ctx context.Context, userName string, code string) error
+
 	// RegisterUserFunc mocks the RegisterUser method.
 	RegisterUserFunc func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// ConfirmEmail holds details about calls to the ConfirmEmail method.
+		ConfirmEmail []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserName is the userName argument value.
+			UserName string
+			// Code is the code argument value.
+			Code string
+		}
 		// RegisterUser holds details about calls to the RegisterUser method.
 		RegisterUser []struct {
 			// Ctx is the ctx argument value.
@@ -280,7 +295,48 @@ type AuthServiceMock struct {
 			Data *model.UserRegistrationData
 		}
 	}
+	lockConfirmEmail sync.RWMutex
 	lockRegisterUser sync.RWMutex
+}
+
+// ConfirmEmail calls ConfirmEmailFunc.
+func (mock *AuthServiceMock) ConfirmEmail(ctx context.Context, userName string, code string) error {
+	if mock.ConfirmEmailFunc == nil {
+		panic("AuthServiceMock.ConfirmEmailFunc: method is nil but AuthService.ConfirmEmail was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		UserName string
+		Code     string
+	}{
+		Ctx:      ctx,
+		UserName: userName,
+		Code:     code,
+	}
+	mock.lockConfirmEmail.Lock()
+	mock.calls.ConfirmEmail = append(mock.calls.ConfirmEmail, callInfo)
+	mock.lockConfirmEmail.Unlock()
+	return mock.ConfirmEmailFunc(ctx, userName, code)
+}
+
+// ConfirmEmailCalls gets all the calls that were made to ConfirmEmail.
+// Check the length with:
+//
+//	len(mockedAuthService.ConfirmEmailCalls())
+func (mock *AuthServiceMock) ConfirmEmailCalls() []struct {
+	Ctx      context.Context
+	UserName string
+	Code     string
+} {
+	var calls []struct {
+		Ctx      context.Context
+		UserName string
+		Code     string
+	}
+	mock.lockConfirmEmail.RLock()
+	calls = mock.calls.ConfirmEmail
+	mock.lockConfirmEmail.RUnlock()
+	return calls
 }
 
 // RegisterUser calls RegisterUserFunc.

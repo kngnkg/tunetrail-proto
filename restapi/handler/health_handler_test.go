@@ -8,6 +8,7 @@ import (
 
 	"github.com/kngnkg/tunetrail/restapi/model"
 	"github.com/kngnkg/tunetrail/restapi/testutil"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHealthHandler_HealthCheck(t *testing.T) {
@@ -56,9 +57,11 @@ func TestHealthHandler_HealthCheck(t *testing.T) {
 
 			url := testutil.RunTestServer(t, "GET", "/health", hh.HealthCheck)
 			resp := testutil.SendGetRequest(t, url)
-			// 期待するレスポンスボディのファイルをロードする
+
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+
 			wantResp := testutil.LoadFile(t, tt.wantRespFile)
-			testutil.AssertResponse(t, resp, tt.wantStatus, wantResp)
+			testutil.AssertResponseBody(t, resp, wantResp)
 		})
 	}
 }
