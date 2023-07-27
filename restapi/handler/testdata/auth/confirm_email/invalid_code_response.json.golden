@@ -1,0 +1,5 @@
+{
+    "code": 4101,
+    "developerMessage": "Invalid confirmation code",
+    "userMessage": "確認コードが一致しません。"
+}

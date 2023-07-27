@@ -90,6 +90,66 @@ func (s *AuthHandlerTestSuite) TestRegisterUser() {
 	}
 }
 
+func (s *AuthHandlerTestSuite) TestConfirmEmail() {
+	tests := []struct {
+		name         string
+		reqFile      string // リクエストのファイルパス
+		wantStatus   int    // ステータスコード
+		wantRespFile string // レスポンスのファイルパス
+	}{
+		{
+			"success",
+			"testdata/auth/confirm_email/ok_request.json.golden",
+			http.StatusNoContent,
+			"",
+		},
+		// リクエストの値が不正な場合
+		{
+			"invalid parameter",
+			"testdata/auth/confirm_email/invalid_parameter_request.json.golden",
+			http.StatusBadRequest,
+			"testdata/auth/confirm_email/invalid_parameter_response.json.golden",
+		},
+		// ユーザー名が存在しない場合
+		{
+			"UserName not found",
+			"testdata/auth/confirm_email/username_not_found_request.json.golden",
+			http.StatusNotFound,
+			"testdata/auth/confirm_email/username_not_found_response.json.golden",
+		},
+		// コードが不正な場合
+		{
+			"invalid code",
+			"testdata/auth/confirm_email/invalid_code_request.json.golden",
+			http.StatusBadRequest,
+			"testdata/auth/confirm_email/invalid_code_response.json.golden",
+		},
+		// コードが期限切れの場合
+		{
+			"expired code",
+			"testdata/auth/confirm_email/expired_code_request.json.golden",
+			http.StatusBadRequest,
+			"testdata/auth/confirm_email/expired_code_response.json.golden",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			url := testutil.RunTestServer(s.T(), "PUT", "/user/confirm", s.ah.ConfirmEmail)
+			reqBody := testutil.LoadFile(s.T(), tt.reqFile)
+			resp := testutil.SendRequest(s.T(), "PUT", url, reqBody)
+
+			assert.Equal(s.T(), tt.wantStatus, resp.StatusCode)
+
+			if tt.wantRespFile == "" {
+				return
+			}
+			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
+			testutil.AssertResponseBody(s.T(), resp, wantResp)
+		})
+	}
+}
+
 func setupAuthServiceMock(t *testing.T) *AuthServiceMock {
 	t.Helper()
 	fc := &clock.FixedClocker{}
@@ -113,6 +173,18 @@ func setupAuthServiceMock(t *testing.T) *AuthServiceMock {
 				UpdatedAt: fc.Now(),
 			}
 			return u, nil
+		},
+		ConfirmEmailFunc: func(ctx context.Context, userName, code string) error {
+			if userName == "notFound" {
+				return service.ErrUserNotFound
+			}
+			if code == "mismatch" {
+				return service.ErrCodeMismatch
+			}
+			if code == "expired" {
+				return service.ErrCodeExpired
+			}
+			return nil
 		},
 	}
 
