@@ -1,3 +1,5 @@
 {
-    "msg": "不正なフィールドがあります。"
+    "code": 4001,
+    "developerMessage": "Invalid parameter",
+    "userMessage": "不明なエラーが発生しました。"
 }

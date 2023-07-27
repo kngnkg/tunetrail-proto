@@ -34,18 +34,26 @@ func errorResponse(c *gin.Context, statusCode, errorCode int) {
 
 // 汎用的なエラーコード
 const (
-	ServerErrorCode = 1000 + iota
-	BadRequestCode
-	BadRequestFieldCode
+	BadRequestCode = 4000 + iota
+	InvalidParameterCode
 )
 
-// ユーザー・認証関連のエラーコード
+// 認証関連のエラーコード
 const (
-	UserNotFoundCode = 2000 + iota
+	InvalidConfirmationCode = 4101 + iota
+	ConfirmationCodeExpiredCode
+)
+
+// ユーザー関連のエラーコード
+const (
+	UserNotFoundCode = 4201 + iota
 	UserNameAlreadyEntryCode
 	EmailAlreadyEntryCode
-	InvalidConfirmationCode
-	ConfirmationCodeExpiredCode
+)
+
+// その他サーバー内部のエラーコード
+const (
+	ServerErrorCode = 5000
 )
 
 // エラーメッセージ
@@ -56,49 +64,40 @@ type ErrorMessage struct {
 }
 
 var ErrorMessages = map[int]ErrorMessage{
-	ServerErrorCode: {
-		DeveloperMessage: "サーバー内部でエラーが発生しました。",
-		UserMessage:      "不明なエラーが発生しました。",
-	},
+	// 汎用的なエラー
 	BadRequestCode: {
-		DeveloperMessage: "不正なリクエストです。",
-		UserMessage:      "不正なリクエストです。",
-	},
-	BadRequestFieldCode: {
-		DeveloperMessage: "不正なフィールドがあります。",
+		DeveloperMessage: "Bad request",
 		UserMessage:      "不明なエラーが発生しました。",
 	},
-	UserNotFoundCode: {
-		DeveloperMessage: "ユーザーが存在しません。",
-		UserMessage:      "ユーザーが存在しません。",
+	InvalidParameterCode: {
+		DeveloperMessage: "Invalid parameter",
+		UserMessage:      "不明なエラーが発生しました。",
 	},
-	UserNameAlreadyEntryCode: {
-		DeveloperMessage: "ユーザー名が既に登録されています。",
-		UserMessage:      "ユーザー名が既に存在します。",
-	},
-	EmailAlreadyEntryCode: {
-		DeveloperMessage: "メールアドレスが既に登録されています。",
-		UserMessage:      "登録できないメールアドレスです。",
-	},
+	// 認証関連
 	InvalidConfirmationCode: {
-		DeveloperMessage: "確認コードが一致しません。",
+		DeveloperMessage: "Invalid confirmation code",
 		UserMessage:      "確認コードが一致しません。",
 	},
 	ConfirmationCodeExpiredCode: {
-		DeveloperMessage: "確認コードが期限切れです。",
+		DeveloperMessage: "Confirmation code expired",
 		UserMessage:      "確認コードが期限切れです。",
 	},
+	// ユーザー関連
+	UserNotFoundCode: {
+		DeveloperMessage: "User not found",
+		UserMessage:      "ユーザーが存在しません。",
+	},
+	UserNameAlreadyEntryCode: {
+		DeveloperMessage: "UserName already entry",
+		UserMessage:      "ユーザー名が既に存在します。",
+	},
+	EmailAlreadyEntryCode: {
+		DeveloperMessage: "Email already entry",
+		UserMessage:      "登録できないメールアドレスです。",
+	},
+	// サーバー内部のエラー
+	ServerErrorCode: {
+		DeveloperMessage: "Unknown server error",
+		UserMessage:      "不明なエラーが発生しました。",
+	},
 }
-
-// ユーザー用レスポンスメッセージ
-const (
-	SuccessMessage                 = "成功しました。"
-	ServerErrorMessage             = "サーバー内部でエラーが発生しました。"
-	BadRequestMessage              = "不正なリクエストです。"
-	BadRequestFieldMessage         = "不正なフィールドがあります。"
-	UserNotFoundMessage            = "ユーザーが存在しません。"
-	UserNameAlreadyEntryMessage    = "ユーザー名が既に登録されています。"
-	EmailAlreadyEntryMessage       = "メールアドレスが既に登録されています。"
-	InvalidConfirmationCodeMessage = "メールアドレスの確認コードが不正です。"
-	ConfirmationCodeExpiredMessage = "メールアドレスの確認コードが期限切れです。"
-)

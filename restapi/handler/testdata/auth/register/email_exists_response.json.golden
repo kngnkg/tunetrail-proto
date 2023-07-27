@@ -1,3 +1,5 @@
 {
-    "msg": "メールアドレスが既に登録されています。"
+    "code": 4203,
+    "developerMessage": "Email already entry",
+    "userMessage": "登録できないメールアドレスです。"
 }

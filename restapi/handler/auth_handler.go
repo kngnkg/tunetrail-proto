@@ -25,25 +25,28 @@ func (ah *AuthHandler) RegisterUser(c *gin.Context) {
 	var data *model.UserRegistrationData
 	if err := c.ShouldBindJSON(&data); err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": BadRequestFieldMessage})
+		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
+
 	u, err := ah.Service.RegisterUser(c.Request.Context(), data)
 	if err != nil {
-		c.Error(err)
 		// ユーザー名が既に登録されている場合
 		if errors.Is(err, service.ErrUserNameAlreadyExists) {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": UserNameAlreadyEntryMessage})
+			errorResponse(c, http.StatusConflict, UserNameAlreadyEntryCode)
 			return
 		}
 		// メールアドレスが既に登録されている場合
 		if errors.Is(err, service.ErrEmailAlreadyExists) {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": EmailAlreadyEntryMessage})
+			errorResponse(c, http.StatusConflict, EmailAlreadyEntryCode)
 			return
 		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
+
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
 		return
 	}
+
 	// ユーザーIDを返す
 	c.JSON(http.StatusOK, gin.H{"id": u.Id})
 }
