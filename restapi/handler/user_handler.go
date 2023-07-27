@@ -26,15 +26,17 @@ func (uh *UserHandler) GetUserByUserName(c *gin.Context) {
 	userName := c.Param("user_name")
 	u, err := uh.Service.GetUserByUserName(c.Request.Context(), userName)
 	if err != nil {
-		c.Error(err)
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"msg": UserNotFoundMessage})
+			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
 			return
 		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
+
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
 		return
 	}
+
 	c.JSON(http.StatusOK, u)
 }
 
@@ -44,30 +46,32 @@ func (uh *UserHandler) UpdateUser(c *gin.Context) {
 	var data *model.UserUpdateData
 	if err := c.ShouldBindJSON(&data); err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": BadRequestFieldMessage})
+		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
 	err := uh.Service.UpdateUser(c.Request.Context(), data)
 	if err != nil {
-		c.Error(err)
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"msg": UserNotFoundMessage})
+			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
 			return
 		}
 		// ユーザー名が既に登録されている場合
 		if errors.Is(err, service.ErrUserNameAlreadyExists) {
-			c.AbortWithStatusJSON(http.StatusConflict, gin.H{"msg": UserNameAlreadyEntryMessage})
+			errorResponse(c, http.StatusConflict, UserNameAlreadyEntryCode)
 			return
 		}
 		// メールアドレスが既に登録されている場合
 		if errors.Is(err, service.ErrEmailAlreadyExists) {
-			c.AbortWithStatusJSON(http.StatusConflict, gin.H{"msg": EmailAlreadyEntryMessage})
+			errorResponse(c, http.StatusConflict, EmailAlreadyEntryCode)
 			return
 		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
+
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
 		return
 	}
+
 	c.Status(http.StatusNoContent)
 }
 
@@ -77,14 +81,16 @@ func (uh *UserHandler) DeleteUserByUserName(c *gin.Context) {
 	userName := c.Param("user_name")
 	err := uh.Service.DeleteUserByUserName(c.Request.Context(), userName)
 	if err != nil {
-		c.Error(err)
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"msg": UserNotFoundMessage})
+			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
 			return
 		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
+
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
 		return
 	}
+
 	c.Status(http.StatusNoContent)
 }

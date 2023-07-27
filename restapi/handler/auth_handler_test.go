@@ -61,14 +61,14 @@ func (s *AuthHandlerTestSuite) TestRegisterUser() {
 		{
 			"alreadyExistsUserName",
 			"testdata/auth/register/user_name_exists_request.json.golden",
-			http.StatusBadRequest,
+			http.StatusConflict,
 			"testdata/auth/register/user_name_exists_response.json.golden",
 		},
 		// メールアドレスが既に存在する場合
 		{
 			"alreadyExistsEmail",
 			"testdata/auth/register/email_exists_request.json.golden",
-			http.StatusBadRequest,
+			http.StatusConflict,
 			"testdata/auth/register/email_exists_response.json.golden",
 		},
 	}

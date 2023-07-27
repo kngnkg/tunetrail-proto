@@ -1,3 +1,5 @@
 {
-    "msg": "ユーザー名が既に登録されています。"
+    "code": 4202,
+    "developerMessage": "UserName already entry",
+    "userMessage": "ユーザー名が既に存在します。"
 }

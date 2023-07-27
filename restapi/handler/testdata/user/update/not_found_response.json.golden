@@ -1,3 +1,5 @@
 {
-    "msg": "ユーザーが存在しません。"
+    "code": 4201,
+    "developerMessage": "User not found",
+    "userMessage": "ユーザーが存在しません。"
 }

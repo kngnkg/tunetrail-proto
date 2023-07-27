@@ -10,6 +10,20 @@
 | PUT          | `/user`   | ユーザーを更新する                     |
 | DELETE       | `/user/hoge`     | ユーザー名が`hoge`のユーザーを削除する |
 
+## エラーレスポンス
+
+エラーレスポンスは以下のようなJSON形式で返されます。
+
+```json
+{
+    "code": 4203,
+    "developerMessage": "Email already entry",
+    "userMessage": "登録できないメールアドレスです。"
+}
+```
+
+詳細は[ERROR_CODES.md](docs/ERROR_CODES.md)を参照してください。
+
 ## 環境構築
 ### Go Modulesの初期化
 
