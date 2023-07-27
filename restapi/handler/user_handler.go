@@ -29,7 +29,7 @@ func (uh *UserHandler) GetUserByUserName(c *gin.Context) {
 		c.Error(err)
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": UserNotFoundMessage})
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"msg": UserNotFoundMessage})
 			return
 		}
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
@@ -44,7 +44,7 @@ func (uh *UserHandler) UpdateUser(c *gin.Context) {
 	var data *model.UserUpdateData
 	if err := c.ShouldBindJSON(&data); err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": BadRequestMessage})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": BadRequestFieldMessage})
 		return
 	}
 	err := uh.Service.UpdateUser(c.Request.Context(), data)
@@ -52,23 +52,23 @@ func (uh *UserHandler) UpdateUser(c *gin.Context) {
 		c.Error(err)
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": UserNotFoundMessage})
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"msg": UserNotFoundMessage})
 			return
 		}
 		// ユーザー名が既に登録されている場合
 		if errors.Is(err, service.ErrUserNameAlreadyExists) {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": UserNameAlreadyEntryMessage})
+			c.AbortWithStatusJSON(http.StatusConflict, gin.H{"msg": UserNameAlreadyEntryMessage})
 			return
 		}
 		// メールアドレスが既に登録されている場合
 		if errors.Is(err, service.ErrEmailAlreadyExists) {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": EmailAlreadyEntryMessage})
+			c.AbortWithStatusJSON(http.StatusConflict, gin.H{"msg": EmailAlreadyEntryMessage})
 			return
 		}
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"msg": SuccessMessage})
+	c.Status(http.StatusNoContent)
 }
 
 // DELETE /user/:user_name
@@ -80,11 +80,11 @@ func (uh *UserHandler) DeleteUserByUserName(c *gin.Context) {
 		c.Error(err)
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": UserNotFoundMessage})
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"msg": UserNotFoundMessage})
 			return
 		}
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"msg": ServerErrorMessage})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"msg": SuccessMessage})
+	c.Status(http.StatusNoContent)
 }

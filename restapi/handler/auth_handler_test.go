@@ -10,38 +10,33 @@ import (
 	"github.com/kngnkg/tunetrail/restapi/service"
 	"github.com/kngnkg/tunetrail/restapi/testutil"
 	"github.com/kngnkg/tunetrail/restapi/validate"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func setupForAuthHandlerTest(t *testing.T, moqService *AuthServiceMock) {
-	t.Helper()
-
-	fc := &clock.FixedClocker{}
-	moqService.RegisterUserFunc = func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {
-		// ユーザー名またはメールアドレスが既に存在する場合はエラーを返す
-		if data.UserName == "alreadyExists" {
-			t.Log("username already exists")
-			return nil, service.ErrUserNameAlreadyExists
-		}
-		if data.Email == "alreadyExists@example.com" {
-			t.Log("email already exists")
-			return nil, service.ErrEmailAlreadyExists
-		}
-		u := &model.User{
-			Id:        "1",
-			UserName:  data.UserName,
-			Name:      data.Name,
-			CreatedAt: fc.Now(),
-			UpdatedAt: fc.Now(),
-		}
-		return u, nil
-	}
+type AuthHandlerTestSuite struct {
+	suite.Suite
+	ah *AuthHandler // テスト対象のハンドラ
 }
 
-func TestRegisterUser(t *testing.T) {
+func TestAuthHandlerTestSuite(t *testing.T) {
 	t.Parallel()
+	suite.Run(t, new(AuthHandlerTestSuite))
+}
+
+func (s *AuthHandlerTestSuite) SetupTest() {
+	testutil.SetGinTestMode(s.T())
 
 	// バリデーションの初期化
 	validate.InitValidation()
+
+	asm := setupAuthServiceMock(s.T())
+	s.ah = &AuthHandler{
+		Service: asm,
+	}
+}
+
+func (s *AuthHandlerTestSuite) TestRegisterUser() {
 	tests := []struct {
 		name         string
 		reqFile      string // リクエストのファイルパス
@@ -79,19 +74,47 @@ func TestRegisterUser(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			moqService := &AuthServiceMock{}
-			setupForAuthHandlerTest(t, moqService)
-			ah := &AuthHandler{
-				Service: moqService,
-			}
+		s.Run(tt.name, func() {
+			url := testutil.RunTestServer(s.T(), "POST", "/user/register", s.ah.RegisterUser)
+			reqBody := testutil.LoadFile(s.T(), tt.reqFile)
+			resp := testutil.SendRequest(s.T(), "POST", url, reqBody)
 
-			url := testutil.RunTestServer(t, "POST", "/user", ah.RegisterUser)
-			reqBody := testutil.LoadFile(t, tt.reqFile)
-			resp := testutil.SendRequest(t, "POST", url, reqBody)
-			// 期待するレスポンスボディのファイルをロードする
-			wantResp := testutil.LoadFile(t, tt.wantRespFile)
-			testutil.AssertResponse(t, resp, tt.wantStatus, wantResp)
+			assert.Equal(s.T(), tt.wantStatus, resp.StatusCode)
+
+			if tt.wantRespFile == "" {
+				return
+			}
+			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
+			testutil.AssertResponseBody(s.T(), resp, wantResp)
 		})
 	}
+}
+
+func setupAuthServiceMock(t *testing.T) *AuthServiceMock {
+	t.Helper()
+	fc := &clock.FixedClocker{}
+
+	mock := &AuthServiceMock{
+		RegisterUserFunc: func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {
+			// ユーザー名またはメールアドレスが既に存在する場合はエラーを返す
+			if data.UserName == "alreadyExists" {
+				t.Log("username already exists")
+				return nil, service.ErrUserNameAlreadyExists
+			}
+			if data.Email == "alreadyExists@example.com" {
+				t.Log("email already exists")
+				return nil, service.ErrEmailAlreadyExists
+			}
+			u := &model.User{
+				Id:        "1",
+				UserName:  data.UserName,
+				Name:      data.Name,
+				CreatedAt: fc.Now(),
+				UpdatedAt: fc.Now(),
+			}
+			return u, nil
+		},
+	}
+
+	return mock
 }

@@ -12,6 +12,7 @@ import (
 
 type AuthService interface {
 	RegisterUser(ctx context.Context, data *model.UserRegistrationData) (*model.User, error)
+	ConfirmEmail(ctx context.Context, userName, code string) error
 }
 
 type AuthHandler struct {
@@ -24,7 +25,7 @@ func (ah *AuthHandler) RegisterUser(c *gin.Context) {
 	var data *model.UserRegistrationData
 	if err := c.ShouldBindJSON(&data); err != nil {
 		c.Error(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": BadRequestMessage})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"msg": BadRequestFieldMessage})
 		return
 	}
 	u, err := ah.Service.RegisterUser(c.Request.Context(), data)

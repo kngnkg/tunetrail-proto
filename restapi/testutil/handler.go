@@ -95,20 +95,17 @@ func SendRequest(t *testing.T, reqMethod string, url string, body []byte) *http.
 	return resp
 }
 
-// レスポンスを検証する
+// レスポンスボディを検証する
 // t: テスト
 // resp: 検証するレスポンス
-// status: 期待するステータスコード
 // body: 期待するレスポンスボディ
-func AssertResponse(t *testing.T, resp *http.Response, status int, body []byte) {
+func AssertResponseBody(t *testing.T, resp *http.Response, body []byte) {
 	t.Helper()
 
 	gb, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// ステータスコードの確認
-	assert.Equal(t, status, resp.StatusCode)
 
 	if len(gb) == 0 && len(body) == 0 {
 		// レスポンスボディが無い場合は確認不要
