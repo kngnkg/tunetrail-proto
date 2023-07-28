@@ -50,3 +50,45 @@ func (ah *AuthHandler) RegisterUser(c *gin.Context) {
 	// ユーザーIDを返す
 	c.JSON(http.StatusOK, gin.H{"id": u.Id})
 }
+
+// PUT /auth/confirm
+// メールアドレスを確認する
+func (ah *AuthHandler) ConfirmEmail(c *gin.Context) {
+	var b struct {
+		UserName string `json:"userName" binding:"required"`
+		Code     string `json:"code" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&b); err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
+		return
+	}
+	if err := ah.Service.ConfirmEmail(c.Request.Context(), b.UserName, b.Code); err != nil {
+		// ユーザー名が存在しない場合
+		if errors.Is(err, service.ErrUserNotFound) {
+			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
+			return
+		}
+		// メールアドレスの確認コードが不正な場合
+		if errors.Is(err, service.ErrCodeMismatch) {
+			errorResponse(c, http.StatusBadRequest, InvalidConfirmationCode)
+			return
+		}
+		// メールアドレスの確認コードが期限切れの場合
+		if errors.Is(err, service.ErrCodeExpired) {
+			errorResponse(c, http.StatusBadRequest, ConfirmationCodeExpiredCode)
+			return
+		}
+		// メールアドレスが既に確認済みの場合
+		if errors.Is(err, service.ErrEmailAlreadyExists) {
+			errorResponse(c, http.StatusConflict, EmailAlreadyConfirmedCode)
+			return
+		}
+
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}

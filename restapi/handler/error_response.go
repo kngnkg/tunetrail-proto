@@ -42,6 +42,7 @@ const (
 const (
 	InvalidConfirmationCode = 4101 + iota
 	ConfirmationCodeExpiredCode
+	EmailAlreadyConfirmedCode
 )
 
 // ユーザー関連のエラーコード
@@ -81,6 +82,10 @@ var ErrorMessages = map[int]ErrorMessage{
 	ConfirmationCodeExpiredCode: {
 		DeveloperMessage: "Confirmation code expired",
 		UserMessage:      "確認コードが期限切れです。",
+	},
+	EmailAlreadyConfirmedCode: {
+		DeveloperMessage: "Email already confirmed",
+		UserMessage:      "既に確認済みのメールアドレスです。",
 	},
 	// ユーザー関連
 	UserNotFoundCode: {

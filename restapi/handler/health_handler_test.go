@@ -13,6 +13,7 @@ import (
 
 func TestHealthHandler_HealthCheck(t *testing.T) {
 	t.Parallel()
+	testutil.SetGinTestMode(t)
 
 	tests := []struct {
 		name         string

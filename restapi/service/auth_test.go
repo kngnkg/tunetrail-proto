@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	invalidPassword = "invalidPassword"
-	mismatchCode    = "mismatch"
-	expiredCode     = "expired"
+	invalidPassword        = "invalidPassword"
+	mismatchCode           = "mismatch"
+	expiredCode            = "expired"
+	emailAlreadyExistsCode = "emailAlreadyExists"
 )
 
 type AuthServiceTestSuite struct {
@@ -197,6 +198,15 @@ func (s *AuthServiceTestSuite) TestConfirmEmail() {
 			},
 			auth.ErrCodeExpired,
 		},
+		{
+			"email already exists",
+			args{
+				ctx:      context.Background(),
+				userName: s.dummyUsers[0].UserName,
+				code:     emailAlreadyExistsCode,
+			},
+			auth.ErrEmailAlreadyExists,
+		},
 	}
 
 	for _, tt := range tests {
@@ -264,6 +274,9 @@ func (s *AuthServiceTestSuite) setupAuthMock() *AuthMock {
 			}
 			if code == expiredCode {
 				return auth.ErrCodeExpired
+			}
+			if code == emailAlreadyExistsCode {
+				return auth.ErrEmailAlreadyExists
 			}
 			return nil
 		},

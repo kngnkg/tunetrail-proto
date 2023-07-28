@@ -77,6 +77,9 @@ func (as *AuthService) ConfirmEmail(ctx context.Context, userName, code string) 
 		if errors.Is(err, auth.ErrCodeExpired) {
 			return fmt.Errorf("%w: %w", ErrCodeExpired, err)
 		}
+		if errors.Is(err, auth.ErrEmailAlreadyExists) {
+			return fmt.Errorf("%w: %w", ErrEmailAlreadyExists, err)
+		}
 		return err
 	}
 
