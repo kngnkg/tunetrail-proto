@@ -23,9 +23,7 @@ func createAuthFortest(t *testing.T, apm *AuthProviderMock) *Auth {
 
 func TestAuth_SignUp(t *testing.T) {
 	var (
-		VALID_USER_SUB  = "test-userSub"
-		DUPLICATE_EMAIL = "duplicate@example.com"
-		VALID_PASSWORD  = "password"
+		VALID_PASSWORD = "password"
 	)
 
 	type args struct {
@@ -36,7 +34,7 @@ func TestAuth_SignUp(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    string
+		want    bool
 		wantErr error
 	}{
 		{
@@ -46,18 +44,8 @@ func TestAuth_SignUp(t *testing.T) {
 				email:    "email@example.com",
 				password: VALID_PASSWORD,
 			},
-			want:    VALID_USER_SUB,
+			want:    true,
 			wantErr: nil,
-		},
-		{
-			name: "email already exists",
-			args: args{
-				ctx:      context.Background(),
-				email:    DUPLICATE_EMAIL,
-				password: VALID_PASSWORD,
-			},
-			want:    "",
-			wantErr: ErrEmailAlreadyExists,
 		},
 		{
 			name: "password is invalid",
@@ -66,7 +54,7 @@ func TestAuth_SignUp(t *testing.T) {
 				email:    "email@example.com",
 				password: "invalid",
 			},
-			want:    "",
+			want:    false,
 			wantErr: ErrInvalidPassword,
 		},
 	}
@@ -75,12 +63,6 @@ func TestAuth_SignUp(t *testing.T) {
 			apm := &AuthProviderMock{}
 			// モックの設定
 			apm.SignUpWithContextFunc = func(ctx context.Context, input *cognitoidentityprovider.SignUpInput, opts ...request.Option) (*cognitoidentityprovider.SignUpOutput, error) {
-				if *input.UserAttributes[0].Value == DUPLICATE_EMAIL {
-					awserr := &cognitoidentityprovider.AliasExistsException{
-						Message_: aws.String("mock"),
-					}
-					return nil, awserr
-				}
 				if *input.Password != VALID_PASSWORD {
 					awserr := &cognitoidentityprovider.InvalidPasswordException{
 						Message_: aws.String("mock"),
@@ -88,8 +70,7 @@ func TestAuth_SignUp(t *testing.T) {
 					return nil, awserr
 				}
 				output := &cognitoidentityprovider.SignUpOutput{
-					UserSub:       aws.String(VALID_USER_SUB),
-					UserConfirmed: aws.Bool(true),
+					UserSub: aws.String("test-userSub"),
 				}
 				return output, nil
 			}
@@ -101,7 +82,7 @@ func TestAuth_SignUp(t *testing.T) {
 				t.Errorf("Auth.SignUp() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want, got != "")
 		})
 	}
 }
@@ -110,6 +91,7 @@ func TestAuth_ConfirmSignUp(t *testing.T) {
 	var (
 		MISMATCH_CODE = "000000"
 		EXPIRED_CODE  = "111111"
+		EMAIL_EXISTS  = "email already exists"
 	)
 
 	type args struct {
@@ -149,6 +131,15 @@ func TestAuth_ConfirmSignUp(t *testing.T) {
 			},
 			wantErr: ErrCodeExpired,
 		},
+		{
+			name: "email already exists",
+			args: args{
+				ctx:             context.Background(),
+				cognitoUserName: "test-userName",
+				code:            EMAIL_EXISTS,
+			},
+			wantErr: ErrEmailAlreadyExists,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -162,6 +153,12 @@ func TestAuth_ConfirmSignUp(t *testing.T) {
 				}
 				if *input.ConfirmationCode == EXPIRED_CODE {
 					awserr := &cognitoidentityprovider.ExpiredCodeException{
+						Message_: aws.String("mock"),
+					}
+					return nil, awserr
+				}
+				if *input.ConfirmationCode == EMAIL_EXISTS {
+					awserr := &cognitoidentityprovider.AliasExistsException{
 						Message_: aws.String("mock"),
 					}
 					return nil, awserr

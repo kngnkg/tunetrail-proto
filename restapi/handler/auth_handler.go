@@ -79,6 +79,11 @@ func (ah *AuthHandler) ConfirmEmail(c *gin.Context) {
 			errorResponse(c, http.StatusBadRequest, ConfirmationCodeExpiredCode)
 			return
 		}
+		// メールアドレスが既に確認済みの場合
+		if errors.Is(err, service.ErrEmailAlreadyExists) {
+			errorResponse(c, http.StatusConflict, EmailAlreadyConfirmedCode)
+			return
+		}
 
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)

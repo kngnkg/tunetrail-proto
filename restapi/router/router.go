@@ -50,7 +50,7 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	auth := router.Group("/auth")
 	{
 		auth.POST("/register", ah.RegisterUser)
-		// auth.PUT("/confirm", ah.ConfirmEmail)   // TODO: 改修予定
+		auth.PUT("/confirm", ah.ConfirmEmail)
 		// auth.POST("/login", ah.Login)           // ログイン
 		// auth.POST("/logout", ah.Logout)         // ログアウト
 	}

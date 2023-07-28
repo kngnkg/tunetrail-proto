@@ -131,6 +131,13 @@ func (s *AuthHandlerTestSuite) TestConfirmEmail() {
 			http.StatusBadRequest,
 			"testdata/auth/confirm_email/expired_code_response.json.golden",
 		},
+		// 既に確認済みの場合
+		{
+			"already confirmed",
+			"testdata/auth/confirm_email/already_confirmed_request.json.golden",
+			http.StatusConflict,
+			"testdata/auth/confirm_email/already_confirmed_response.json.golden",
+		},
 	}
 
 	for _, tt := range tests {
@@ -183,6 +190,9 @@ func setupAuthServiceMock(t *testing.T) *AuthServiceMock {
 			}
 			if code == "expired" {
 				return service.ErrCodeExpired
+			}
+			if code == "confirmed" {
+				return service.ErrEmailAlreadyExists
 			}
 			return nil
 		},

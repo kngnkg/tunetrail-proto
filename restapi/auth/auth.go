@@ -103,8 +103,6 @@ func (a *Auth) SignUp(ctx context.Context, email, password string) (string, erro
 				switch awserr.(type) {
 				case *cognitoidentityprovider.InvalidPasswordException:
 					return "", fmt.Errorf("%w: %w", ErrInvalidPassword, awserr)
-				case *cognitoidentityprovider.AliasExistsException:
-					return "", fmt.Errorf("%w: %w", ErrEmailAlreadyExists, awserr)
 				case *cognitoidentityprovider.UsernameExistsException:
 					// Cognitoのユーザー名が既に存在する場合は、Cognitoのユーザー名を変更して再度登録する
 					return signUpWithRetry(retryCount + 1)
@@ -119,7 +117,7 @@ func (a *Auth) SignUp(ctx context.Context, email, password string) (string, erro
 			return "", ErrUserSubIsNil
 		}
 
-		return *res.UserSub, nil
+		return cognitoUserName, nil
 	}
 
 	return signUpWithRetry(0)
@@ -141,6 +139,8 @@ func (a *Auth) ConfirmSignUp(ctx context.Context, userId, code string) error {
 			log.Println("awserr.Code(): " + awserr.Code())
 			log.Println("awserr.Message(): " + awserr.Message())
 			switch awserr.(type) {
+			case *cognitoidentityprovider.AliasExistsException:
+				return fmt.Errorf("%w: %w", ErrEmailAlreadyExists, awserr)
 			case *cognitoidentityprovider.CodeMismatchException:
 				return fmt.Errorf("%w: %w", ErrCodeMismatch, awserr)
 			case *cognitoidentityprovider.ExpiredCodeException:
