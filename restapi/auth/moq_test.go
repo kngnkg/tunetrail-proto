@@ -20,8 +20,8 @@ var _ AuthProvider = &AuthProviderMock{}
 //
 //		// make and configure a mocked AuthProvider
 //		mockedAuthProvider := &AuthProviderMock{
-//			AdminInitiateAuthFunc: func(input *cognitoidentityprovider.AdminInitiateAuthInput) (*cognitoidentityprovider.AdminInitiateAuthOutput, error) {
-//				panic("mock out the AdminInitiateAuth method")
+//			AdminInitiateAuthWithContextFunc: func(ctx context.Context, input *cognitoidentityprovider.AdminInitiateAuthInput, opts ...request.Option) (*cognitoidentityprovider.AdminInitiateAuthOutput, error) {
+//				panic("mock out the AdminInitiateAuthWithContext method")
 //			},
 //			ConfirmSignUpWithContextFunc: func(ctx context.Context, input *cognitoidentityprovider.ConfirmSignUpInput, opts ...request.Option) (*cognitoidentityprovider.ConfirmSignUpOutput, error) {
 //				panic("mock out the ConfirmSignUpWithContext method")
@@ -36,8 +36,8 @@ var _ AuthProvider = &AuthProviderMock{}
 //
 //	}
 type AuthProviderMock struct {
-	// AdminInitiateAuthFunc mocks the AdminInitiateAuth method.
-	AdminInitiateAuthFunc func(input *cognitoidentityprovider.AdminInitiateAuthInput) (*cognitoidentityprovider.AdminInitiateAuthOutput, error)
+	// AdminInitiateAuthWithContextFunc mocks the AdminInitiateAuthWithContext method.
+	AdminInitiateAuthWithContextFunc func(ctx context.Context, input *cognitoidentityprovider.AdminInitiateAuthInput, opts ...request.Option) (*cognitoidentityprovider.AdminInitiateAuthOutput, error)
 
 	// ConfirmSignUpWithContextFunc mocks the ConfirmSignUpWithContext method.
 	ConfirmSignUpWithContextFunc func(ctx context.Context, input *cognitoidentityprovider.ConfirmSignUpInput, opts ...request.Option) (*cognitoidentityprovider.ConfirmSignUpOutput, error)
@@ -47,10 +47,14 @@ type AuthProviderMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// AdminInitiateAuth holds details about calls to the AdminInitiateAuth method.
-		AdminInitiateAuth []struct {
+		// AdminInitiateAuthWithContext holds details about calls to the AdminInitiateAuthWithContext method.
+		AdminInitiateAuthWithContext []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// Input is the input argument value.
 			Input *cognitoidentityprovider.AdminInitiateAuthInput
+			// Opts is the opts argument value.
+			Opts []request.Option
 		}
 		// ConfirmSignUpWithContext holds details about calls to the ConfirmSignUpWithContext method.
 		ConfirmSignUpWithContext []struct {
@@ -71,40 +75,48 @@ type AuthProviderMock struct {
 			Opts []request.Option
 		}
 	}
-	lockAdminInitiateAuth        sync.RWMutex
-	lockConfirmSignUpWithContext sync.RWMutex
-	lockSignUpWithContext        sync.RWMutex
+	lockAdminInitiateAuthWithContext sync.RWMutex
+	lockConfirmSignUpWithContext     sync.RWMutex
+	lockSignUpWithContext            sync.RWMutex
 }
 
-// AdminInitiateAuth calls AdminInitiateAuthFunc.
-func (mock *AuthProviderMock) AdminInitiateAuth(input *cognitoidentityprovider.AdminInitiateAuthInput) (*cognitoidentityprovider.AdminInitiateAuthOutput, error) {
-	if mock.AdminInitiateAuthFunc == nil {
-		panic("AuthProviderMock.AdminInitiateAuthFunc: method is nil but AuthProvider.AdminInitiateAuth was just called")
+// AdminInitiateAuthWithContext calls AdminInitiateAuthWithContextFunc.
+func (mock *AuthProviderMock) AdminInitiateAuthWithContext(ctx context.Context, input *cognitoidentityprovider.AdminInitiateAuthInput, opts ...request.Option) (*cognitoidentityprovider.AdminInitiateAuthOutput, error) {
+	if mock.AdminInitiateAuthWithContextFunc == nil {
+		panic("AuthProviderMock.AdminInitiateAuthWithContextFunc: method is nil but AuthProvider.AdminInitiateAuthWithContext was just called")
 	}
 	callInfo := struct {
+		Ctx   context.Context
 		Input *cognitoidentityprovider.AdminInitiateAuthInput
+		Opts  []request.Option
 	}{
+		Ctx:   ctx,
 		Input: input,
+		Opts:  opts,
 	}
-	mock.lockAdminInitiateAuth.Lock()
-	mock.calls.AdminInitiateAuth = append(mock.calls.AdminInitiateAuth, callInfo)
-	mock.lockAdminInitiateAuth.Unlock()
-	return mock.AdminInitiateAuthFunc(input)
+	mock.lockAdminInitiateAuthWithContext.Lock()
+	mock.calls.AdminInitiateAuthWithContext = append(mock.calls.AdminInitiateAuthWithContext, callInfo)
+	mock.lockAdminInitiateAuthWithContext.Unlock()
+	return mock.AdminInitiateAuthWithContextFunc(ctx, input, opts...)
 }
 
-// AdminInitiateAuthCalls gets all the calls that were made to AdminInitiateAuth.
+// AdminInitiateAuthWithContextCalls gets all the calls that were made to AdminInitiateAuthWithContext.
 // Check the length with:
 //
-//	len(mockedAuthProvider.AdminInitiateAuthCalls())
-func (mock *AuthProviderMock) AdminInitiateAuthCalls() []struct {
+//	len(mockedAuthProvider.AdminInitiateAuthWithContextCalls())
+func (mock *AuthProviderMock) AdminInitiateAuthWithContextCalls() []struct {
+	Ctx   context.Context
 	Input *cognitoidentityprovider.AdminInitiateAuthInput
+	Opts  []request.Option
 } {
 	var calls []struct {
+		Ctx   context.Context
 		Input *cognitoidentityprovider.AdminInitiateAuthInput
+		Opts  []request.Option
 	}
-	mock.lockAdminInitiateAuth.RLock()
-	calls = mock.calls.AdminInitiateAuth
-	mock.lockAdminInitiateAuth.RUnlock()
+	mock.lockAdminInitiateAuthWithContext.RLock()
+	calls = mock.calls.AdminInitiateAuthWithContext
+	mock.lockAdminInitiateAuthWithContext.RUnlock()
 	return calls
 }
 

@@ -21,7 +21,7 @@ import (
 type AuthProvider interface {
 	SignUpWithContext(ctx context.Context, input *cognitoidentityprovider.SignUpInput, opts ...request.Option) (*cognitoidentityprovider.SignUpOutput, error)
 	ConfirmSignUpWithContext(ctx context.Context, input *cognitoidentityprovider.ConfirmSignUpInput, opts ...request.Option) (*cognitoidentityprovider.ConfirmSignUpOutput, error)
-	AdminInitiateAuth(input *cognitoidentityprovider.AdminInitiateAuthInput) (*cognitoidentityprovider.AdminInitiateAuthOutput, error)
+	AdminInitiateAuthWithContext(ctx context.Context, input *cognitoidentityprovider.AdminInitiateAuthInput, opts ...request.Option) (*cognitoidentityprovider.AdminInitiateAuthOutput, error)
 }
 
 // Cognitoから返されるトークン
@@ -45,6 +45,8 @@ type Auth struct {
 var (
 	ErrEmailAlreadyExists = errors.New("auth: email already exists")
 	ErrInvalidPassword    = errors.New("auth: invalid password")
+	ErrUserNotFound       = errors.New("auth: user not found")
+	ErrNotAuthorized      = errors.New("auth: invalid email or password")
 	ErrUserNotConfirmed   = errors.New("auth: user not confirmed")
 	ErrUserSubIsNil       = errors.New("auth: user sub is nil")
 	ErrCodeMismatch       = errors.New("auth: code mismatch")
@@ -155,7 +157,7 @@ func (a *Auth) ConfirmSignUp(ctx context.Context, userId, code string) error {
 	return nil
 }
 
-func (a *Auth) Login(ctx context.Context, email, password string) (*Tokens, error) {
+func (a *Auth) SignIn(ctx context.Context, email, password string) (*Tokens, error) {
 	params := &cognitoidentityprovider.AdminInitiateAuthInput{
 		ClientId:   aws.String(a.cognitoClientId),
 		UserPoolId: aws.String(a.userPoolId),
@@ -166,11 +168,23 @@ func (a *Auth) Login(ctx context.Context, email, password string) (*Tokens, erro
 		},
 	}
 
-	res, err := a.provider.AdminInitiateAuth(params)
+	res, err := a.provider.AdminInitiateAuthWithContext(ctx, params)
 	if err != nil {
-		log.Print("AdminAuth Error")
+		if awserr, ok := err.(awserr.Error); ok {
+			log.Println("awserr.Code(): " + awserr.Code())
+			log.Println("awserr.Message(): " + awserr.Message())
+			switch awserr.(type) {
+			case *cognitoidentityprovider.UserNotConfirmedException:
+				return nil, fmt.Errorf("%w: %w", ErrUserNotFound, awserr)
+			case *cognitoidentityprovider.NotAuthorizedException:
+				return nil, fmt.Errorf("%w: %w", ErrNotAuthorized, awserr)
+			default:
+				return nil, fmt.Errorf("error from aws: %w", awserr)
+			}
+		}
 		return nil, err
 	}
+
 	if res == nil || res.AuthenticationResult == nil || res.AuthenticationResult.IdToken == nil {
 		return nil, errors.New("failed to login")
 	}
