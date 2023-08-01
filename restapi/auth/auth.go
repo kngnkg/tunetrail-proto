@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/google/uuid"
+	"github.com/kngnkg/tunetrail/restapi/model"
 )
 
 //go:generate go run github.com/matryer/moq -out moq_test.go . AuthProvider
@@ -25,11 +26,6 @@ type AuthProvider interface {
 }
 
 // Cognitoから返されるトークン
-type Tokens struct {
-	Id      string
-	Access  string
-	Refresh string
-}
 
 type authConfig struct {
 	userPoolId          string
@@ -157,14 +153,17 @@ func (a *Auth) ConfirmSignUp(ctx context.Context, userId, code string) error {
 	return nil
 }
 
-func (a *Auth) SignIn(ctx context.Context, email, password string) (*Tokens, error) {
+func (a *Auth) SignIn(ctx context.Context, userIdentifier, password string) (*model.Tokens, error) {
+	secretHash := a.getSecretHash(userIdentifier)
+
 	params := &cognitoidentityprovider.AdminInitiateAuthInput{
 		ClientId:   aws.String(a.cognitoClientId),
 		UserPoolId: aws.String(a.userPoolId),
 		AuthFlow:   aws.String(cognitoidentityprovider.AuthFlowTypeAdminNoSrpAuth),
 		AuthParameters: map[string]*string{
-			"EMAIL":    aws.String("email"),
-			"PASSWORD": aws.String("password"),
+			"USERNAME":    aws.String(userIdentifier),
+			"PASSWORD":    aws.String(password),
+			"SECRET_HASH": aws.String(secretHash),
 		},
 	}
 
@@ -189,7 +188,7 @@ func (a *Auth) SignIn(ctx context.Context, email, password string) (*Tokens, err
 		return nil, errors.New("failed to login")
 	}
 
-	tokens := &Tokens{
+	tokens := &model.Tokens{
 		Id:      *res.AuthenticationResult.IdToken,
 		Access:  *res.AuthenticationResult.AccessToken,
 		Refresh: *res.AuthenticationResult.RefreshToken,
@@ -199,9 +198,9 @@ func (a *Auth) SignIn(ctx context.Context, email, password string) (*Tokens, err
 }
 
 // Cognitoのユーザー名とクライアントID、クライアントシークレットからシークレットハッシュを生成する
-func (a *Auth) getSecretHash(username string) string {
+func (a *Auth) getSecretHash(userIdentifier string) string {
 	mac := hmac.New(sha256.New, []byte(a.cognitoClientSecret))
-	mac.Write([]byte(username + a.cognitoClientId))
+	mac.Write([]byte(userIdentifier + a.cognitoClientId))
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
 

@@ -191,7 +191,7 @@ func TestAuth_SignIn(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *Tokens
+		want    bool
 		wantErr error
 	}{
 		{
@@ -201,7 +201,7 @@ func TestAuth_SignIn(t *testing.T) {
 				email:    u.Email,
 				password: u.Password,
 			},
-			want:    &Tokens{},
+			want:    true,
 			wantErr: nil,
 		},
 		{
@@ -211,8 +211,8 @@ func TestAuth_SignIn(t *testing.T) {
 				email:    u.Email,
 				password: "invalid",
 			},
-			want:    nil,
-			wantErr: ErrUserNotFound,
+			want:    false,
+			wantErr: ErrNotAuthorized,
 		},
 		{
 			name: "email not found",
@@ -221,8 +221,8 @@ func TestAuth_SignIn(t *testing.T) {
 				email:    "invalid@example.com",
 				password: u.Password,
 			},
-			want:    nil,
-			wantErr: ErrUserNotFound,
+			want:    false,
+			wantErr: ErrNotAuthorized,
 		},
 	}
 	for _, tt := range tests {
@@ -236,13 +236,21 @@ func TestAuth_SignIn(t *testing.T) {
 					}
 					return nil, awserr
 				}
-				if *input.AuthParameters["EMAIL"] != u.Email {
+				if *input.AuthParameters["USERNAME"] != u.UserName && *input.AuthParameters["USERNAME"] != u.Email {
 					awserr := &cognitoidentityprovider.NotAuthorizedException{
 						Message_: aws.String("mock"),
 					}
 					return nil, awserr
 				}
-				output := &cognitoidentityprovider.AdminInitiateAuthOutput{}
+				output := &cognitoidentityprovider.AdminInitiateAuthOutput{
+					AuthenticationResult: &cognitoidentityprovider.AuthenticationResultType{
+						AccessToken:  aws.String("mock"),
+						ExpiresIn:    aws.Int64(3600),
+						IdToken:      aws.String("mock"),
+						RefreshToken: aws.String("mock"),
+						TokenType:    aws.String("mock"),
+					},
+				}
 				return output, nil
 			}
 
@@ -253,7 +261,7 @@ func TestAuth_SignIn(t *testing.T) {
 				t.Errorf("Auth.SignIn() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want, got != nil)
 		})
 	}
 }
