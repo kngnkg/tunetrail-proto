@@ -219,6 +219,90 @@ func (s *AuthServiceTestSuite) TestConfirmEmail() {
 	}
 }
 
+func (s *AuthServiceTestSuite) TestSignIn() {
+	type args struct {
+		ctx  context.Context
+		data *model.UserSignInData
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    bool
+		wantErr error
+	}{
+		{
+			"success (userName)",
+			args{
+				ctx: context.Background(),
+				data: &model.UserSignInData{
+					UserName: s.dummyUsers[0].UserName,
+					Password: s.dummyUsers[0].Password,
+				},
+			},
+			true,
+			nil,
+		},
+		{
+			"success (email)",
+			args{
+				ctx: context.Background(),
+				data: &model.UserSignInData{
+					Email:    s.dummyUsers[0].Email,
+					Password: s.dummyUsers[0].Password,
+				},
+			},
+			true,
+			nil,
+		},
+		{
+			"invalid password",
+			args{
+				ctx: context.Background(),
+				data: &model.UserSignInData{
+					Email:    s.dummyUsers[0].Email,
+					Password: "invalid",
+				},
+			},
+			false,
+			ErrNotAuthorized,
+		},
+		{
+			"user not found (userName)",
+			args{
+				ctx: context.Background(),
+				data: &model.UserSignInData{
+					UserName: "notFound",
+					Password: s.dummyUsers[0].Password,
+				},
+			},
+			false,
+			ErrUserNotFound,
+		},
+		{
+			"user not found (email)",
+			args{
+				ctx: context.Background(),
+				data: &model.UserSignInData{
+					Email:    "notFound@example.com",
+					Password: s.dummyUsers[0].Password,
+				},
+			},
+			false,
+			ErrUserNotFound,
+		},
+	}
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, err := s.as.SignIn(tt.args.ctx, tt.args.data)
+			if !errors.Is(err, tt.wantErr) {
+				s.T().Errorf("UserService.SignIn() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			assert.Equal(s.T(), tt.want, got != nil)
+		})
+	}
+}
+
 func (s *AuthServiceTestSuite) setupRepoMock() *UserRepositoryMock {
 	mock := &UserRepositoryMock{
 		WithTransactionFunc: func(ctx context.Context, db store.Beginner, fn func(tx *sqlx.Tx) error) error {
@@ -279,6 +363,21 @@ func (s *AuthServiceTestSuite) setupAuthMock() *AuthMock {
 				return auth.ErrEmailAlreadyExists
 			}
 			return nil
+		},
+		SignInFunc: func(ctx context.Context, userIdentifier, password string) (*model.Tokens, error) {
+			for _, u := range s.dummyUsers {
+				if userIdentifier == u.Id || userIdentifier == u.Email {
+					if password != u.Password {
+						return nil, auth.ErrNotAuthorized
+					}
+					return &model.Tokens{
+						Id:      uuid.New().String(),
+						Access:  uuid.New().String(),
+						Refresh: uuid.New().String(),
+					}, nil
+				}
+			}
+			return nil, auth.ErrUserNotFound
 		},
 	}
 	return mock

@@ -17,8 +17,6 @@ type AuthService struct {
 	Auth Auth
 }
 
-// type Token struct{}
-
 // RegisterUserはユーザーを登録する
 func (as *AuthService) RegisterUser(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {
 	id, err := as.Auth.SignUp(ctx, data.Email, data.Password)
@@ -84,4 +82,42 @@ func (as *AuthService) ConfirmEmail(ctx context.Context, userName, code string) 
 	}
 
 	return nil
+}
+
+func (as *AuthService) SignIn(ctx context.Context, data *model.UserSignInData) (*model.Tokens, error) {
+	// メールアドレスでサインインする場合
+	if data.Email != "" {
+		tokens, err := as.Auth.SignIn(ctx, data.Email, data.Password)
+		if err != nil {
+			if errors.Is(err, auth.ErrUserNotFound) {
+				return nil, fmt.Errorf("%w: %w", ErrUserNotFound, err)
+			}
+			if errors.Is(err, auth.ErrNotAuthorized) {
+				return nil, fmt.Errorf("%w: %w", ErrNotAuthorized, err)
+			}
+			return nil, err
+		}
+		return tokens, nil
+	}
+
+	// ユーザー名でサインインする場合
+	user, err := as.Repo.GetUserByUserName(ctx, as.DB, data.UserName)
+	if err != nil {
+		if errors.Is(err, store.ErrUserNotFound) {
+			return nil, fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, data.UserName, err)
+		}
+		return nil, err
+	}
+
+	tokens, err := as.Auth.SignIn(ctx, user.Id, data.Password)
+	if err != nil {
+		if errors.Is(err, auth.ErrUserNotFound) {
+			return nil, fmt.Errorf("%w: %w", ErrUserNotFound, err)
+		}
+		if errors.Is(err, auth.ErrNotAuthorized) {
+			return nil, fmt.Errorf("%w: %w", ErrNotAuthorized, err)
+		}
+		return nil, err
+	}
+	return tokens, nil
 }

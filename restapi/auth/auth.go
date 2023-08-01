@@ -173,7 +173,7 @@ func (a *Auth) SignIn(ctx context.Context, userIdentifier, password string) (*mo
 			log.Println("awserr.Code(): " + awserr.Code())
 			log.Println("awserr.Message(): " + awserr.Message())
 			switch awserr.(type) {
-			case *cognitoidentityprovider.UserNotConfirmedException:
+			case *cognitoidentityprovider.UserNotFoundException:
 				return nil, fmt.Errorf("%w: %w", ErrUserNotFound, awserr)
 			case *cognitoidentityprovider.NotAuthorizedException:
 				return nil, fmt.Errorf("%w: %w", ErrNotAuthorized, awserr)
