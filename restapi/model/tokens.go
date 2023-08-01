@@ -1,7 +1,7 @@
 package model
 
 type Tokens struct {
-	Id      string
-	Access  string
-	Refresh string
+	Id      string `json:"id" binding:"required"`
+	Access  string `json:"access" binding:"required"`
+	Refresh string `json:"refresh" binding:"required"`
 }

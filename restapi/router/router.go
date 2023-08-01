@@ -51,8 +51,8 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	{
 		auth.POST("/register", ah.RegisterUser)
 		auth.PUT("/confirm", ah.ConfirmEmail)
-		// auth.POST("/login", ah.Login)           // ログイン
-		// auth.POST("/logout", ah.Logout)         // ログアウト
+		auth.POST("/signin", ah.SignIn) // サインイン
+		// auth.POST("/signout", ah.SignOut)         // サインアウト
 	}
 
 	user := router.Group("/user")

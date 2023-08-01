@@ -24,9 +24,9 @@ type UserRegistrationData struct {
 }
 
 type UserSignInData struct {
-	UserName string `json:"userName"`
-	Email    string `json:"email"`
-	Password string `json:"password" binding:"required"`
+	UserName string `json:"userName" binding:"omitempty,min=3,max=20"`
+	Email    string `json:"email" binding:"omitempty,email"`
+	Password string `json:"password" binding:"required,password"`
 }
 
 type UserUpdateData struct {
