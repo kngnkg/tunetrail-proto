@@ -40,6 +40,16 @@ variable "cognito_client_secret" {
   type        = string
 }
 
+variable "cognito_admin_access_key" {
+  description = "The access key for the Cognito admin user"
+  type        = string
+}
+
+variable "cognito_admin_secret_key" {
+  description = "The secret key for the Cognito admin user"
+  type        = string
+}
+
 variable "webapp_domain" {
   description = "The domain name for the webapp"
   type        = string
