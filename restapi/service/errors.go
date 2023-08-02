@@ -13,4 +13,6 @@ var (
 	ErrCodeMismatch = errors.New("service: code mismatch")
 	// 検証コードが期限切れ
 	ErrCodeExpired = errors.New("service: code expired")
+
+	ErrNotAuthorized = errors.New("service: not authorized")
 )

@@ -23,6 +23,12 @@ type UserRegistrationData struct {
 	Email    string `json:"email" binding:"required,email"`
 }
 
+type UserSignInData struct {
+	UserName string `json:"userName" binding:"omitempty,min=3,max=20"`
+	Email    string `json:"email" binding:"omitempty,email"`
+	Password string `json:"password" binding:"required,password"`
+}
+
 type UserUpdateData struct {
 	Id       string `json:"id" db:"id" binding:"required"`
 	UserName string `json:"userName" db:"user_name" binding:"required,min=3,max=20"`

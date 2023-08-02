@@ -105,4 +105,6 @@ jobs:
           -var "migration_image_tag=${{ steps.get-migration-tag.outputs.tag }}" \
           -var "db_password=${{ secrets.DB_PASSWORD }}"\
           -var "db_schema_bucket_name=${{ secrets.TUNETRAIL_S3_BUCKET }}" \
-          -var "cognito_client_secret=${{ secrets.COGNITO_CLIENT_SECRET }}"
+          -var "cognito_client_secret=${{ secrets.COGNITO_CLIENT_SECRET }}" \
+          -var "cognito_admin_access_key=${{ secrets.COGNITO_ADMIN_ACCESS_KEY }}" \
+          -var "cognito_admin_secret_key=${{ secrets.COGNITO_ADMIN_SECRET_ACCESS_KEY }}"

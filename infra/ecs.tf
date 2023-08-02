@@ -128,6 +128,14 @@ resource "aws_ecs_task_definition" "restapi" {
         name  = "COGNITO_CLIENT_SECRET"
         value = var.cognito_client_secret
       },
+      {
+        name  = "AWS_ACCESS_KEY_ID"
+        value = var.cognito_admin_access_key
+      },
+      {
+        name  = "AWS_SECRET_ACCESS_KEY"
+        value = var.cognito_admin_secret_key
+      },
     ],
     logConfiguration = {
       logDriver = "awslogs", # CloudWatch Logsを使用する

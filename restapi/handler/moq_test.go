@@ -263,6 +263,9 @@ var _ AuthService = &AuthServiceMock{}
 //			RegisterUserFunc: func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {
 //				panic("mock out the RegisterUser method")
 //			},
+//			SignInFunc: func(ctx context.Context, data *model.UserSignInData) (*model.Tokens, error) {
+//				panic("mock out the SignIn method")
+//			},
 //		}
 //
 //		// use mockedAuthService in code that requires AuthService
@@ -275,6 +278,9 @@ type AuthServiceMock struct {
 
 	// RegisterUserFunc mocks the RegisterUser method.
 	RegisterUserFunc func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error)
+
+	// SignInFunc mocks the SignIn method.
+	SignInFunc func(ctx context.Context, data *model.UserSignInData) (*model.Tokens, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -294,9 +300,17 @@ type AuthServiceMock struct {
 			// Data is the data argument value.
 			Data *model.UserRegistrationData
 		}
+		// SignIn holds details about calls to the SignIn method.
+		SignIn []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Data is the data argument value.
+			Data *model.UserSignInData
+		}
 	}
 	lockConfirmEmail sync.RWMutex
 	lockRegisterUser sync.RWMutex
+	lockSignIn       sync.RWMutex
 }
 
 // ConfirmEmail calls ConfirmEmailFunc.
@@ -372,5 +386,41 @@ func (mock *AuthServiceMock) RegisterUserCalls() []struct {
 	mock.lockRegisterUser.RLock()
 	calls = mock.calls.RegisterUser
 	mock.lockRegisterUser.RUnlock()
+	return calls
+}
+
+// SignIn calls SignInFunc.
+func (mock *AuthServiceMock) SignIn(ctx context.Context, data *model.UserSignInData) (*model.Tokens, error) {
+	if mock.SignInFunc == nil {
+		panic("AuthServiceMock.SignInFunc: method is nil but AuthService.SignIn was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Data *model.UserSignInData
+	}{
+		Ctx:  ctx,
+		Data: data,
+	}
+	mock.lockSignIn.Lock()
+	mock.calls.SignIn = append(mock.calls.SignIn, callInfo)
+	mock.lockSignIn.Unlock()
+	return mock.SignInFunc(ctx, data)
+}
+
+// SignInCalls gets all the calls that were made to SignIn.
+// Check the length with:
+//
+//	len(mockedAuthService.SignInCalls())
+func (mock *AuthServiceMock) SignInCalls() []struct {
+	Ctx  context.Context
+	Data *model.UserSignInData
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Data *model.UserSignInData
+	}
+	mock.lockSignIn.RLock()
+	calls = mock.calls.SignIn
+	mock.lockSignIn.RUnlock()
 	return calls
 }

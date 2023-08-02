@@ -454,6 +454,9 @@ var _ Auth = &AuthMock{}
 //			ConfirmSignUpFunc: func(ctx context.Context, userId string, code string) error {
 //				panic("mock out the ConfirmSignUp method")
 //			},
+//			SignInFunc: func(ctx context.Context, userIdentifier string, password string) (*model.Tokens, error) {
+//				panic("mock out the SignIn method")
+//			},
 //			SignUpFunc: func(ctx context.Context, email string, password string) (string, error) {
 //				panic("mock out the SignUp method")
 //			},
@@ -466,6 +469,9 @@ var _ Auth = &AuthMock{}
 type AuthMock struct {
 	// ConfirmSignUpFunc mocks the ConfirmSignUp method.
 	ConfirmSignUpFunc func(ctx context.Context, userId string, code string) error
+
+	// SignInFunc mocks the SignIn method.
+	SignInFunc func(ctx context.Context, userIdentifier string, password string) (*model.Tokens, error)
 
 	// SignUpFunc mocks the SignUp method.
 	SignUpFunc func(ctx context.Context, email string, password string) (string, error)
@@ -481,6 +487,15 @@ type AuthMock struct {
 			// Code is the code argument value.
 			Code string
 		}
+		// SignIn holds details about calls to the SignIn method.
+		SignIn []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserIdentifier is the userIdentifier argument value.
+			UserIdentifier string
+			// Password is the password argument value.
+			Password string
+		}
 		// SignUp holds details about calls to the SignUp method.
 		SignUp []struct {
 			// Ctx is the ctx argument value.
@@ -492,6 +507,7 @@ type AuthMock struct {
 		}
 	}
 	lockConfirmSignUp sync.RWMutex
+	lockSignIn        sync.RWMutex
 	lockSignUp        sync.RWMutex
 }
 
@@ -532,6 +548,46 @@ func (mock *AuthMock) ConfirmSignUpCalls() []struct {
 	mock.lockConfirmSignUp.RLock()
 	calls = mock.calls.ConfirmSignUp
 	mock.lockConfirmSignUp.RUnlock()
+	return calls
+}
+
+// SignIn calls SignInFunc.
+func (mock *AuthMock) SignIn(ctx context.Context, userIdentifier string, password string) (*model.Tokens, error) {
+	if mock.SignInFunc == nil {
+		panic("AuthMock.SignInFunc: method is nil but Auth.SignIn was just called")
+	}
+	callInfo := struct {
+		Ctx            context.Context
+		UserIdentifier string
+		Password       string
+	}{
+		Ctx:            ctx,
+		UserIdentifier: userIdentifier,
+		Password:       password,
+	}
+	mock.lockSignIn.Lock()
+	mock.calls.SignIn = append(mock.calls.SignIn, callInfo)
+	mock.lockSignIn.Unlock()
+	return mock.SignInFunc(ctx, userIdentifier, password)
+}
+
+// SignInCalls gets all the calls that were made to SignIn.
+// Check the length with:
+//
+//	len(mockedAuth.SignInCalls())
+func (mock *AuthMock) SignInCalls() []struct {
+	Ctx            context.Context
+	UserIdentifier string
+	Password       string
+} {
+	var calls []struct {
+		Ctx            context.Context
+		UserIdentifier string
+		Password       string
+	}
+	mock.lockSignIn.RLock()
+	calls = mock.calls.SignIn
+	mock.lockSignIn.RUnlock()
 	return calls
 }
 

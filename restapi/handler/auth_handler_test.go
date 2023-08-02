@@ -157,6 +157,65 @@ func (s *AuthHandlerTestSuite) TestConfirmEmail() {
 	}
 }
 
+func (s *AuthHandlerTestSuite) TestSignIn() {
+	tests := []struct {
+		name         string
+		reqFile      string // リクエストのファイルパス
+		wantStatus   int    // ステータスコード
+		wantRespFile string // レスポンスのファイルパス
+	}{
+		{
+			"success with username",
+			"testdata/auth/signin/ok_username_request.json.golden",
+			http.StatusOK,
+			"testdata/auth/signin/ok_username_response.json.golden",
+		},
+		{
+			"success with email",
+			"testdata/auth/signin/ok_email_request.json.golden",
+			http.StatusOK,
+			"testdata/auth/signin/ok_email_response.json.golden",
+		},
+		// フィールドの値が不正な場合
+		{
+			"invalid parameter",
+			"testdata/auth/signin/invalid_parameter_request.json.golden",
+			http.StatusBadRequest,
+			"testdata/auth/signin/invalid_parameter_response.json.golden",
+		},
+		// ユーザー名が存在しない場合
+		{
+			"UserName not found",
+			"testdata/auth/signin/username_not_found_request.json.golden",
+			http.StatusNotFound,
+			"testdata/auth/signin/username_not_found_response.json.golden",
+		},
+		// メールアドレスが存在しない場合
+		{
+			"Email not found",
+			"testdata/auth/signin/email_not_found_request.json.golden",
+			http.StatusNotFound,
+			"testdata/auth/signin/email_not_found_response.json.golden",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			url := testutil.RunTestServer(s.T(), "POST", "/user/signin", s.ah.SignIn)
+			reqBody := testutil.LoadFile(s.T(), tt.reqFile)
+			resp := testutil.SendRequest(s.T(), "POST", url, reqBody)
+
+			assert.Equal(s.T(), tt.wantStatus, resp.StatusCode)
+
+			if tt.wantRespFile == "" {
+				return
+			}
+			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
+			testutil.AssertResponseBody(s.T(), resp, wantResp)
+		})
+	}
+}
+
 func setupAuthServiceMock(t *testing.T) *AuthServiceMock {
 	t.Helper()
 	fc := &clock.FixedClocker{}
@@ -195,6 +254,20 @@ func setupAuthServiceMock(t *testing.T) *AuthServiceMock {
 				return service.ErrEmailAlreadyExists
 			}
 			return nil
+		},
+		SignInFunc: func(ctx context.Context, data *model.UserSignInData) (*model.Tokens, error) {
+			if data.UserName == "notFound" {
+				return nil, service.ErrUserNotFound
+			}
+			if data.Email == "notFound@example.com" {
+				return nil, service.ErrUserNotFound
+			}
+			tokens := &model.Tokens{
+				Id:      "dummy",
+				Access:  "dummy",
+				Refresh: "dummy",
+			}
+			return tokens, nil
 		},
 	}
 

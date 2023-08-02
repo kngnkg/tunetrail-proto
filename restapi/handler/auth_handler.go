@@ -13,6 +13,7 @@ import (
 type AuthService interface {
 	RegisterUser(ctx context.Context, data *model.UserRegistrationData) (*model.User, error)
 	ConfirmEmail(ctx context.Context, userName, code string) error
+	SignIn(ctx context.Context, data *model.UserSignInData) (*model.Tokens, error)
 }
 
 type AuthHandler struct {
@@ -91,4 +92,38 @@ func (ah *AuthHandler) ConfirmEmail(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// POST /auth/signin
+// サインインする
+func (ah *AuthHandler) SignIn(c *gin.Context) {
+	var data *model.UserSignInData
+	if err := c.ShouldBindJSON(&data); err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
+		return
+	}
+	if data.UserName == "" && data.Email == "" {
+		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
+		return
+	}
+
+	tokens, err := ah.Service.SignIn(c.Request.Context(), data)
+	if err != nil {
+		if errors.Is(err, service.ErrUserNotFound) {
+			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
+			return
+		}
+		// メールアドレスまたはパスワードが一致しない場合
+		if errors.Is(err, service.ErrNotAuthorized) {
+			errorResponse(c, http.StatusBadRequest, NotAuthorizedCode)
+			return
+		}
+
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
+		return
+	}
+
+	c.JSON(http.StatusOK, tokens)
 }

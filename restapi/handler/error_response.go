@@ -43,6 +43,7 @@ const (
 	InvalidConfirmationCode = 4101 + iota
 	ConfirmationCodeExpiredCode
 	EmailAlreadyConfirmedCode
+	NotAuthorizedCode
 )
 
 // ユーザー関連のエラーコード
@@ -86,6 +87,10 @@ var ErrorMessages = map[int]ErrorMessage{
 	EmailAlreadyConfirmedCode: {
 		DeveloperMessage: "Email already confirmed",
 		UserMessage:      "既に確認済みのメールアドレスです。",
+	},
+	NotAuthorizedCode: {
+		DeveloperMessage: "Wrong email or password",
+		UserMessage:      "メールアドレスまたはパスワードが一致しません。",
 	},
 	// ユーザー関連
 	UserNotFoundCode: {

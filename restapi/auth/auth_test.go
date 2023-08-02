@@ -8,6 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/kngnkg/tunetrail/restapi/model"
+	"github.com/kngnkg/tunetrail/restapi/testutil/fixture"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -173,6 +175,93 @@ func TestAuth_ConfirmSignUp(t *testing.T) {
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("Auth.ConfirmSignUp() error = %v, wantErr %v", err, tt.wantErr)
 			}
+		})
+	}
+}
+
+func TestAuth_SignIn(t *testing.T) {
+	// このユーザーが登録されていることを前提とする
+	u := fixture.User(&model.User{})
+
+	type args struct {
+		ctx      context.Context
+		email    string
+		password string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    bool
+		wantErr error
+	}{
+		{
+			name: "success",
+			args: args{
+				ctx:      context.Background(),
+				email:    u.Email,
+				password: u.Password,
+			},
+			want:    true,
+			wantErr: nil,
+		},
+		{
+			name: "password mismatch",
+			args: args{
+				ctx:      context.Background(),
+				email:    u.Email,
+				password: "invalid",
+			},
+			want:    false,
+			wantErr: ErrNotAuthorized,
+		},
+		{
+			name: "email not found",
+			args: args{
+				ctx:      context.Background(),
+				email:    "invalid@example.com",
+				password: u.Password,
+			},
+			want:    false,
+			wantErr: ErrNotAuthorized,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			apm := &AuthProviderMock{}
+			// モックの設定
+			apm.AdminInitiateAuthWithContextFunc = func(ctx context.Context, input *cognitoidentityprovider.AdminInitiateAuthInput, opts ...request.Option) (*cognitoidentityprovider.AdminInitiateAuthOutput, error) {
+				if *input.AuthParameters["PASSWORD"] != u.Password {
+					awserr := &cognitoidentityprovider.NotAuthorizedException{
+						Message_: aws.String("mock"),
+					}
+					return nil, awserr
+				}
+				if *input.AuthParameters["USERNAME"] != u.UserName && *input.AuthParameters["USERNAME"] != u.Email {
+					awserr := &cognitoidentityprovider.NotAuthorizedException{
+						Message_: aws.String("mock"),
+					}
+					return nil, awserr
+				}
+				output := &cognitoidentityprovider.AdminInitiateAuthOutput{
+					AuthenticationResult: &cognitoidentityprovider.AuthenticationResultType{
+						AccessToken:  aws.String("mock"),
+						ExpiresIn:    aws.Int64(3600),
+						IdToken:      aws.String("mock"),
+						RefreshToken: aws.String("mock"),
+						TokenType:    aws.String("mock"),
+					},
+				}
+				return output, nil
+			}
+
+			a := createAuthFortest(t, apm)
+
+			got, err := a.SignIn(tt.args.ctx, tt.args.email, tt.args.password)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("Auth.SignIn() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			assert.Equal(t, tt.want, got != nil)
 		})
 	}
 }
