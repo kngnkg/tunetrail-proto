@@ -6,7 +6,7 @@
  * ユーザー
  */
 CREATE TABLE users (
-    id VARCHAR(100) PRIMARY KEY,
+    id UUID PRIMARY KEY,
     user_name VARCHAR(100) UNIQUE,
     name VARCHAR(100),
     icon_url VARCHAR(100),
