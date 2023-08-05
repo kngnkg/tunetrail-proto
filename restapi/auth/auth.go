@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	"github.com/google/uuid"
 	"github.com/kngnkg/tunetrail/restapi/model"
 )
 
@@ -39,14 +38,15 @@ type Auth struct {
 }
 
 var (
-	ErrEmailAlreadyExists = errors.New("auth: email already exists")
-	ErrInvalidPassword    = errors.New("auth: invalid password")
-	ErrUserNotFound       = errors.New("auth: user not found")
-	ErrNotAuthorized      = errors.New("auth: invalid email or password")
-	ErrUserNotConfirmed   = errors.New("auth: user not confirmed")
-	ErrUserSubIsNil       = errors.New("auth: user sub is nil")
-	ErrCodeMismatch       = errors.New("auth: code mismatch")
-	ErrCodeExpired        = errors.New("auth: code expired")
+	ErrUserIdAlreadyExists = errors.New("auth: userId already exists")
+	ErrEmailAlreadyExists  = errors.New("auth: email already exists")
+	ErrInvalidPassword     = errors.New("auth: invalid password")
+	ErrUserNotFound        = errors.New("auth: user not found")
+	ErrNotAuthorized       = errors.New("auth: invalid email or password")
+	ErrUserNotConfirmed    = errors.New("auth: user not confirmed")
+	ErrUserSubIsNil        = errors.New("auth: user sub is nil")
+	ErrCodeMismatch        = errors.New("auth: code mismatch")
+	ErrCodeExpired         = errors.New("auth: code expired")
 )
 
 func NewAuth(region, userPoolId, cognitoClientId, cognitoClientSecret string) *Auth {
@@ -67,67 +67,53 @@ func NewAuth(region, userPoolId, cognitoClientId, cognitoClientSecret string) *A
 	}
 }
 
-const MaxRetryCount = 3
+func (a *Auth) SignUp(ctx context.Context, userId model.UserID, email, password string) error {
+	secretHash := a.getSecretHash(string(userId))
 
-func (a *Auth) SignUp(ctx context.Context, email, password string) (string, error) {
-	var signUpWithRetry func(retryCount int) (string, error)
-	signUpWithRetry = func(retryCount int) (string, error) {
-		if retryCount > MaxRetryCount {
-			return "", fmt.Errorf("maximum retry attempts exceeded")
-		}
-
-		// TODO: service層でユーザーIdを生成するように変更する
-		cognitoUserName := generateUserId() // Cognitoのユーザー名はユーザーIDとする
-		secretHash := a.getSecretHash(cognitoUserName)
-
-		param := &cognitoidentityprovider.SignUpInput{
-			ClientId:   aws.String(a.cognitoClientId),
-			SecretHash: aws.String(secretHash),
-			Username:   aws.String(cognitoUserName),
-			Password:   aws.String(password),
-			UserAttributes: []*cognitoidentityprovider.AttributeType{
-				{
-					Name:  aws.String("email"),
-					Value: aws.String(email),
-				},
+	param := &cognitoidentityprovider.SignUpInput{
+		ClientId:   aws.String(a.cognitoClientId),
+		SecretHash: aws.String(secretHash),
+		Username:   aws.String(string(userId)),
+		Password:   aws.String(password),
+		UserAttributes: []*cognitoidentityprovider.AttributeType{
+			{
+				Name:  aws.String("email"),
+				Value: aws.String(email),
 			},
-		}
-
-		res, err := a.provider.SignUpWithContext(ctx, param)
-		if err != nil {
-			if awserr, ok := err.(awserr.Error); ok {
-				log.Println("awserr.Code(): " + awserr.Code())
-				log.Println("awserr.Message(): " + awserr.Message())
-				switch awserr.(type) {
-				case *cognitoidentityprovider.InvalidPasswordException:
-					return "", fmt.Errorf("%w: %w", ErrInvalidPassword, awserr)
-				case *cognitoidentityprovider.UsernameExistsException:
-					// Cognitoのユーザー名が既に存在する場合は、Cognitoのユーザー名を変更して再度登録する
-					return signUpWithRetry(retryCount + 1)
-				default:
-					return "", fmt.Errorf("error from aws: %w", awserr)
-				}
-			}
-			return "", err
-		}
-
-		if res.UserSub == nil {
-			return "", ErrUserSubIsNil
-		}
-
-		return cognitoUserName, nil
+		},
 	}
 
-	return signUpWithRetry(0)
+	res, err := a.provider.SignUpWithContext(ctx, param)
+	if err != nil {
+		if awserr, ok := err.(awserr.Error); ok {
+			log.Println("awserr.Code(): " + awserr.Code())
+			log.Println("awserr.Message(): " + awserr.Message())
+			switch awserr.(type) {
+			case *cognitoidentityprovider.UsernameExistsException:
+				return fmt.Errorf("%w: %w", ErrUserIdAlreadyExists, awserr)
+			case *cognitoidentityprovider.InvalidPasswordException:
+				return fmt.Errorf("%w: %w", ErrInvalidPassword, awserr)
+			default:
+				return fmt.Errorf("error from aws: %w", awserr)
+			}
+		}
+		return err
+	}
+
+	if res.UserSub == nil {
+		return ErrUserSubIsNil
+	}
+
+	return nil
 }
 
-func (a *Auth) ConfirmSignUp(ctx context.Context, userId, code string) error {
-	secretHash := a.getSecretHash(userId)
+func (a *Auth) ConfirmSignUp(ctx context.Context, userId model.UserID, code string) error {
+	secretHash := a.getSecretHash(string(userId))
 
 	param := &cognitoidentityprovider.ConfirmSignUpInput{
 		ClientId:         aws.String(a.cognitoClientId),
 		SecretHash:       aws.String(secretHash),
-		Username:         aws.String(userId),
+		Username:         aws.String(string(userId)),
 		ConfirmationCode: aws.String(code),
 	}
 
@@ -242,9 +228,4 @@ func (a *Auth) getSecretHash(userIdentifier string) string {
 	mac := hmac.New(sha256.New, []byte(a.cognitoClientSecret))
 	mac.Write([]byte(userIdentifier + a.cognitoClientId))
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
-}
-
-// ユーザーIDを生成する
-func generateUserId() string {
-	return uuid.New().String()
 }

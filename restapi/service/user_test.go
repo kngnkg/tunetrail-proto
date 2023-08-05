@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"testing"
@@ -23,115 +22,27 @@ type UserServiceTestSuite struct {
 	dummyUsers []*model.User       // テスト用のダミーユーザー
 }
 
-var (
-	VALID_PASSWORD = "password"
-
-	DUMMY_1_USER_ID  = "dummy1id"
-	DUMMY_1_USERNAME = "dummy1"
-	DUMMY_1_EMAIL    = "dummy1@example.com"
-	DUMMY_1_PASSWORD = "dummy1"
-
-	DUMMY_2_USER_ID  = "dummy2id"
-	DUMMY_2_USERNAME = "dummy2"
-	DUMMY_2_EMAIL    = "dummy2@example.com"
-	DUMMY_2_PASSWORD = "dummy2"
-)
-
 func TestUserServiceTestSuite(t *testing.T) {
 	t.Parallel()
-	moqDB := &DBConnectionMock{}
-	moqRepo := &UserRepositoryMock{}
+	suite.Run(t, new(UserServiceTestSuite))
+}
+
+func (s *UserServiceTestSuite) SetupTest() {
 	fc := &clock.FixedClocker{}
 
 	// テスト用のダミーユーザーを作成
 	// これらのユーザーだけがDBに存在することを想定している
-	dummyUsers := []*model.User{
-		fixture.User(&model.User{
-			Id:       DUMMY_1_USER_ID,
-			UserName: DUMMY_1_USERNAME,
-			Name:     "dummy1",
-			IconUrl:  "https://example.com/icon.png",
-			Bio:      "dummy1",
-			// タイムスタンプを固定する
-			CreatedAt: fc.Now(),
-			UpdatedAt: fc.Now(),
-		}),
-		fixture.User(&model.User{
-			Id:       DUMMY_2_USER_ID,
-			UserName: DUMMY_2_USERNAME,
-			Name:     "dummy2",
-			IconUrl:  "https://example.com/icon.png",
-			Bio:      "dummy2",
-			// タイムスタンプを固定する
-			CreatedAt: fc.Now(),
-			UpdatedAt: fc.Now(),
-		}),
-	}
+	dummyUsers := fixture.CreateUsers(2)
 
-	// 各種モック関数の設定
-	moqDB.BeginTxxFunc = func(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error) {
-		return &sqlx.Tx{}, nil
-	}
+	moqRepo := s.setupRepoMock()
 
-	moqRepo.WithTransactionFunc = func(ctx context.Context, db store.Beginner, fn func(tx *sqlx.Tx) error) error {
-		tx, err := db.BeginTxx(ctx, nil)
-		if err != nil {
-			return fmt.Errorf("failed to begin transaction: %w", err)
-		}
-		err = fn(tx)
-		if err != nil {
-			return fmt.Errorf("failed to execute mock transaction: %w", err)
-		}
-		return nil
+	s.us = &UserService{
+		DB:   &DBConnectionMock{},
+		Repo: moqRepo,
 	}
-
-	moqRepo.UserExistsByUserNameFunc = func(ctx context.Context, db store.Queryer, userName string) (bool, error) {
-		if userName == DUMMY_1_USERNAME || userName == DUMMY_2_USERNAME {
-			return true, nil
-		}
-		return false, nil
-	}
-
-	moqRepo.GetUserByUserNameFunc = func(ctx context.Context, db store.Queryer, userName string) (*model.User, error) {
-		if userName == DUMMY_1_USERNAME {
-			return dummyUsers[0], nil
-		}
-		if userName == DUMMY_2_USERNAME {
-			return dummyUsers[1], nil
-		}
-		return nil, store.ErrUserNotFound
-	}
-
-	// ダミーユーザー1を更新する場合を想定
-	moqRepo.UpdateUserFunc = func(ctx context.Context, db store.Execer, u *model.User) error {
-		if u.Id != DUMMY_1_USER_ID && u.Id != DUMMY_2_USER_ID {
-			return store.ErrUserNotFound
-		}
-		if u.UserName == DUMMY_2_USERNAME {
-			return store.ErrUserNameAlreadyExists
-		}
-		u.UpdatedAt = fc.Now()
-		return nil
-	}
-
-	moqRepo.DeleteUserByUserNameFunc = func(ctx context.Context, db store.Execer, userName string) error {
-		if userName == DUMMY_1_USERNAME || userName == DUMMY_2_USERNAME {
-			return nil
-		}
-		return store.ErrUserNotFound
-	}
-
-	suite.Run(t, &UserServiceTestSuite{
-		us: &UserService{
-			DB:   moqDB,
-			Repo: moqRepo,
-		},
-		fc:         fc,
-		dummyUsers: dummyUsers,
-	})
+	s.fc = fc
+	s.dummyUsers = dummyUsers
 }
-
-func (s *UserServiceTestSuite) SetupTest() {}
 
 func (s *UserServiceTestSuite) TestGetUserByUserName() {
 	type args struct {
@@ -149,7 +60,7 @@ func (s *UserServiceTestSuite) TestGetUserByUserName() {
 			"ok",
 			args{
 				ctx:      context.Background(),
-				userName: DUMMY_1_USERNAME,
+				userName: s.dummyUsers[0].UserName,
 			},
 			s.dummyUsers[0],
 			nil,
@@ -196,12 +107,12 @@ func (s *UserServiceTestSuite) TestUpdateUser() {
 			args{
 				ctx: context.Background(),
 				data: &model.UserUpdateData{
-					Id:       DUMMY_1_USER_ID,
+					Id:       s.dummyUsers[0].Id,
 					UserName: "update",
 					Name:     "test",
 					IconUrl:  "https://example.com/icon.png",
 					Bio:      "test",
-					Password: VALID_PASSWORD,
+					Password: "test",
 					Email:    "email@example.com",
 				},
 			},
@@ -213,12 +124,12 @@ func (s *UserServiceTestSuite) TestUpdateUser() {
 			args{
 				ctx: context.Background(),
 				data: &model.UserUpdateData{
-					Id:       "0",
+					Id:       fixture.NewUserId(),
 					UserName: "update",
 					Name:     "test",
 					IconUrl:  "https://example.com/icon.png",
 					Bio:      "test",
-					Password: VALID_PASSWORD,
+					Password: "test",
 					Email:    "email@example.com",
 				},
 			},
@@ -230,12 +141,12 @@ func (s *UserServiceTestSuite) TestUpdateUser() {
 			args{
 				ctx: context.Background(),
 				data: &model.UserUpdateData{
-					Id:       DUMMY_1_USER_ID,
-					UserName: DUMMY_2_USERNAME,
+					Id:       s.dummyUsers[0].Id,
+					UserName: s.dummyUsers[1].UserName, // ダミーユーザー2と同じユーザー名
 					Name:     "test",
 					IconUrl:  "https://example.com/icon.png",
 					Bio:      "test",
-					Password: VALID_PASSWORD,
+					Password: "test",
 					Email:    "email@example.com",
 				},
 			},
@@ -285,7 +196,7 @@ func (s *UserServiceTestSuite) TestDeleteUserByUserName() {
 			"ok",
 			args{
 				ctx:      context.Background(),
-				userName: DUMMY_1_USERNAME,
+				userName: s.dummyUsers[0].UserName,
 			},
 			nil,
 		},
@@ -307,5 +218,53 @@ func (s *UserServiceTestSuite) TestDeleteUserByUserName() {
 				s.T().Errorf("UserService.DeleteUserByUserName() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func (s *UserServiceTestSuite) setupRepoMock() *UserRepositoryMock {
+	return &UserRepositoryMock{
+		WithTransactionFunc: func(ctx context.Context, db store.Beginner, fn func(tx *sqlx.Tx) error) error {
+			tx := &sqlx.Tx{}
+			err := fn(tx)
+			if err != nil {
+				return fmt.Errorf("failed to execute mock transaction: %w", err)
+			}
+			return nil
+		},
+		UserExistsByUserNameFunc: func(ctx context.Context, db store.Queryer, userName string) (bool, error) {
+			for _, u := range s.dummyUsers {
+				if userName == u.UserName {
+					return true, nil
+				}
+			}
+			return false, nil
+		},
+		GetUserByUserNameFunc: func(ctx context.Context, db store.Queryer, userName string) (*model.User, error) {
+			for _, u := range s.dummyUsers {
+				if userName == u.UserName {
+					return u, nil
+				}
+			}
+			return nil, store.ErrUserNotFound
+		},
+		// ダミーユーザー1を更新する場合を想定
+		UpdateUserFunc: func(ctx context.Context, db store.Execer, u *model.User) error {
+			if u.Id != s.dummyUsers[0].Id && u.Id != s.dummyUsers[1].Id {
+				return store.ErrUserNotFound
+			}
+			if u.UserName == s.dummyUsers[1].UserName {
+				return store.ErrUserNameAlreadyExists
+			}
+			u.UpdatedAt = s.fc.Now()
+			return nil
+		},
+		DeleteUserByUserNameFunc: func(ctx context.Context, db store.Execer, userName string) error {
+			for _, u := range s.dummyUsers {
+				if userName == u.UserName {
+					return nil
+				}
+			}
+			return store.ErrUserNotFound
+		},
 	}
 }

@@ -19,17 +19,32 @@ type AuthService struct {
 
 // RegisterUserはユーザーを登録する
 func (as *AuthService) RegisterUser(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {
-	id, err := as.Auth.SignUp(ctx, data.Email, data.Password)
-	if err != nil {
-		if errors.Is(err, auth.ErrEmailAlreadyExists) {
-			return nil, fmt.Errorf("%w: %w", ErrEmailAlreadyExists, err)
+	var maxAttempt = 3
+	var userId model.UserID
+
+	for i := 0; i < maxAttempt; i++ {
+		userId = model.NewUserId() // ユーザーIDを生成
+
+		if err := as.Auth.SignUp(ctx, userId, data.Email, data.Password); err != nil {
+			if errors.Is(err, auth.ErrUserIdAlreadyExists) {
+				continue // ユーザーIDが既に存在する場合はリトライ
+			}
+			if errors.Is(err, auth.ErrEmailAlreadyExists) {
+				return nil, fmt.Errorf("%w: %w", ErrEmailAlreadyExists, err)
+			}
+			return nil, err
 		}
-		return nil, err
+
+		if i == maxAttempt-1 {
+			return nil, fmt.Errorf("maximum retry attempts exceeded")
+		}
+
+		break
 	}
 
 	registeredUser := &model.User{}
 	// トランザクション開始
-	err = as.Repo.WithTransaction(ctx, as.DB, func(tx *sqlx.Tx) error {
+	err := as.Repo.WithTransaction(ctx, as.DB, func(tx *sqlx.Tx) error {
 		// ユーザー名が既に存在するかどうかを確認
 		exists, err := as.Repo.UserExistsByUserName(ctx, tx, data.UserName)
 		if err != nil {
@@ -40,7 +55,7 @@ func (as *AuthService) RegisterUser(ctx context.Context, data *model.UserRegistr
 		}
 
 		u := &model.User{
-			Id:       id,
+			Id:       userId,
 			UserName: data.UserName,
 			Name:     data.Name,
 			IconUrl:  "",
@@ -53,6 +68,7 @@ func (as *AuthService) RegisterUser(ctx context.Context, data *model.UserRegistr
 		return nil
 	})
 	if err != nil {
+		// TODO: Authのユーザー登録をロールバックする
 		return nil, err
 	}
 
@@ -109,7 +125,7 @@ func (as *AuthService) SignIn(ctx context.Context, data *model.UserSignInData) (
 		return nil, err
 	}
 
-	tokens, err := as.Auth.SignIn(ctx, user.Id, data.Password)
+	tokens, err := as.Auth.SignIn(ctx, string(user.Id), data.Password)
 	if err != nil {
 		if errors.Is(err, auth.ErrUserNotFound) {
 			return nil, fmt.Errorf("%w: %w", ErrUserNotFound, err)

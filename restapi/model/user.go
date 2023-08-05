@@ -2,10 +2,19 @@ package model
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
+type UserID string
+
+// ユーザーIDを生成する
+func NewUserId() UserID {
+	return UserID(uuid.New().String())
+}
+
 type User struct {
-	Id        string    `json:"id" db:"id" binding:"required"`
+	Id        UserID    `json:"id" db:"id" binding:"required,uuid4"`
 	UserName  string    `json:"userName" db:"user_name" binding:"required,min=3,max=20"`
 	Name      string    `json:"name" db:"name" binding:"required,min=3,max=20"`
 	IconUrl   string    `json:"iconUrl" db:"icon_url" binding:"required,url"`
@@ -30,7 +39,7 @@ type UserSignInData struct {
 }
 
 type UserUpdateData struct {
-	Id       string `json:"id" db:"id" binding:"required"`
+	Id       UserID `json:"id" db:"id" binding:"required"`
 	UserName string `json:"userName" db:"user_name" binding:"required,min=3,max=20"`
 	Name     string `json:"name" db:"name" binding:"required,min=3,max=20"`
 	IconUrl  string `json:"iconUrl" db:"icon_url" binding:"required,url"`

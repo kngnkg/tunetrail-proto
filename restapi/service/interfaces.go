@@ -9,8 +9,8 @@ import (
 )
 
 type Auth interface {
-	SignUp(ctx context.Context, email, password string) (string, error)
-	ConfirmSignUp(ctx context.Context, userId, code string) error
+	SignUp(ctx context.Context, userId model.UserID, email, password string) error
+	ConfirmSignUp(ctx context.Context, userId model.UserID, code string) error
 	SignIn(ctx context.Context, userIdentifier, password string) (*model.Tokens, error)
 	RefreshToken(ctx context.Context, userIdentifier, refreshToken string) (*model.Tokens, error)
 }

@@ -451,7 +451,7 @@ var _ Auth = &AuthMock{}
 //
 //		// make and configure a mocked Auth
 //		mockedAuth := &AuthMock{
-//			ConfirmSignUpFunc: func(ctx context.Context, userId string, code string) error {
+//			ConfirmSignUpFunc: func(ctx context.Context, userId model.UserID, code string) error {
 //				panic("mock out the ConfirmSignUp method")
 //			},
 //			RefreshTokenFunc: func(ctx context.Context, userIdentifier string, refreshToken string) (*model.Tokens, error) {
@@ -460,7 +460,7 @@ var _ Auth = &AuthMock{}
 //			SignInFunc: func(ctx context.Context, userIdentifier string, password string) (*model.Tokens, error) {
 //				panic("mock out the SignIn method")
 //			},
-//			SignUpFunc: func(ctx context.Context, email string, password string) (string, error) {
+//			SignUpFunc: func(ctx context.Context, userId model.UserID, email string, password string) error {
 //				panic("mock out the SignUp method")
 //			},
 //		}
@@ -471,7 +471,7 @@ var _ Auth = &AuthMock{}
 //	}
 type AuthMock struct {
 	// ConfirmSignUpFunc mocks the ConfirmSignUp method.
-	ConfirmSignUpFunc func(ctx context.Context, userId string, code string) error
+	ConfirmSignUpFunc func(ctx context.Context, userId model.UserID, code string) error
 
 	// RefreshTokenFunc mocks the RefreshToken method.
 	RefreshTokenFunc func(ctx context.Context, userIdentifier string, refreshToken string) (*model.Tokens, error)
@@ -480,7 +480,7 @@ type AuthMock struct {
 	SignInFunc func(ctx context.Context, userIdentifier string, password string) (*model.Tokens, error)
 
 	// SignUpFunc mocks the SignUp method.
-	SignUpFunc func(ctx context.Context, email string, password string) (string, error)
+	SignUpFunc func(ctx context.Context, userId model.UserID, email string, password string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -489,7 +489,7 @@ type AuthMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// UserId is the userId argument value.
-			UserId string
+			UserId model.UserID
 			// Code is the code argument value.
 			Code string
 		}
@@ -515,6 +515,8 @@ type AuthMock struct {
 		SignUp []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// UserId is the userId argument value.
+			UserId model.UserID
 			// Email is the email argument value.
 			Email string
 			// Password is the password argument value.
@@ -528,13 +530,13 @@ type AuthMock struct {
 }
 
 // ConfirmSignUp calls ConfirmSignUpFunc.
-func (mock *AuthMock) ConfirmSignUp(ctx context.Context, userId string, code string) error {
+func (mock *AuthMock) ConfirmSignUp(ctx context.Context, userId model.UserID, code string) error {
 	if mock.ConfirmSignUpFunc == nil {
 		panic("AuthMock.ConfirmSignUpFunc: method is nil but Auth.ConfirmSignUp was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
-		UserId string
+		UserId model.UserID
 		Code   string
 	}{
 		Ctx:    ctx,
@@ -553,12 +555,12 @@ func (mock *AuthMock) ConfirmSignUp(ctx context.Context, userId string, code str
 //	len(mockedAuth.ConfirmSignUpCalls())
 func (mock *AuthMock) ConfirmSignUpCalls() []struct {
 	Ctx    context.Context
-	UserId string
+	UserId model.UserID
 	Code   string
 } {
 	var calls []struct {
 		Ctx    context.Context
-		UserId string
+		UserId model.UserID
 		Code   string
 	}
 	mock.lockConfirmSignUp.RLock()
@@ -648,23 +650,25 @@ func (mock *AuthMock) SignInCalls() []struct {
 }
 
 // SignUp calls SignUpFunc.
-func (mock *AuthMock) SignUp(ctx context.Context, email string, password string) (string, error) {
+func (mock *AuthMock) SignUp(ctx context.Context, userId model.UserID, email string, password string) error {
 	if mock.SignUpFunc == nil {
 		panic("AuthMock.SignUpFunc: method is nil but Auth.SignUp was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
+		UserId   model.UserID
 		Email    string
 		Password string
 	}{
 		Ctx:      ctx,
+		UserId:   userId,
 		Email:    email,
 		Password: password,
 	}
 	mock.lockSignUp.Lock()
 	mock.calls.SignUp = append(mock.calls.SignUp, callInfo)
 	mock.lockSignUp.Unlock()
-	return mock.SignUpFunc(ctx, email, password)
+	return mock.SignUpFunc(ctx, userId, email, password)
 }
 
 // SignUpCalls gets all the calls that were made to SignUp.
@@ -673,11 +677,13 @@ func (mock *AuthMock) SignUp(ctx context.Context, email string, password string)
 //	len(mockedAuth.SignUpCalls())
 func (mock *AuthMock) SignUpCalls() []struct {
 	Ctx      context.Context
+	UserId   model.UserID
 	Email    string
 	Password string
 } {
 	var calls []struct {
 		Ctx      context.Context
+		UserId   model.UserID
 		Email    string
 		Password string
 	}
