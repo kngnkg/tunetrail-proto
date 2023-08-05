@@ -260,6 +260,9 @@ var _ AuthService = &AuthServiceMock{}
 //			ConfirmEmailFunc: func(ctx context.Context, userName string, code string) error {
 //				panic("mock out the ConfirmEmail method")
 //			},
+//			RefreshTokenFunc: func(ctx context.Context, refreshToken string) (string, error) {
+//				panic("mock out the RefreshToken method")
+//			},
 //			RegisterUserFunc: func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {
 //				panic("mock out the RegisterUser method")
 //			},
@@ -275,6 +278,9 @@ var _ AuthService = &AuthServiceMock{}
 type AuthServiceMock struct {
 	// ConfirmEmailFunc mocks the ConfirmEmail method.
 	ConfirmEmailFunc func(ctx context.Context, userName string, code string) error
+
+	// RefreshTokenFunc mocks the RefreshToken method.
+	RefreshTokenFunc func(ctx context.Context, refreshToken string) (string, error)
 
 	// RegisterUserFunc mocks the RegisterUser method.
 	RegisterUserFunc func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error)
@@ -293,6 +299,13 @@ type AuthServiceMock struct {
 			// Code is the code argument value.
 			Code string
 		}
+		// RefreshToken holds details about calls to the RefreshToken method.
+		RefreshToken []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// RefreshToken is the refreshToken argument value.
+			RefreshToken string
+		}
 		// RegisterUser holds details about calls to the RegisterUser method.
 		RegisterUser []struct {
 			// Ctx is the ctx argument value.
@@ -309,6 +322,7 @@ type AuthServiceMock struct {
 		}
 	}
 	lockConfirmEmail sync.RWMutex
+	lockRefreshToken sync.RWMutex
 	lockRegisterUser sync.RWMutex
 	lockSignIn       sync.RWMutex
 }
@@ -350,6 +364,42 @@ func (mock *AuthServiceMock) ConfirmEmailCalls() []struct {
 	mock.lockConfirmEmail.RLock()
 	calls = mock.calls.ConfirmEmail
 	mock.lockConfirmEmail.RUnlock()
+	return calls
+}
+
+// RefreshToken calls RefreshTokenFunc.
+func (mock *AuthServiceMock) RefreshToken(ctx context.Context, refreshToken string) (string, error) {
+	if mock.RefreshTokenFunc == nil {
+		panic("AuthServiceMock.RefreshTokenFunc: method is nil but AuthService.RefreshToken was just called")
+	}
+	callInfo := struct {
+		Ctx          context.Context
+		RefreshToken string
+	}{
+		Ctx:          ctx,
+		RefreshToken: refreshToken,
+	}
+	mock.lockRefreshToken.Lock()
+	mock.calls.RefreshToken = append(mock.calls.RefreshToken, callInfo)
+	mock.lockRefreshToken.Unlock()
+	return mock.RefreshTokenFunc(ctx, refreshToken)
+}
+
+// RefreshTokenCalls gets all the calls that were made to RefreshToken.
+// Check the length with:
+//
+//	len(mockedAuthService.RefreshTokenCalls())
+func (mock *AuthServiceMock) RefreshTokenCalls() []struct {
+	Ctx          context.Context
+	RefreshToken string
+} {
+	var calls []struct {
+		Ctx          context.Context
+		RefreshToken string
+	}
+	mock.lockRefreshToken.RLock()
+	calls = mock.calls.RefreshToken
+	mock.lockRefreshToken.RUnlock()
 	return calls
 }
 

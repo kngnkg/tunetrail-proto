@@ -21,6 +21,10 @@ type JWTer struct {
 	*JWTerConfig
 }
 
+var (
+	ErrTokenExpired = errors.New("token is expired")
+)
+
 func NewJWTer(clocker clock.Clocker, config *JWTerConfig) *JWTer {
 	return &JWTer{
 		clocker:     clocker,
@@ -66,7 +70,7 @@ func (j *JWTer) Verify(ctx context.Context, tokenString string) error {
 
 	// exp (expiration time) クレームは、現在の時刻よりも未来である必要がある
 	if !token.Expiration().After(j.clocker.Now()) {
-		return errors.New("token is expired")
+		return ErrTokenExpired
 	}
 
 	return nil

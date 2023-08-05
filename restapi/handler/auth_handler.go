@@ -14,6 +14,7 @@ type AuthService interface {
 	RegisterUser(ctx context.Context, data *model.UserRegistrationData) (*model.User, error)
 	ConfirmEmail(ctx context.Context, userName, code string) error
 	SignIn(ctx context.Context, data *model.UserSignInData) (*model.Tokens, error)
+	RefreshToken(ctx context.Context, userIdentifier, refreshToken string) (string, error)
 }
 
 type AuthHandler struct {
@@ -59,11 +60,13 @@ func (ah *AuthHandler) ConfirmEmail(c *gin.Context) {
 		UserName string `json:"userName" binding:"required"`
 		Code     string `json:"code" binding:"required"`
 	}
+
 	if err := c.ShouldBindJSON(&b); err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
+
 	if err := ah.Service.ConfirmEmail(c.Request.Context(), b.UserName, b.Code); err != nil {
 		// ユーザー名が存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
@@ -126,4 +129,39 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, tokens)
+}
+
+// POST /auth/refresh
+// リフレッシュトークンを使ってアクセストークンを更新する
+func (ah *AuthHandler) RefreshToken(c *gin.Context) {
+	var b struct {
+		Id           string `json:"id" binding:"required"`
+		RefreshToken string `json:"refreshToken" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&b); err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
+		return
+	}
+
+	accessToken, err := ah.Service.RefreshToken(c.Request.Context(), b.Id, b.RefreshToken)
+	if err != nil {
+		// // リフレッシュトークンが不正な場合
+		// if errors.Is(err, service.ErrInvalidRefreshToken) {
+		// 	errorResponse(c, http.StatusBadRequest, InvalidRefreshTokenCode)
+		// 	return
+		// }
+		// // リフレッシュトークンが期限切れの場合
+		// if errors.Is(err, service.ErrRefreshTokenExpired) {
+		// 	errorResponse(c, http.StatusBadRequest, RefreshTokenExpiredCode)
+		// 	return
+		// }
+
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"accessToken": accessToken})
 }

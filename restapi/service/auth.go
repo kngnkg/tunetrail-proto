@@ -121,3 +121,14 @@ func (as *AuthService) SignIn(ctx context.Context, data *model.UserSignInData) (
 	}
 	return tokens, nil
 }
+
+func (as *AuthService) RefreshToken(ctx context.Context, userId, refreshToken string) (string, error) {
+	tokens, err := as.Auth.RefreshToken(ctx, userId, refreshToken)
+	if err != nil {
+		if errors.Is(err, auth.ErrNotAuthorized) {
+			return "", fmt.Errorf("%w: %w", ErrNotAuthorized, err)
+		}
+		return "", err
+	}
+	return tokens.Access, nil
+}

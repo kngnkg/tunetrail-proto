@@ -1,9 +1,6 @@
 package router
 
 import (
-	"time"
-
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/kngnkg/tunetrail/restapi/auth"
 	"github.com/kngnkg/tunetrail/restapi/clock"
@@ -14,6 +11,8 @@ import (
 )
 
 func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
+	cl := clock.RealClocker{}
+
 	db, cleanup, err := store.New(cfg)
 	if err != nil {
 		return nil, cleanup, err
@@ -23,7 +22,11 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		cfg.AWSRegion, cfg.CognitoUserPoolId, cfg.CognitoClientId, cfg.CognitoClientSecret,
 	)
 
-	cl := clock.RealClocker{}
+	j := auth.NewJWTer(cl, &auth.JWTerConfig{
+		Region:          cfg.AWSRegion,
+		UserPoolId:      cfg.CognitoUserPoolId,
+		CognitoClientId: cfg.CognitoClientId,
+	})
 
 	r := &store.Repository{Clocker: cl}
 
@@ -43,7 +46,7 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 
 	router := gin.Default()
 
-	router.Use(CorsMiddleware())
+	router.Use(handler.CorsMiddleware())
 
 	router.GET("/health", hh.HealthCheck)
 
@@ -51,12 +54,14 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	{
 		auth.POST("/register", ah.RegisterUser)
 		auth.PUT("/confirm", ah.ConfirmEmail)
-		auth.POST("/signin", ah.SignIn) // サインイン
-		// auth.POST("/signout", ah.SignOut)         // サインアウト
+		auth.POST("/signin", ah.SignIn)
+		auth.POST("/refresh", ah.RefreshToken)
+		// auth.POST("/signout", handler.AuthMiddleware(j), ah.SignOut) // サインアウト
 	}
 
 	user := router.Group("/user")
 	{
+		user.Use(handler.AuthMiddleware(j))
 		user.GET("/:user_name", uh.GetUserByUserName) // ログインユーザ以外のユーザー情報取得
 		// auth.GET("/me", uh.GetMe)                     // ログインユーザー情報取得
 		user.PUT("/", uh.UpdateUser) // TODO: 改修予定
@@ -65,37 +70,4 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	}
 
 	return router, cleanup, nil
-}
-
-// CORSの設定
-func CorsMiddleware() gin.HandlerFunc {
-	return cors.New(cors.Config{
-		// 許可したいHTTPメソッドの一覧
-		AllowMethods: []string{
-			"POST",
-			"GET",
-			"OPTIONS",
-			"PUT",
-			"DELETE",
-		},
-		// 許可したいHTTPリクエストヘッダの一覧
-		AllowHeaders: []string{
-			"Access-Control-Allow-Headers",
-			"Content-Type",
-			"Content-Length",
-			"Accept-Encoding",
-			"X-CSRF-Token",
-			"Authorization",
-		},
-		// 許可したいアクセス元の一覧
-		AllowOrigins: []string{
-			"http://localhost:3000",
-			"http://www.tune-trail.com",
-			"https://www.tune-trail.com",
-			"http://tune-trail.com",
-			"https://tune-trail.com",
-		},
-		// preflight requestで許可した後の接続可能時間
-		MaxAge: 24 * time.Hour,
-	})
 }
