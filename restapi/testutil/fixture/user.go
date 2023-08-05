@@ -15,7 +15,7 @@ func User(u *model.User) *model.User {
 	random := strconv.Itoa(rand.Int())[:3]
 
 	result := &model.User{
-		Id:        uuid.New().String(),
+		Id:        NewUserId(),
 		UserName:  "test" + random,
 		Name:      "test" + random,
 		IconUrl:   "test" + random,
@@ -73,4 +73,8 @@ func CreateUsers(n int) []*model.User {
 		})
 	}
 	return users
+}
+
+func NewUserId() model.UserID {
+	return model.UserID(uuid.New().String())
 }

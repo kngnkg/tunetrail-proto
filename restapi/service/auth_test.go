@@ -341,18 +341,21 @@ func (s *AuthServiceTestSuite) setupRepoMock() *UserRepositoryMock {
 
 func (s *AuthServiceTestSuite) setupAuthMock() *AuthMock {
 	mock := &AuthMock{
-		SignUpFunc: func(ctx context.Context, email, password string) (string, error) {
+		SignUpFunc: func(ctx context.Context, userId model.UserID, email, password string) error {
 			if password == invalidPassword {
-				return "", auth.ErrInvalidPassword
+				return auth.ErrInvalidPassword
 			}
 			for _, u := range s.dummyUsers {
+				if userId == u.Id {
+					return auth.ErrUserIdAlreadyExists
+				}
 				if email == u.Email {
-					return "", auth.ErrEmailAlreadyExists
+					return auth.ErrEmailAlreadyExists
 				}
 			}
-			return uuid.New().String(), nil
+			return nil
 		},
-		ConfirmSignUpFunc: func(ctx context.Context, userId, code string) error {
+		ConfirmSignUpFunc: func(ctx context.Context, userId model.UserID, code string) error {
 			if code == mismatchCode {
 				return auth.ErrCodeMismatch
 			}
@@ -366,7 +369,7 @@ func (s *AuthServiceTestSuite) setupAuthMock() *AuthMock {
 		},
 		SignInFunc: func(ctx context.Context, userIdentifier, password string) (*model.Tokens, error) {
 			for _, u := range s.dummyUsers {
-				if userIdentifier == u.Id || userIdentifier == u.Email {
+				if userIdentifier == string(u.Id) || userIdentifier == u.Email {
 					if password != u.Password {
 						return nil, auth.ErrNotAuthorized
 					}

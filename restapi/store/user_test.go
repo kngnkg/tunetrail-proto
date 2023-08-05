@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/kngnkg/tunetrail/restapi/clock"
 	"github.com/kngnkg/tunetrail/restapi/model"
@@ -230,7 +229,7 @@ func (s *UserStoreTestSuite) TestUpdateUser() {
 			// 存在しないidの場合はエラーを返す
 			"errIdNotExists",
 			fixture.User(&model.User{
-				Id: uuid.New().String(),
+				Id: fixture.NewUserId(),
 			}),
 			nil,
 			ErrUserNotFound,

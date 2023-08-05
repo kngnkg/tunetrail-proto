@@ -25,39 +25,50 @@ func createAuthFortest(t *testing.T, apm *AuthProviderMock) *Auth {
 
 func TestAuth_SignUp(t *testing.T) {
 	var (
-		VALID_PASSWORD = "password"
+		VALID_PASSWORD    = "password"
+		ALREADY_EXISTS_ID = fixture.NewUserId()
 	)
 
 	type args struct {
 		ctx      context.Context
+		userId   model.UserID
 		email    string
 		password string
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    bool
 		wantErr error
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx:      context.Background(),
+				userId:   fixture.NewUserId(),
 				email:    "email@example.com",
 				password: VALID_PASSWORD,
 			},
-			want:    true,
 			wantErr: nil,
 		},
 		{
 			name: "password is invalid",
 			args: args{
 				ctx:      context.Background(),
+				userId:   fixture.NewUserId(),
 				email:    "email@example.com",
 				password: "invalid",
 			},
-			want:    false,
 			wantErr: ErrInvalidPassword,
+		},
+		{
+			name: "already exists user id",
+			args: args{
+				ctx:      context.Background(),
+				userId:   ALREADY_EXISTS_ID,
+				email:    "email@example.com",
+				password: VALID_PASSWORD,
+			},
+			wantErr: ErrUserIdAlreadyExists,
 		},
 	}
 	for _, tt := range tests {
@@ -65,6 +76,12 @@ func TestAuth_SignUp(t *testing.T) {
 			apm := &AuthProviderMock{}
 			// モックの設定
 			apm.SignUpWithContextFunc = func(ctx context.Context, input *cognitoidentityprovider.SignUpInput, opts ...request.Option) (*cognitoidentityprovider.SignUpOutput, error) {
+				if *input.Username == string(ALREADY_EXISTS_ID) {
+					awserr := &cognitoidentityprovider.UsernameExistsException{
+						Message_: aws.String("mock"),
+					}
+					return nil, awserr
+				}
 				if *input.Password != VALID_PASSWORD {
 					awserr := &cognitoidentityprovider.InvalidPasswordException{
 						Message_: aws.String("mock"),
@@ -79,12 +96,10 @@ func TestAuth_SignUp(t *testing.T) {
 
 			a := createAuthFortest(t, apm)
 
-			got, err := a.SignUp(tt.args.ctx, tt.args.email, tt.args.password)
+			err := a.SignUp(tt.args.ctx, tt.args.userId, tt.args.email, tt.args.password)
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("Auth.SignUp() error = %v, wantErr %v", err, tt.wantErr)
 			}
-
-			assert.Equal(t, tt.want, got != "")
 		})
 	}
 }
@@ -97,9 +112,9 @@ func TestAuth_ConfirmSignUp(t *testing.T) {
 	)
 
 	type args struct {
-		ctx             context.Context
-		cognitoUserName string
-		code            string
+		ctx    context.Context
+		userId model.UserID
+		code   string
 	}
 	tests := []struct {
 		name    string
@@ -109,36 +124,36 @@ func TestAuth_ConfirmSignUp(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				ctx:             context.Background(),
-				cognitoUserName: "test-userName",
-				code:            "123456",
+				ctx:    context.Background(),
+				userId: fixture.NewUserId(),
+				code:   "123456",
 			},
 			wantErr: nil,
 		},
 		{
 			name: "code mismatch",
 			args: args{
-				ctx:             context.Background(),
-				cognitoUserName: "test-userName",
-				code:            MISMATCH_CODE,
+				ctx:    context.Background(),
+				userId: fixture.NewUserId(),
+				code:   MISMATCH_CODE,
 			},
 			wantErr: ErrCodeMismatch,
 		},
 		{
 			name: "code is expired",
 			args: args{
-				ctx:             context.Background(),
-				cognitoUserName: "test-userName",
-				code:            EXPIRED_CODE,
+				ctx:    context.Background(),
+				userId: fixture.NewUserId(),
+				code:   EXPIRED_CODE,
 			},
 			wantErr: ErrCodeExpired,
 		},
 		{
 			name: "email already exists",
 			args: args{
-				ctx:             context.Background(),
-				cognitoUserName: "test-userName",
-				code:            EMAIL_EXISTS,
+				ctx:    context.Background(),
+				userId: fixture.NewUserId(),
+				code:   EMAIL_EXISTS,
 			},
 			wantErr: ErrEmailAlreadyExists,
 		},
@@ -171,7 +186,7 @@ func TestAuth_ConfirmSignUp(t *testing.T) {
 
 			a := createAuthFortest(t, apm)
 
-			err := a.ConfirmSignUp(tt.args.ctx, tt.args.cognitoUserName, tt.args.code)
+			err := a.ConfirmSignUp(tt.args.ctx, tt.args.userId, tt.args.code)
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("Auth.ConfirmSignUp() error = %v, wantErr %v", err, tt.wantErr)
 			}
