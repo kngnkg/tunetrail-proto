@@ -197,6 +197,46 @@ func (a *Auth) SignIn(ctx context.Context, userIdentifier, password string) (*mo
 	return tokens, nil
 }
 
+func (a *Auth) RefreshToken(ctx context.Context, userIdentifier, refreshToken string) (*model.Tokens, error) {
+	secretHash := a.getSecretHash(userIdentifier)
+
+	params := &cognitoidentityprovider.AdminInitiateAuthInput{
+		ClientId:   aws.String(a.cognitoClientId),
+		UserPoolId: aws.String(a.userPoolId),
+		AuthFlow:   aws.String(cognitoidentityprovider.AuthFlowTypeRefreshToken),
+		AuthParameters: map[string]*string{
+			"REFRESH_TOKEN": aws.String(refreshToken),
+			"SECRET_HASH":   aws.String(secretHash),
+		},
+	}
+
+	res, err := a.provider.AdminInitiateAuthWithContext(ctx, params)
+	if err != nil {
+		if awserr, ok := err.(awserr.Error); ok {
+			log.Println("awserr.Code(): " + awserr.Code())
+			log.Println("awserr.Message(): " + awserr.Message())
+			switch awserr.(type) {
+			case *cognitoidentityprovider.NotAuthorizedException:
+				return nil, fmt.Errorf("%w: %w", ErrNotAuthorized, awserr)
+			default:
+				return nil, fmt.Errorf("error from aws: %w", awserr)
+			}
+		}
+		return nil, err
+	}
+
+	if res == nil || res.AuthenticationResult == nil || res.AuthenticationResult.IdToken == nil {
+		return nil, errors.New("failed to login")
+	}
+
+	tokens := &model.Tokens{
+		Id:     *res.AuthenticationResult.IdToken,
+		Access: *res.AuthenticationResult.AccessToken,
+	}
+
+	return tokens, nil
+}
+
 // Cognitoのユーザー名とクライアントID、クライアントシークレットからシークレットハッシュを生成する
 func (a *Auth) getSecretHash(userIdentifier string) string {
 	mac := hmac.New(sha256.New, []byte(a.cognitoClientSecret))

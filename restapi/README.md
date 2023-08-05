@@ -8,6 +8,7 @@
 | POST         | `/auth/register` | ユーザーを登録する                     |
 | PUT          | `/auth/confirm`  | メールアドレスを検証する                     |
 | POST         | `/auth/signin`   | サインインする                     |
+| POST         | `/auth/refresh`  | アクセストークンをリフレッシュする           |
 | GET          | `/user/hoge`     | ユーザー名が`hoge`のユーザーを取得する |
 | PUT          | `/user`          | ユーザーを更新する                     |
 | DELETE       | `/user/hoge`     | ユーザー名が`hoge`のユーザーを削除する |
