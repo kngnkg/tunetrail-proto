@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/kngnkg/tunetrail/restapi/clock"
 	"github.com/kngnkg/tunetrail/restapi/model"
 )
@@ -14,7 +15,7 @@ func User(u *model.User) *model.User {
 	random := strconv.Itoa(rand.Int())[:3]
 
 	result := &model.User{
-		Id:        random,
+		Id:        uuid.New().String(),
 		UserName:  "test" + random,
 		Name:      "test" + random,
 		IconUrl:   "test" + random,

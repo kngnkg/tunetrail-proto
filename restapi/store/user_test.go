@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/kngnkg/tunetrail/restapi/clock"
 	"github.com/kngnkg/tunetrail/restapi/model"
@@ -39,7 +40,6 @@ func (s *UserStoreTestSuite) SetupTest() {
 
 	// テスト用のダミーユーザー
 	s.dummy = fixture.User(&model.User{
-		Id:       "1",
 		UserName: "dummy",
 		// タイムスタンプを固定する
 		CreatedAt: s.fc.Now(),
@@ -230,7 +230,7 @@ func (s *UserStoreTestSuite) TestUpdateUser() {
 			// 存在しないidの場合はエラーを返す
 			"errIdNotExists",
 			fixture.User(&model.User{
-				Id: "999",
+				Id: uuid.New().String(),
 			}),
 			nil,
 			ErrUserNotFound,
