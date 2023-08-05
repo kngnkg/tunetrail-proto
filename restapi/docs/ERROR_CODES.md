@@ -17,6 +17,7 @@
 | `4102`       | `400 Bad Request`              | Confirmation code expired | 確認コードが期限切れの場合に返されます。 |
 | `4103`       | `409 Conflict`              | Email already confirmed | メールアドレスが既に認証済みの場合に返されます。 |
 | `4104`       | `400 Bad Request`              | Wrong email or password | メールアドレスまたはパスワードが一致しない場合に返されます。 |
+| `4105`       | `400 Bad Request`              | Token expired | トークンが期限切れの場合に返されます。 |
 
 ## ユーザーに関連するエラー
 

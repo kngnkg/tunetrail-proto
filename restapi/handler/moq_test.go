@@ -260,7 +260,7 @@ var _ AuthService = &AuthServiceMock{}
 //			ConfirmEmailFunc: func(ctx context.Context, userName string, code string) error {
 //				panic("mock out the ConfirmEmail method")
 //			},
-//			RefreshTokenFunc: func(ctx context.Context, refreshToken string) (string, error) {
+//			RefreshTokenFunc: func(ctx context.Context, userIdentifier string, refreshToken string) (string, error) {
 //				panic("mock out the RefreshToken method")
 //			},
 //			RegisterUserFunc: func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error) {
@@ -280,7 +280,7 @@ type AuthServiceMock struct {
 	ConfirmEmailFunc func(ctx context.Context, userName string, code string) error
 
 	// RefreshTokenFunc mocks the RefreshToken method.
-	RefreshTokenFunc func(ctx context.Context, refreshToken string) (string, error)
+	RefreshTokenFunc func(ctx context.Context, userIdentifier string, refreshToken string) (string, error)
 
 	// RegisterUserFunc mocks the RegisterUser method.
 	RegisterUserFunc func(ctx context.Context, data *model.UserRegistrationData) (*model.User, error)
@@ -303,6 +303,8 @@ type AuthServiceMock struct {
 		RefreshToken []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// UserIdentifier is the userIdentifier argument value.
+			UserIdentifier string
 			// RefreshToken is the refreshToken argument value.
 			RefreshToken string
 		}
@@ -368,21 +370,23 @@ func (mock *AuthServiceMock) ConfirmEmailCalls() []struct {
 }
 
 // RefreshToken calls RefreshTokenFunc.
-func (mock *AuthServiceMock) RefreshToken(ctx context.Context, refreshToken string) (string, error) {
+func (mock *AuthServiceMock) RefreshToken(ctx context.Context, userIdentifier string, refreshToken string) (string, error) {
 	if mock.RefreshTokenFunc == nil {
 		panic("AuthServiceMock.RefreshTokenFunc: method is nil but AuthService.RefreshToken was just called")
 	}
 	callInfo := struct {
-		Ctx          context.Context
-		RefreshToken string
+		Ctx            context.Context
+		UserIdentifier string
+		RefreshToken   string
 	}{
-		Ctx:          ctx,
-		RefreshToken: refreshToken,
+		Ctx:            ctx,
+		UserIdentifier: userIdentifier,
+		RefreshToken:   refreshToken,
 	}
 	mock.lockRefreshToken.Lock()
 	mock.calls.RefreshToken = append(mock.calls.RefreshToken, callInfo)
 	mock.lockRefreshToken.Unlock()
-	return mock.RefreshTokenFunc(ctx, refreshToken)
+	return mock.RefreshTokenFunc(ctx, userIdentifier, refreshToken)
 }
 
 // RefreshTokenCalls gets all the calls that were made to RefreshToken.
@@ -390,12 +394,14 @@ func (mock *AuthServiceMock) RefreshToken(ctx context.Context, refreshToken stri
 //
 //	len(mockedAuthService.RefreshTokenCalls())
 func (mock *AuthServiceMock) RefreshTokenCalls() []struct {
-	Ctx          context.Context
-	RefreshToken string
+	Ctx            context.Context
+	UserIdentifier string
+	RefreshToken   string
 } {
 	var calls []struct {
-		Ctx          context.Context
-		RefreshToken string
+		Ctx            context.Context
+		UserIdentifier string
+		RefreshToken   string
 	}
 	mock.lockRefreshToken.RLock()
 	calls = mock.calls.RefreshToken

@@ -44,6 +44,7 @@ const (
 	ConfirmationCodeExpiredCode
 	EmailAlreadyConfirmedCode
 	NotAuthorizedCode
+	TokenExpiredCode
 )
 
 // ユーザー関連のエラーコード
@@ -91,6 +92,10 @@ var ErrorMessages = map[int]ErrorMessage{
 	NotAuthorizedCode: {
 		DeveloperMessage: "Wrong email or password",
 		UserMessage:      "メールアドレスまたはパスワードが一致しません。",
+	},
+	TokenExpiredCode: {
+		DeveloperMessage: "Token expired",
+		UserMessage:      "トークンが期限切れです。",
 	},
 	// ユーザー関連
 	UserNotFoundCode: {

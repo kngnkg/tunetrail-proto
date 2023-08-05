@@ -58,6 +58,11 @@ func AuthMiddleware(j *auth.JWTer) gin.HandlerFunc {
 
 		// JWTの検証
 		if err := j.Verify(c, token); err != nil {
+			if err == auth.ErrTokenExpired {
+				errorResponse(c, http.StatusUnauthorized, TokenExpiredCode)
+				return
+			}
+
 			c.Error(err)
 			errorResponse(c, http.StatusUnauthorized, NotAuthorizedCode)
 			return
