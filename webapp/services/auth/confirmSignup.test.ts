@@ -1,19 +1,17 @@
 import { env } from "@/env.mjs"
 import { ApiError } from "@/types/error"
 
-import { SignupData, signup } from "./signup"
+import { ConfirmSignupData, confirmSignup } from "./confirmSignup"
 
-describe("signup", () => {
+describe("confirmSignup", () => {
   beforeEach(() => {
     jest.resetAllMocks()
   })
 
   test("ステータスコードが200の場合、nullを返す", async () => {
-    const body: SignupData = {
+    const body: ConfirmSignupData = {
       userName: "test",
-      name: "test",
-      password: "test",
-      email: "test",
+      code: "test",
     }
 
     const mock = () =>
@@ -24,40 +22,36 @@ describe("signup", () => {
       })
     global.fetch = jest.fn().mockImplementation(mock)
 
-    const data: SignupData = {
+    const data: ConfirmSignupData = {
       userName: "test",
-      name: "test",
-      password: "test",
-      email: "test",
+      code: "012345",
     }
 
-    const result = await signup(env.NEXT_PUBLIC_API_ROOT, data)
+    const result = await confirmSignup(env.NEXT_PUBLIC_API_ROOT, data)
     expect(result).toBeNull()
   })
 
   test("APIからエラーが返ってきた場合、エラーメッセージを返す", async () => {
     const body: ApiError = {
-      code: 4202,
-      developerMessage: "UserName already entry",
-      userMessage: "ユーザー名が既に存在します。",
+      code: 4101,
+      developerMessage: "Invalid confirmation code",
+      userMessage: "確認コードが一致しません。",
     }
 
     const mock = () =>
       Promise.resolve({
         ok: false,
-        status: 409,
+        status: 400,
         json: () => Promise.resolve(body),
       })
     global.fetch = jest.fn().mockImplementation(mock)
 
-    const data: SignupData = {
+    const data: ConfirmSignupData = {
       userName: "test",
-      name: "test",
-      password: "test",
-      email: "test",
+      code: "543210",
     }
 
-    const result = await signup(env.NEXT_PUBLIC_API_ROOT, data)
+    const result = await confirmSignup(env.NEXT_PUBLIC_API_ROOT, data)
     expect(result).toBe(body.userMessage)
   })
 })

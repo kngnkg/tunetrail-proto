@@ -38,3 +38,11 @@ export const userAuthSchema = z
   .refine((data) => passwordConfirmationSchema.safeParse(data).success, {
     message: "パスワードと確認用パスワードが一致しません",
   })
+
+export const confirmSignupSchema = z.object({
+  code: z
+    .string()
+    .min(6, "確認コードは6文字です")
+    .max(6, "確認コードは6文字です")
+    .regex(/^\d+$/, "確認コードは数字のみです"),
+})

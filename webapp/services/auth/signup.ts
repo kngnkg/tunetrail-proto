@@ -27,7 +27,7 @@ export const signup = async (
   data: SignupData
 ): Promise<null | FetchError> => {
   try {
-    const response = await fetch(`${apiRoot}/user/register`, {
+    const response = await fetch(`${apiRoot}/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -37,7 +37,6 @@ export const signup = async (
 
     if (!response.ok) {
       const errorResponse = await response.json()
-      console.error(errorResponse)
       if (!isApiError(errorResponse)) {
         const error = new Error(
           errorResponse.message ??
@@ -47,24 +46,19 @@ export const signup = async (
         throw error
       }
 
-      switch (response.status) {
-        case 400:
-          let errorMsg = MESSAGE.UNKNOWN_ERROR
-          if (errorResponse.msg === "ユーザー名が既に登録されています。") {
-            errorMsg = MESSAGE.DUP_USERNAME
-          }
-          if (errorResponse.msg === "メールアドレスが既に登録されています。") {
-            errorMsg = MESSAGE.DUP_EMAIL
-          }
+      // switch (response.status) {
+      //   case 400:
+      //     return errorResponse.userMessage
+      //   case 409:
+      //     return errorResponse.userMessage
+      //   case 500:
+      //     return errorResponse.userMessage
+      //   default:
+      //     return MESSAGE.UNKNOWN_ERROR
+      // }
 
-          return errorMsg
-        case 500:
-          return MESSAGE.UNKNOWN_ERROR
-        default:
-          return MESSAGE.UNKNOWN_ERROR
-      }
+      return errorResponse.userMessage
     }
-
     return null
   } catch (e) {
     console.error(e)
