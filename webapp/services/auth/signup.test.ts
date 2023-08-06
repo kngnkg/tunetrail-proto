@@ -1,18 +1,15 @@
-import { MESSAGE } from "@/config/messages"
+import { env } from "@/env.mjs"
+import { ApiError } from "@/types/error"
 
-import { signup } from "./signup"
+import { SignupData, signup } from "./signup"
 
 describe("signup", () => {
-  const apiRoot = "ttp://localhost:3000"
-
   beforeEach(() => {
     jest.resetAllMocks()
   })
 
-  //   test("リクエストのフォーマットが正しいこと", () => {})
-
   test("ステータスコードが200の場合、nullを返す", async () => {
-    const body = {
+    const body: SignupData = {
       userName: "test",
       name: "test",
       password: "test",
@@ -27,79 +24,40 @@ describe("signup", () => {
       })
     global.fetch = jest.fn().mockImplementation(mock)
 
-    const data = {
+    const data: SignupData = {
       userName: "test",
       name: "test",
       password: "test",
       email: "test",
     }
 
-    const result = await signup(apiRoot, data)
+    const result = await signup(env.NEXT_PUBLIC_API_ROOT, data)
     expect(result).toBeNull()
   })
 
-  describe("ステータスコードが400の場合", () => {
-    test("ユーザーネームが重複していた場合", async () => {
-      const mock = () =>
-        Promise.resolve({
-          ok: false,
-          status: 400,
-          json: () =>
-            Promise.resolve({ msg: "ユーザー名が既に登録されています。" }),
-        })
-      global.fetch = jest.fn().mockImplementation(mock)
+  test("APIからエラーが返ってきた場合、エラーメッセージを返す", async () => {
+    const body: ApiError = {
+      code: 4202,
+      developerMessage: "UserName already entry",
+      userMessage: "ユーザー名が既に存在します。",
+    }
 
-      const data = {
-        userName: "test",
-        name: "test",
-        password: "test",
-        email: "test",
-      }
-
-      const result = await signup(apiRoot, data)
-      expect(result).toBe(MESSAGE.DUP_USERNAME)
-    })
-
-    test("メールアドレスが重複していた場合", async () => {
-      const mock = () =>
-        Promise.resolve({
-          ok: false,
-          status: 400,
-          json: () =>
-            Promise.resolve({ msg: "メールアドレスが既に登録されています。" }),
-        })
-      global.fetch = jest.fn().mockImplementation(mock)
-
-      const data = {
-        userName: "test",
-        name: "test",
-        password: "test",
-        email: "test",
-      }
-
-      const result = await signup(apiRoot, data)
-      expect(result).toBe(MESSAGE.DUP_EMAIL)
-    })
-  })
-
-  test("ステータスコードが500の場合", async () => {
     const mock = () =>
       Promise.resolve({
         ok: false,
-        status: 500,
-        json: () =>
-          Promise.resolve({ msg: "サーバー内部でエラーが発生しました。" }),
+        status: 409,
+        json: () => Promise.resolve(body),
       })
     global.fetch = jest.fn().mockImplementation(mock)
 
-    const data = {
+    const data: SignupData = {
       userName: "test",
       name: "test",
       password: "test",
       email: "test",
     }
 
-    const result = await signup(apiRoot, data)
-    expect(result).toBe(MESSAGE.UNKNOWN_ERROR)
+    const result = await signup(env.NEXT_PUBLIC_API_ROOT, data)
+    expect(result).toBe(body.userMessage)
   })
 })

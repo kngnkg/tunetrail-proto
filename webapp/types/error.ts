@@ -2,9 +2,15 @@ export type FetchError = string
 
 // APIのエラー時のレスポンスの型
 export type ApiError = {
-  msg: string
+  code: number
+  developerMessage: string
+  userMessage: string
 }
 
 export const isApiError = (arg: any): arg is ApiError => {
-  return arg.msg !== undefined
+  return (
+    arg.code !== undefined &&
+    arg.developerMessage !== undefined &&
+    arg.userMessage !== undefined
+  )
 }
