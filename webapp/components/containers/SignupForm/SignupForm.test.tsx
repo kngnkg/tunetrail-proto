@@ -19,6 +19,10 @@ jest.mock("../../../hooks/toast/use-toast", () => ({
   useToast: jest.fn(),
 }))
 
+jest.mock("next/navigation", () => ({
+  useRouter: jest.fn(),
+}))
+
 describe("SignupForm", () => {
   let mockHandleSubmit: jest.Mock
   let mockRegister: jest.Mock

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { isSignupData, signup } from "@/services/auth/signup"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -22,6 +23,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   className,
   ...props
 }) => {
+  const router = useRouter()
+
   const { register, handleSubmit, formState } = useForm<FormData>({
     resolver: zodResolver(userAuthSchema),
   })
@@ -56,6 +59,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       intent: "success",
       description: MESSAGE.SUCCESS_SIGNUP,
     })
+
+    // メールアドレス認証コード送信画面に遷移する
+    router.push("/confirm?userName=" + data.userName)
+
     setIsLoading(false)
   }
 
