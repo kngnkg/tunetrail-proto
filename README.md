@@ -98,12 +98,6 @@ users ||--o{ reply_destination_users: "1人のユーザーは0以上の`reply_de
 
 ## 環境構築
 
-externalなネットワークを作成します。
-
-```
-docker network create tunetrail-external
-```
-
 docker-composeで各コンテナを起動します。
 
 ```
