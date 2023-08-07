@@ -35,6 +35,22 @@ services:
       - tunetrail-internal
       - tunetrail-external
 
+  reverse-proxy:
+    container_name: tunetrail-reverse-proxy
+    hostname: tunetrail-reverse-proxy
+    build:
+      context: .
+      target: run-local
+      dockerfile: ./reverse-proxy-for-dev/Dockerfile
+    volumes:
+      # .gitを含むルートディレクトリを指定する
+      - .:/workspace:cached
+    ports:
+      - "18001:8080"
+    networks:
+      - tunetrail-internal
+      - tunetrail-external
+
   migration:
     container_name: tunetrail-migration
     hostname: tunetrail-migration
