@@ -98,11 +98,24 @@ users ||--o{ reply_destination_users: "1人のユーザーは0以上の`reply_de
 
 ## 環境構築
 
-docker-composeで各コンテナを起動します。
+### リバースプロキシの公開鍵と秘密鍵を作成
 
+[mkcert](https://github.com/FiloSottile/mkcert)を使用します。
+
+```console
+mkcert -install
 ```
+
+```console
+cd reverse-proxy-for-dev && mkcert localhost
+```
+
+### 各コンテナを起動
+
+```console
 docker compose up
 ```
+
 ### REST API
 
 VSCodeのコマンドパレットで**Dev Containers: Open Folder in Container**を実行し、`restapi`ディレクトリを選択します。

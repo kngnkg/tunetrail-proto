@@ -15,6 +15,19 @@ services:
     ports:
       - '3000:3000'
 
+  reverse-proxy:
+    container_name: tunetrail-reverse-proxy
+    hostname: tunetrail-reverse-proxy
+    build:
+      context: .
+      target: run-local
+      dockerfile: ./reverse-proxy-for-dev/Dockerfile
+    volumes:
+      # .gitを含むルートディレクトリを指定する
+      - .:/workspace:cached
+    ports:
+      - "1443:443"
+
   restapi:
     container_name: tunetrail-restapi
     hostname: tunetrail-restapi
@@ -29,19 +42,6 @@ services:
       - .:/workspace:cached
     ports:
       - "18000:8080"
-
-  reverse-proxy:
-    container_name: tunetrail-reverse-proxy
-    hostname: tunetrail-reverse-proxy
-    build:
-      context: .
-      target: dev
-      dockerfile: ./reverse-proxy-for-dev/Dockerfile
-    volumes:
-      # .gitを含むルートディレクトリを指定する
-      - .:/workspace:cached
-    ports:
-      - "18001:8080"
 
   db:
     container_name: tunetrail-db

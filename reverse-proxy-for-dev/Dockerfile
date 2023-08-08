@@ -1,7 +1,7 @@
 # ---------------------------------------------------
 # ローカル実行用のコンテナイメージを作成するステージ
 
-FROM golang:1.20.3-bullseye as run-local
+FROM golang:1.20.3-alpine as run-local
 
 ENV GO111MODULE on
 
