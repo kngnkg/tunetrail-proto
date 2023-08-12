@@ -137,7 +137,7 @@ resource "aws_ecs_task_definition" "restapi" {
         value = var.cognito_admin_secret_key
       },
       {
-        name  = "ALLOWED_HOST"
+        name  = "ALLOWED_DOMAIN"
         value = var.allowed_domain
       },
     ],
