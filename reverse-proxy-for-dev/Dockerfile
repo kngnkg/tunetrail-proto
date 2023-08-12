@@ -1,40 +1,22 @@
-# リリース用のビルドを行うコンテナイメージを作成するステージ
-FROM golang:1.20.3-bullseye as deploy-builder
-
-WORKDIR /app
-
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
-RUN go build -trimpath -ldflags "-w -s" -o app
-
 # ---------------------------------------------------
-# リリース用のコンテナイメージを作成するステージ
+# ローカル実行用のコンテナイメージを作成するステージ
 
-FROM debian:bullseye-slim as deploy
+FROM golang:1.20.3-alpine as run-local
 
-COPY --from=deploy-builder /app/app .
+ENV GO111MODULE on
 
-CMD ["./app"]
+WORKDIR /workspace/reverse-proxy-for-dev
+
+CMD ["go", "run", "main.go"]
 
 # ---------------------------------------------------
 # 開発時に利用するコンテナイメージを作成するステージ
 
 FROM golang:1.20.3 as dev
 
-# GoのModule ModeをONにする
 ENV GO111MODULE on
 
-# ワーキングディレクトリを変更
-WORKDIR /workspace/restapi
-
-# 開発用のツールをインストール
-RUN apt-get update && apt-get install -y \
-    jq \
-    iputils-ping \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace/reverse-proxy-for-dev
 
 # goの各種ツールをインストール
 RUN go install github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest && \

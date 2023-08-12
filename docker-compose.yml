@@ -1,6 +1,20 @@
 version: "3.9"
 
 services:
+  reverse-proxy:
+    container_name: tunetrail-reverse-proxy
+    hostname: tunetrail-reverse-proxy
+    build:
+      context: .
+      target: dev
+      dockerfile: ./reverse-proxy-for-dev/Dockerfile
+    volumes:
+      # .gitを含むルートディレクトリを指定する
+      - .:/workspace:cached
+    ports:
+      - "1443:443"
+      - "3000:444"
+
   webapp:
     container_name: tunetrail-webapp
     hostname: tunetrail-webapp
@@ -12,10 +26,6 @@ services:
     volumes:
       # .gitを含むルートディレクトリを指定する
       - .:/workspace:cached
-    ports:
-      - '3000:3000'
-    networks:
-      - tunetrail-external
 
   restapi:
     container_name: tunetrail-restapi
@@ -29,11 +39,25 @@ services:
     volumes:
       # .gitを含むルートディレクトリを指定する
       - .:/workspace:cached
+
+  db:
+    container_name: tunetrail-db
+    hostname: tunetrail-db
+    image: postgres:15.2
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: tunetrail
+      POSTGRES_PASSWORD: tunetrail
+      POSTGRES_DB: tunetrail
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # dockerコンテナ起動時に自動で実行される.sqlファイル
+      - ./migration/_tools/postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./migration/_tools/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
     ports:
-      - "18000:8080"
-    networks:
-      - tunetrail-internal
-      - tunetrail-external
+      - "5555:5432"
+    # 設定ファイルを読み込む
+    command: -c 'config_file=/etc/postgresql/postgresql.conf'
 
   migration:
     container_name: tunetrail-migration
@@ -55,40 +79,6 @@ services:
       - .:/workspace:cached
     ports:
       - "18009:8080"
-    networks:
-      - tunetrail-internal
-      - tunetrail-external
-
-  db:
-    container_name: tunetrail-db
-    hostname: tunetrail-db
-    image: postgres:15.2
-    platform: linux/amd64
-    environment:
-      POSTGRES_USER: tunetrail
-      POSTGRES_PASSWORD: tunetrail
-      POSTGRES_DB: tunetrail
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      # dockerコンテナ起動時に自動で実行される.sqlファイル
-      - ./migration/_tools/postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-      - ./migration/_tools/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
-    ports:
-      - "5555:5432"
-    networks:
-      - tunetrail-internal
-    # 設定ファイルを読み込む
-    command: -c 'config_file=/etc/postgresql/postgresql.conf'
-
-networks:
-  # 内部ネットワーク
-  tunetrail-internal:
-    driver: bridge
-    internal: true
-  # 公開ネットワーク
-  tunetrail-external:
-    driver: bridge
-    external: true
 
 volumes:
   postgres-data:
