@@ -34,7 +34,7 @@ CMD ["node", "server.js"]
 
 FROM node:19.8 as dev
 
-WORKDIR /workspace
+WORKDIR /workspace/webapp
 
 COPY ./ ./
 
@@ -47,4 +47,4 @@ RUN apt-get update && apt-get install -y \
 
 RUN npm install -g npm@latest && npm install create-next-app
 
-ENTRYPOINT ["sleep", "infinity"]
+CMD ["npm", "run", "dev"]
