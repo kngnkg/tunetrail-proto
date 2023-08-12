@@ -143,7 +143,7 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 		"refreshToken",
 		tokens.Refresh,
 		60*60*24*7, // TODO: 有効期限を考える
-		"/refresh",
+		"/auth/refresh",
 		"."+ah.AllowedDomain,
 		true, // Secure
 		true, // HttpOnly
