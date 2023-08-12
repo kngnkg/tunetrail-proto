@@ -32,7 +32,8 @@ func (s *AuthHandlerTestSuite) SetupTest() {
 
 	asm := setupAuthServiceMock(s.T())
 	s.ah = &AuthHandler{
-		Service: asm,
+		Service:       asm,
+		AllowedDomain: "example.com",
 	}
 }
 
@@ -168,13 +169,13 @@ func (s *AuthHandlerTestSuite) TestSignIn() {
 			"success with username",
 			"testdata/auth/signin/ok_username_request.json.golden",
 			http.StatusOK,
-			"testdata/auth/signin/ok_username_response.json.golden",
+			"",
 		},
 		{
 			"success with email",
 			"testdata/auth/signin/ok_email_request.json.golden",
 			http.StatusOK,
-			"testdata/auth/signin/ok_email_response.json.golden",
+			"",
 		},
 		// フィールドの値が不正な場合
 		{
@@ -207,9 +208,14 @@ func (s *AuthHandlerTestSuite) TestSignIn() {
 
 			assert.Equal(s.T(), tt.wantStatus, resp.StatusCode)
 
+			// 正常系の場合
 			if tt.wantRespFile == "" {
+				// レスポンスのヘッダーにCookieが含まれていることを確認
+				cookie := resp.Header["Set-Cookie"]
+				assert.NotEmpty(s.T(), cookie)
 				return
 			}
+
 			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
 			testutil.AssertResponseBody(s.T(), resp, wantResp)
 		})

@@ -1,8 +1,8 @@
 package handler
 
 import (
+	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -11,7 +11,7 @@ import (
 )
 
 // CORSの設定
-func CorsMiddleware() gin.HandlerFunc {
+func CorsMiddleware(allowedDomain string) gin.HandlerFunc {
 	return cors.New(cors.Config{
 		// 許可したいHTTPメソッドの一覧
 		AllowMethods: []string{
@@ -28,15 +28,13 @@ func CorsMiddleware() gin.HandlerFunc {
 			"Content-Length",
 			"Accept-Encoding",
 			"X-CSRF-Token",
-			"Authorization",
+			"Authorization", // 不要になるかも
 		},
 		// 許可したいアクセス元の一覧
 		AllowOrigins: []string{
-			"http://localhost:3000",
-			"http://www.tune-trail.com",
-			"https://www.tune-trail.com",
-			"http://tune-trail.com",
-			"https://tune-trail.com",
+			"https://" + allowedDomain,
+			"https://www." + allowedDomain,
+			"https://api." + allowedDomain,
 		},
 		// preflight requestで許可した後の接続可能時間
 		MaxAge: 24 * time.Hour,
@@ -46,19 +44,20 @@ func CorsMiddleware() gin.HandlerFunc {
 // 認証ミドルウェア
 func AuthMiddleware(j *auth.JWTer) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Authorizationヘッダーの値を取得
-		headerValue := c.GetHeader("Authorization")
-		if headerValue == "" {
+		// Cookieからアクセストークンを取得
+		token, err := c.Cookie("accessToken")
+		if err != nil {
+			c.Error(err)
 			errorResponse(c, http.StatusUnauthorized, NotAuthorizedCode)
 			return
 		}
 
-		// Bearerプレフィックスを削除
-		token := strings.TrimPrefix(headerValue, "Bearer ")
+		log.Println("token: ", token)
 
 		// JWTの検証
 		if err := j.Verify(c, token); err != nil {
 			if err == auth.ErrTokenExpired {
+				// エラーレスポンスではなくリダイレクトさせたい
 				errorResponse(c, http.StatusUnauthorized, TokenExpiredCode)
 				return
 			}
