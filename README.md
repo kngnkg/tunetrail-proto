@@ -107,7 +107,8 @@ mkcert -install
 ```
 
 ```console
-cd reverse-proxy-for-dev && mkcert localhost
+cd reverse-proxy-for-dev && \
+mkcert -cert-file ./localhost.pem -key-file ./localhost-key.pem localhost "host.docker.internal"
 ```
 
 ### 各コンテナを起動
