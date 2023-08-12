@@ -4,23 +4,41 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"strconv"
+	"sync"
 )
 
-func main() {
-	log.Print("Starting reverse proxy server on port 8080")
+func runProxyServer(port int, forwardHost string) {
 	director := func(request *http.Request) {
 		request.URL.Scheme = "http"
-		// request.URL.Host = "docker.for.mac.localhost:18000"
-		request.URL.Host = "tunetrail-restapi:8080"
+		request.URL.Host = forwardHost
 	}
 
 	rp := &httputil.ReverseProxy{Director: director}
 	server := http.Server{
-		Addr:    ":443",
+		Addr:    ":" + strconv.Itoa(port),
 		Handler: rp,
 	}
 
-	if err := server.ListenAndServeTLS("localhost.pem","localhost-key.pem"); err != nil {
+	if err := server.ListenAndServeTLS("localhost.pem", "localhost-key.pem"); err != nil {
 		log.Fatal(err.Error())
 	}
+}
+
+func main() {
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+
+	go func() {
+		runProxyServer(443, "tunetrail-restapi:8080")
+		wg.Done()
+	}()
+
+	go func() {
+		runProxyServer(444, "tunetrail-webapp:3000")
+		wg.Done()
+	}()
+
+	wg.Wait()
 }
