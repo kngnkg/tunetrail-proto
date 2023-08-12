@@ -79,3 +79,9 @@ variable "db_port" {
   type        = number
   default     = 5432
 }
+
+variable "allowed_domain" {
+  description = "The domain name for the allowed domain"
+  type        = string
+  default     = "tune-trail.com"
+}

@@ -136,6 +136,10 @@ resource "aws_ecs_task_definition" "restapi" {
         name  = "AWS_SECRET_ACCESS_KEY"
         value = var.cognito_admin_secret_key
       },
+      {
+        name  = "ALLOWED_HOST"
+        value = var.allowed_domain
+      },
     ],
     logConfiguration = {
       logDriver = "awslogs", # CloudWatch Logsを使用する

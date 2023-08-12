@@ -42,11 +42,12 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 			Repo: r,
 			Auth: a,
 		},
+		AllowedDomain: cfg.AllowedDomain,
 	}
 
 	router := gin.Default()
 
-	router.Use(handler.CorsMiddleware())
+	router.Use(handler.CorsMiddleware(cfg.AllowedDomain))
 
 	router.GET("/health", hh.HealthCheck)
 
