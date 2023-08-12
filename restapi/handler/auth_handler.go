@@ -18,7 +18,8 @@ type AuthService interface {
 }
 
 type AuthHandler struct {
-	Service AuthService
+	Service       AuthService
+	AllowedDomain string
 }
 
 // POST /auth/register
@@ -128,7 +129,30 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, tokens)
+	c.SetCookie(
+		"accessToken",
+		tokens.Access,
+		60*60*24*7, // TODO: 有効期限を短くする
+		"/",
+		"."+ah.AllowedDomain,
+		true, // Secure
+		true, // HttpOnly
+	)
+
+	c.SetCookie(
+		"refreshToken",
+		tokens.Refresh,
+		60*60*24*7, // TODO: 有効期限を考える
+		"/refresh",
+		"."+ah.AllowedDomain,
+		true, // Secure
+		true, // HttpOnly
+	)
+
+	// c.JSON(http.StatusOK, tokens)
+
+	// userIdを返したほうがいいかも
+	c.Status(http.StatusOK)
 }
 
 // POST /auth/refresh

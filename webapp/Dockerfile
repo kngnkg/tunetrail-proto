@@ -38,6 +38,10 @@ WORKDIR /workspace/webapp
 
 COPY ./ ./
 
+# 証明書をインストール
+COPY ../reverse-proxy-for-dev/localhost.pem /usr/local/share/ca-certificates/localhost.crt
+RUN update-ca-certificates
+
 # 開発用のツールをインストール
 RUN apt-get update && apt-get install -y \
     jq \
@@ -45,6 +49,6 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g npm@latest && npm install create-next-app
+RUN npm install -g npm@latest
 
 CMD ["npm", "run", "dev"]
