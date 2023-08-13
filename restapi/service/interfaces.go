@@ -15,6 +15,10 @@ type Auth interface {
 	RefreshToken(ctx context.Context, userIdentifier, refreshToken string) (*model.Tokens, error)
 }
 
+type JWTer interface {
+	ParseIdToken(ctx context.Context, idToken string) (*model.AuthInfo, error)
+}
+
 type UserRepository interface {
 	// WithTransactionはトランザクションを実行する
 	WithTransaction(ctx context.Context, db store.Beginner, f func(tx *sqlx.Tx) error) error
@@ -22,8 +26,9 @@ type UserRepository interface {
 	UserExistsByUserName(ctx context.Context, db store.Queryer, userName string) (bool, error)
 	// GetUserByUserNameはユーザー名からユーザーを取得する
 	GetUserByUserName(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
+	// GetUserByUserIdはユーザーIDからユーザーを取得する
+	GetUserByUserId(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error)
 	// RegisterUserはユーザーを登録する
-	// RegisterUserInfo
 	RegisterUser(ctx context.Context, db store.Execer, u *model.User) error
 	// UpdateUserはユーザーを更新する
 	UpdateUser(ctx context.Context, db store.Execer, u *model.User) error

@@ -12,9 +12,10 @@ import (
 )
 
 type AuthService struct {
-	DB   store.DBConnection
-	Repo UserRepository
-	Auth Auth
+	DB    store.DBConnection
+	Repo  UserRepository
+	Auth  Auth
+	JWTer JWTer
 }
 
 // RegisterUserはユーザーを登録する
@@ -136,6 +137,16 @@ func (as *AuthService) SignIn(ctx context.Context, data *model.UserSignInData) (
 		return nil, err
 	}
 	return tokens, nil
+}
+
+func (as *AuthService) GetSignedInUser(ctx context.Context, idToken string) (*model.User, error) {
+	parsed, err := as.JWTer.ParseIdToken(ctx, idToken)
+	if err != nil {
+		// TODO: エラー処理
+		return nil, err
+	}
+
+	return as.Repo.GetUserByUserId(ctx, as.DB, parsed.Id)
 }
 
 func (as *AuthService) RefreshToken(ctx context.Context, userId, refreshToken string) (string, error) {

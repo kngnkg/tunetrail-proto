@@ -260,6 +260,9 @@ var _ AuthService = &AuthServiceMock{}
 //			ConfirmEmailFunc: func(ctx context.Context, userName string, code string) error {
 //				panic("mock out the ConfirmEmail method")
 //			},
+//			GetSignedInUserFunc: func(ctx context.Context, idToken string) (*model.User, error) {
+//				panic("mock out the GetSignedInUser method")
+//			},
 //			RefreshTokenFunc: func(ctx context.Context, userIdentifier string, refreshToken string) (string, error) {
 //				panic("mock out the RefreshToken method")
 //			},
@@ -278,6 +281,9 @@ var _ AuthService = &AuthServiceMock{}
 type AuthServiceMock struct {
 	// ConfirmEmailFunc mocks the ConfirmEmail method.
 	ConfirmEmailFunc func(ctx context.Context, userName string, code string) error
+
+	// GetSignedInUserFunc mocks the GetSignedInUser method.
+	GetSignedInUserFunc func(ctx context.Context, idToken string) (*model.User, error)
 
 	// RefreshTokenFunc mocks the RefreshToken method.
 	RefreshTokenFunc func(ctx context.Context, userIdentifier string, refreshToken string) (string, error)
@@ -298,6 +304,13 @@ type AuthServiceMock struct {
 			UserName string
 			// Code is the code argument value.
 			Code string
+		}
+		// GetSignedInUser holds details about calls to the GetSignedInUser method.
+		GetSignedInUser []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// IdToken is the idToken argument value.
+			IdToken string
 		}
 		// RefreshToken holds details about calls to the RefreshToken method.
 		RefreshToken []struct {
@@ -323,10 +336,11 @@ type AuthServiceMock struct {
 			Data *model.UserSignInData
 		}
 	}
-	lockConfirmEmail sync.RWMutex
-	lockRefreshToken sync.RWMutex
-	lockRegisterUser sync.RWMutex
-	lockSignIn       sync.RWMutex
+	lockConfirmEmail    sync.RWMutex
+	lockGetSignedInUser sync.RWMutex
+	lockRefreshToken    sync.RWMutex
+	lockRegisterUser    sync.RWMutex
+	lockSignIn          sync.RWMutex
 }
 
 // ConfirmEmail calls ConfirmEmailFunc.
@@ -366,6 +380,42 @@ func (mock *AuthServiceMock) ConfirmEmailCalls() []struct {
 	mock.lockConfirmEmail.RLock()
 	calls = mock.calls.ConfirmEmail
 	mock.lockConfirmEmail.RUnlock()
+	return calls
+}
+
+// GetSignedInUser calls GetSignedInUserFunc.
+func (mock *AuthServiceMock) GetSignedInUser(ctx context.Context, idToken string) (*model.User, error) {
+	if mock.GetSignedInUserFunc == nil {
+		panic("AuthServiceMock.GetSignedInUserFunc: method is nil but AuthService.GetSignedInUser was just called")
+	}
+	callInfo := struct {
+		Ctx     context.Context
+		IdToken string
+	}{
+		Ctx:     ctx,
+		IdToken: idToken,
+	}
+	mock.lockGetSignedInUser.Lock()
+	mock.calls.GetSignedInUser = append(mock.calls.GetSignedInUser, callInfo)
+	mock.lockGetSignedInUser.Unlock()
+	return mock.GetSignedInUserFunc(ctx, idToken)
+}
+
+// GetSignedInUserCalls gets all the calls that were made to GetSignedInUser.
+// Check the length with:
+//
+//	len(mockedAuthService.GetSignedInUserCalls())
+func (mock *AuthServiceMock) GetSignedInUserCalls() []struct {
+	Ctx     context.Context
+	IdToken string
+} {
+	var calls []struct {
+		Ctx     context.Context
+		IdToken string
+	}
+	mock.lockGetSignedInUser.RLock()
+	calls = mock.calls.GetSignedInUser
+	mock.lockGetSignedInUser.RUnlock()
 	return calls
 }
 
