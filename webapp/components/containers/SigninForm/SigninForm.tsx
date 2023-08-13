@@ -1,43 +1,48 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 
+import { env } from "@/env.mjs"
 import { MESSAGE } from "@/config/messages"
 import { mergeClasses } from "@/lib/utils"
-import { userAuthSchema } from "@/lib/validations/auth.schema"
+import { signInSchema } from "@/lib/validations/auth.schema"
+import { useSignin } from "@/hooks/auth/use-signin"
 import { useToast } from "@/hooks/toast/use-toast"
 import { Button } from "@/components/ui/Button/Button"
 import { Input } from "@/components/ui/Input/Input"
 
 interface SigninFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-type FormData = z.infer<typeof userAuthSchema>
+type FormData = z.infer<typeof signInSchema>
 
 export const SigninForm: React.FC<SigninFormProps> = ({
   className,
   ...props
 }) => {
+  const router = useRouter()
   const { register, handleSubmit, formState } = useForm<FormData>({
-    resolver: zodResolver(userAuthSchema),
+    resolver: zodResolver(signInSchema),
   })
+
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
+  const { error, signin } = useSignin()
   const { showToast } = useToast()
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
 
-    // TODO: ユーザー登録またはユーザー認証処理
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    const signinResult = confirm(`Signin with ${JSON.stringify(data)}`)
-
-    // TODO: ユーザー登録またはユーザー認証後の処理
-    if (!signinResult) {
+    await signin(env.NEXT_PUBLIC_API_ROOT, {
+      userName: "", // TODO: ユーザー名を入力できるようにする
+      ...data,
+    })
+    if (error) {
       showToast({
         intent: "error",
-        description: "ユーザー認証に失敗しました",
+        description: error,
       })
       setIsLoading(false)
       return
@@ -47,6 +52,10 @@ export const SigninForm: React.FC<SigninFormProps> = ({
       intent: "success",
       description: MESSAGE.SUCCESS_LOGIN,
     })
+
+    // サインイン後はホーム画面に遷移
+    router.push("/")
+
     setIsLoading(false)
   }
 

@@ -46,3 +46,8 @@ export const confirmSignupSchema = z.object({
     .max(6, "確認コードは6文字です")
     .regex(/^\d+$/, "確認コードは数字のみです"),
 })
+
+export const signInSchema = z.object({
+  email: z.string().email(MESSAGE.VALIDATION.USER.EMAIL),
+  password: passwordSchema,
+})
