@@ -15,6 +15,26 @@ const (
 	ConstraintUserName = "users_user_name_key"
 )
 
+// GetUserByUserId はユーザーIDからユーザーを取得する
+func (r *Repository) GetUserByUserId(ctx context.Context, db Queryer, id model.UserID) (*model.User, error) {
+	u := &model.User{}
+	query := `SELECT id, user_name, name, icon_url, bio, created_at, updated_at
+			FROM users
+			WHERE id = $1;`
+
+	if err := db.GetContext(ctx, u, query, string(id)); err != nil {
+		// ユーザーが存在しない場合はエラーをラップして返す
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("%w: %w", ErrUserNotFound, err)
+		}
+		return nil, err
+	}
+	// UTCに変換
+	u.CreatedAt = u.CreatedAt.UTC()
+	u.UpdatedAt = u.UpdatedAt.UTC()
+	return u, nil
+}
+
 // GetUserByUserName はユーザー名からユーザーを取得する
 func (r *Repository) GetUserByUserName(ctx context.Context, db Queryer, userName string) (*model.User, error) {
 	u := &model.User{}

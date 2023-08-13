@@ -14,6 +14,7 @@ type AuthService interface {
 	RegisterUser(ctx context.Context, data *model.UserRegistrationData) (*model.User, error)
 	ConfirmEmail(ctx context.Context, userName, code string) error
 	SignIn(ctx context.Context, data *model.UserSignInData) (*model.Tokens, error)
+	GetSignedInUser(ctx context.Context, idToken string) (*model.User, error)
 	RefreshToken(ctx context.Context, userIdentifier, refreshToken string) (string, error)
 }
 
@@ -129,6 +130,8 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 		return
 	}
 
+	// HttpOnly で Secure なクッキーを設定する
+
 	c.SetCookie(
 		"accessToken",
 		tokens.Access,
@@ -143,16 +146,21 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 		"refreshToken",
 		tokens.Refresh,
 		60*60*24*7, // TODO: 有効期限を考える
-		"/refresh",
+		"/auth/refresh",
 		"."+ah.AllowedDomain,
 		true, // Secure
 		true, // HttpOnly
 	)
 
-	// c.JSON(http.StatusOK, tokens)
+	// サインインしたユーザーの情報を取得する
+	user, err := ah.Service.GetSignedInUser(c.Request.Context(), tokens.Id)
+	if err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
+		return
+	}
 
-	// userIdを返したほうがいいかも
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, user)
 }
 
 // POST /auth/refresh

@@ -38,9 +38,10 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	}
 	ah := &handler.AuthHandler{
 		Service: &service.AuthService{
-			DB:   db,
-			Repo: r,
-			Auth: a,
+			DB:    db,
+			Repo:  r,
+			Auth:  a,
+			JWTer: j,
 		},
 		AllowedDomain: cfg.AllowedDomain,
 	}

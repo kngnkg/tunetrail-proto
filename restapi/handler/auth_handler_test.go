@@ -169,13 +169,13 @@ func (s *AuthHandlerTestSuite) TestSignIn() {
 			"success with username",
 			"testdata/auth/signin/ok_username_request.json.golden",
 			http.StatusOK,
-			"",
+			"testdata/auth/signin/ok_username_response.json.golden",
 		},
 		{
 			"success with email",
 			"testdata/auth/signin/ok_email_request.json.golden",
 			http.StatusOK,
-			"",
+			"testdata/auth/signin/ok_email_response.json.golden",
 		},
 		// フィールドの値が不正な場合
 		{
@@ -208,16 +208,15 @@ func (s *AuthHandlerTestSuite) TestSignIn() {
 
 			assert.Equal(s.T(), tt.wantStatus, resp.StatusCode)
 
-			// 正常系の場合
+			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
+			testutil.AssertResponseBody(s.T(), resp, wantResp)
+
+			// 正常系の場合はレスポンスヘッダーにCookieが含まれていることを確認
 			if tt.wantRespFile == "" {
-				// レスポンスのヘッダーにCookieが含まれていることを確認
 				cookie := resp.Header["Set-Cookie"]
 				assert.NotEmpty(s.T(), cookie)
 				return
 			}
-
-			wantResp := testutil.LoadFile(s.T(), tt.wantRespFile)
-			testutil.AssertResponseBody(s.T(), resp, wantResp)
 		})
 	}
 }
@@ -274,6 +273,18 @@ func setupAuthServiceMock(t *testing.T) *AuthServiceMock {
 				Refresh: "dummy",
 			}
 			return tokens, nil
+		},
+		GetSignedInUserFunc: func(ctx context.Context, idToken string) (*model.User, error) {
+			u := &model.User{
+				Id:        "1",
+				UserName:  "dummy",
+				Name:      "dummy",
+				IconUrl:   "https://example.com/icon.png",
+				Bio:       "dummy",
+				CreatedAt: fc.Now(),
+				UpdatedAt: fc.Now(),
+			}
+			return u, nil
 		},
 	}
 

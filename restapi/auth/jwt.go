@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/kngnkg/tunetrail/restapi/clock"
+	"github.com/kngnkg/tunetrail/restapi/model"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 )
@@ -74,4 +75,21 @@ func (j *JWTer) Verify(ctx context.Context, tokenString string) error {
 	}
 
 	return nil
+}
+
+func (j *JWTer) ParseIdToken(ctx context.Context, tokenString string) (*model.AuthInfo, error) {
+	token, err := jwt.Parse([]byte(tokenString))
+	if err != nil {
+		return nil, err
+	}
+
+	authInfo := &model.AuthInfo{}
+
+	id, _ := token.Get("cognito:username")
+	authInfo.Id = model.UserID(id.(string))
+
+	email, _ := token.Get("email")
+	authInfo.Email = email.(string)
+
+	return authInfo, nil
 }

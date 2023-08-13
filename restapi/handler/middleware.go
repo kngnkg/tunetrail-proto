@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -28,14 +27,13 @@ func CorsMiddleware(allowedDomain string) gin.HandlerFunc {
 			"Content-Length",
 			"Accept-Encoding",
 			"X-CSRF-Token",
-			"Authorization", // 不要になるかも
 		},
 		// 許可したいアクセス元の一覧
 		AllowOrigins: []string{
-			"https://" + allowedDomain,
-			"https://www." + allowedDomain,
-			"https://api." + allowedDomain,
+			"https://" + allowedDomain + ":3000",
+			"https://www." + allowedDomain + ":3000",
 		},
+		AllowCredentials: true,
 		// preflight requestで許可した後の接続可能時間
 		MaxAge: 24 * time.Hour,
 	})
@@ -51,8 +49,6 @@ func AuthMiddleware(j *auth.JWTer) gin.HandlerFunc {
 			errorResponse(c, http.StatusUnauthorized, NotAuthorizedCode)
 			return
 		}
-
-		log.Println("token: ", token)
 
 		// JWTの検証
 		if err := j.Verify(c, token); err != nil {

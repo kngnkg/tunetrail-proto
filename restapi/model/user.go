@@ -25,6 +25,11 @@ type User struct {
 	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
 }
 
+type AuthInfo struct {
+	Id    UserID `json:"id" binding:"required,uuid4"`
+	Email string `json:"email" binding:"email"`
+}
+
 type UserRegistrationData struct {
 	UserName string `json:"userName" binding:"required,min=3,max=20"`
 	Name     string `json:"name" binding:"required,min=3,max=20"`

@@ -96,6 +96,9 @@ var _ UserRepository = &UserRepositoryMock{}
 //			DeleteUserByUserNameFunc: func(ctx context.Context, db store.Execer, userName string) error {
 //				panic("mock out the DeleteUserByUserName method")
 //			},
+//			GetUserByUserIdFunc: func(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error) {
+//				panic("mock out the GetUserByUserId method")
+//			},
 //			GetUserByUserNameFunc: func(ctx context.Context, db store.Queryer, userName string) (*model.User, error) {
 //				panic("mock out the GetUserByUserName method")
 //			},
@@ -120,6 +123,9 @@ var _ UserRepository = &UserRepositoryMock{}
 type UserRepositoryMock struct {
 	// DeleteUserByUserNameFunc mocks the DeleteUserByUserName method.
 	DeleteUserByUserNameFunc func(ctx context.Context, db store.Execer, userName string) error
+
+	// GetUserByUserIdFunc mocks the GetUserByUserId method.
+	GetUserByUserIdFunc func(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error)
 
 	// GetUserByUserNameFunc mocks the GetUserByUserName method.
 	GetUserByUserNameFunc func(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
@@ -146,6 +152,15 @@ type UserRepositoryMock struct {
 			Db store.Execer
 			// UserName is the userName argument value.
 			UserName string
+		}
+		// GetUserByUserId holds details about calls to the GetUserByUserId method.
+		GetUserByUserId []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Db is the db argument value.
+			Db store.Queryer
+			// ID is the id argument value.
+			ID model.UserID
 		}
 		// GetUserByUserName holds details about calls to the GetUserByUserName method.
 		GetUserByUserName []struct {
@@ -194,6 +209,7 @@ type UserRepositoryMock struct {
 		}
 	}
 	lockDeleteUserByUserName sync.RWMutex
+	lockGetUserByUserId      sync.RWMutex
 	lockGetUserByUserName    sync.RWMutex
 	lockRegisterUser         sync.RWMutex
 	lockUpdateUser           sync.RWMutex
@@ -238,6 +254,46 @@ func (mock *UserRepositoryMock) DeleteUserByUserNameCalls() []struct {
 	mock.lockDeleteUserByUserName.RLock()
 	calls = mock.calls.DeleteUserByUserName
 	mock.lockDeleteUserByUserName.RUnlock()
+	return calls
+}
+
+// GetUserByUserId calls GetUserByUserIdFunc.
+func (mock *UserRepositoryMock) GetUserByUserId(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error) {
+	if mock.GetUserByUserIdFunc == nil {
+		panic("UserRepositoryMock.GetUserByUserIdFunc: method is nil but UserRepository.GetUserByUserId was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Db  store.Queryer
+		ID  model.UserID
+	}{
+		Ctx: ctx,
+		Db:  db,
+		ID:  id,
+	}
+	mock.lockGetUserByUserId.Lock()
+	mock.calls.GetUserByUserId = append(mock.calls.GetUserByUserId, callInfo)
+	mock.lockGetUserByUserId.Unlock()
+	return mock.GetUserByUserIdFunc(ctx, db, id)
+}
+
+// GetUserByUserIdCalls gets all the calls that were made to GetUserByUserId.
+// Check the length with:
+//
+//	len(mockedUserRepository.GetUserByUserIdCalls())
+func (mock *UserRepositoryMock) GetUserByUserIdCalls() []struct {
+	Ctx context.Context
+	Db  store.Queryer
+	ID  model.UserID
+} {
+	var calls []struct {
+		Ctx context.Context
+		Db  store.Queryer
+		ID  model.UserID
+	}
+	mock.lockGetUserByUserId.RLock()
+	calls = mock.calls.GetUserByUserId
+	mock.lockGetUserByUserId.RUnlock()
 	return calls
 }
 
