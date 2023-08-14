@@ -9,6 +9,13 @@ import (
 	"github.com/kngnkg/tunetrail/restapi/auth"
 )
 
+const (
+	AccessTokenKey  = "accessToken"
+	IdTokenKey      = "idToken"
+	RefreshTokenKey = "refreshToken"
+	UserIdKey       = "userId"
+)
+
 // CORSの設定
 func CorsMiddleware(allowedDomain string) gin.HandlerFunc {
 	return cors.New(cors.Config{
@@ -43,7 +50,7 @@ func CorsMiddleware(allowedDomain string) gin.HandlerFunc {
 func AuthMiddleware(j *auth.JWTer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Cookieからアクセストークンを取得
-		token, err := c.Cookie("accessToken")
+		token, err := c.Cookie(AccessTokenKey)
 		if err != nil {
 			c.Error(err)
 			errorResponse(c, http.StatusUnauthorized, NotAuthorizedCode)
@@ -62,6 +69,30 @@ func AuthMiddleware(j *auth.JWTer) gin.HandlerFunc {
 			errorResponse(c, http.StatusUnauthorized, NotAuthorizedCode)
 			return
 		}
+
+		it, err := c.Cookie(IdTokenKey)
+		if err != nil {
+			c.Error(err)
+			errorResponse(c, http.StatusUnauthorized, NotAuthorizedCode)
+			return
+		}
+
+		// JWTの検証
+		ai, err := j.ParseIdToken(c, it)
+		if err != nil {
+			if err == auth.ErrTokenExpired {
+				// TODO: 考える
+				errorResponse(c, http.StatusUnauthorized, TokenExpiredCode)
+				return
+			}
+
+			c.Error(err)
+			errorResponse(c, http.StatusUnauthorized, NotAuthorizedCode)
+			return
+		}
+
+		// リクエストにユーザーIDをセット
+		c.Set(UserIdKey, ai.Id)
 
 		c.Next()
 	}

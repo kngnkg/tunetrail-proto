@@ -130,27 +130,10 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 		return
 	}
 
-	// HttpOnly で Secure なクッキーを設定する
-
-	c.SetCookie(
-		"accessToken",
-		tokens.Access,
-		60*60*24*7, // TODO: 有効期限を短くする
-		"/",
-		"."+ah.AllowedDomain,
-		true, // Secure
-		true, // HttpOnly
-	)
-
-	c.SetCookie(
-		"refreshToken",
-		tokens.Refresh,
-		60*60*24*7, // TODO: 有効期限を考える
-		"/auth/refresh",
-		"."+ah.AllowedDomain,
-		true, // Secure
-		true, // HttpOnly
-	)
+	// HttpOnly Cookie にトークンをセット
+	setCookie(c, IdTokenKey, tokens.Id)
+	setCookie(c, AccessTokenKey, tokens.Access)
+	setCookie(c, RefreshTokenKey, tokens.Refresh)
 
 	// サインインしたユーザーの情報を取得する
 	user, err := ah.Service.GetSignedInUser(c.Request.Context(), tokens.Id)
@@ -166,18 +149,17 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 // POST /auth/refresh
 // リフレッシュトークンを使ってアクセストークンを更新する
 func (ah *AuthHandler) RefreshToken(c *gin.Context) {
-	var b struct {
-		Id           string `json:"id" binding:"required"`
-		RefreshToken string `json:"refreshToken" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&b); err != nil {
+	rt, err := c.Cookie(RefreshTokenKey)
+	if err != nil {
+		// エラーハンドリングを考える
 		c.Error(err)
-		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
+		errorResponse(c, http.StatusUnauthorized, NotAuthorizedCode)
 		return
 	}
 
-	accessToken, err := ah.Service.RefreshToken(c.Request.Context(), b.Id, b.RefreshToken)
+	id := c.MustGet(UserIdKey).(string)
+
+	accessToken, err := ah.Service.RefreshToken(c.Request.Context(), id, rt)
 	if err != nil {
 		// // リフレッシュトークンが不正な場合
 		// if errors.Is(err, service.ErrInvalidRefreshToken) {
@@ -195,5 +177,44 @@ func (ah *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"accessToken": accessToken})
+	setCookie(c, AccessTokenKey, accessToken)
+
+	c.Status(http.StatusNoContent)
+}
+
+func setCookie(c *gin.Context, key, value string) {
+	switch key {
+	case IdTokenKey:
+		c.SetCookie(
+			key,
+			value,
+			60*60*24*7, // TODO: 有効期限を短くする
+			"/",
+			"."+c.Request.Host,
+			true, // Secure
+			true, // HttpOnly
+		)
+	case AccessTokenKey:
+		c.SetCookie(
+			key,
+			value,
+			60*60*24*7, // TODO: 有効期限を短くする
+			"/",
+			"."+c.Request.Host,
+			true, // Secure
+			true, // HttpOnly
+		)
+	case RefreshTokenKey:
+		c.SetCookie(
+			key,
+			value,
+			60*60*24*7, // TODO: 有効期限を短くする
+			"/auth/refresh",
+			"."+c.Request.Host,
+			true, // Secure
+			true, // HttpOnly
+		)
+	default:
+		panic("invalid key")
+	}
 }
