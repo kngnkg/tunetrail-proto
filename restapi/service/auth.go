@@ -149,13 +149,18 @@ func (as *AuthService) GetSignedInUser(ctx context.Context, idToken string) (*mo
 	return as.Repo.GetUserByUserId(ctx, as.DB, parsed.Id)
 }
 
-func (as *AuthService) RefreshToken(ctx context.Context, userId, refreshToken string) (string, error) {
-	tokens, err := as.Auth.RefreshToken(ctx, userId, refreshToken)
+func (as *AuthService) RefreshToken(ctx context.Context, idToken, refreshToken string) (*model.Tokens, error) {
+	ai, err := as.JWTer.ParseIdToken(ctx, idToken)
+	if err != nil {
+		return nil, err
+	}
+
+	tokens, err := as.Auth.RefreshToken(ctx, string(ai.Id), refreshToken)
 	if err != nil {
 		if errors.Is(err, auth.ErrNotAuthorized) {
-			return "", fmt.Errorf("%w: %w", ErrNotAuthorized, err)
+			return nil, fmt.Errorf("%w: %w", ErrNotAuthorized, err)
 		}
-		return "", err
+		return nil, err
 	}
-	return tokens.Access, nil
+	return tokens, nil
 }
