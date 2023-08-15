@@ -1,4 +1,4 @@
-import { refreshAccessToken } from "@/services/auth/refreshAccessToken"
+import { refreshToken } from "@/services/auth/refreshToken"
 
 import { env } from "@/env.mjs"
 import { isApiError } from "@/types/error"
@@ -26,7 +26,7 @@ export const fetcher = async (
         switch (errResp.code) {
           case 4105:
             // トークンが期限切れの場合はリフレッシュトークンを送信して再度リクエストを送る
-            await refreshAccessToken(env.NEXT_PUBLIC_API_ROOT)
+            await refreshToken(env.NEXT_PUBLIC_AUTH_API_ROOT)
             return fetcher(resource, init)
           // case 4106:
           // リフレッシュトークンが期限切れの場合はログイン画面に遷移する
