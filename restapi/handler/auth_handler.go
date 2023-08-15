@@ -15,7 +15,7 @@ type AuthService interface {
 	ConfirmEmail(ctx context.Context, userName, code string) error
 	SignIn(ctx context.Context, data *model.UserSignInData) (*model.Tokens, error)
 	GetSignedInUser(ctx context.Context, idToken string) (*model.User, error)
-	RefreshToken(ctx context.Context, userIdentifier, refreshToken string) (string, error)
+	RefreshToken(ctx context.Context, idToken, refreshToken string) (*model.Tokens, error)
 }
 
 type AuthHandler struct {
@@ -131,9 +131,9 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 	}
 
 	// HttpOnly Cookie にトークンをセット
-	setCookie(c, IdTokenKey, tokens.Id)
-	setCookie(c, AccessTokenKey, tokens.Access)
-	setCookie(c, RefreshTokenKey, tokens.Refresh)
+	ah.setCookie(c, IdTokenKey, tokens.Id)
+	ah.setCookie(c, AccessTokenKey, tokens.Access)
+	ah.setCookie(c, RefreshTokenKey, tokens.Refresh)
 
 	// サインインしたユーザーの情報を取得する
 	user, err := ah.Service.GetSignedInUser(c.Request.Context(), tokens.Id)
@@ -149,17 +149,18 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 // POST /auth/refresh
 // リフレッシュトークンを使ってアクセストークンを更新する
 func (ah *AuthHandler) RefreshToken(c *gin.Context) {
-	rt, err := c.Cookie(RefreshTokenKey)
-	if err != nil {
-		// エラーハンドリングを考える
+	var b struct {
+		IdToken      string `json:"idToken" binding:"required"`
+		RefreshToken string `json:"refreshToken" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&b); err != nil {
 		c.Error(err)
-		errorResponse(c, http.StatusUnauthorized, NotAuthorizedCode)
+		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
 
-	id := c.MustGet(UserIdKey).(string)
-
-	accessToken, err := ah.Service.RefreshToken(c.Request.Context(), id, rt)
+	tokens, err := ah.Service.RefreshToken(c.Request.Context(), b.IdToken, b.RefreshToken)
 	if err != nil {
 		// // リフレッシュトークンが不正な場合
 		// if errors.Is(err, service.ErrInvalidRefreshToken) {
@@ -177,12 +178,13 @@ func (ah *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	setCookie(c, AccessTokenKey, accessToken)
-
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusOK, gin.H{
+		"idToken":     tokens.Id,
+		"accessToken": tokens.Access,
+	})
 }
 
-func setCookie(c *gin.Context, key, value string) {
+func (ah *AuthHandler) setCookie(c *gin.Context, key, value string) {
 	switch key {
 	case IdTokenKey:
 		c.SetCookie(
@@ -190,7 +192,7 @@ func setCookie(c *gin.Context, key, value string) {
 			value,
 			60*60*24*7, // TODO: 有効期限を短くする
 			"/",
-			"."+c.Request.Host,
+			"."+ah.AllowedDomain,
 			true, // Secure
 			true, // HttpOnly
 		)
@@ -200,7 +202,7 @@ func setCookie(c *gin.Context, key, value string) {
 			value,
 			60*60*24*7, // TODO: 有効期限を短くする
 			"/",
-			"."+c.Request.Host,
+			"."+ah.AllowedDomain,
 			true, // Secure
 			true, // HttpOnly
 		)
@@ -209,8 +211,8 @@ func setCookie(c *gin.Context, key, value string) {
 			key,
 			value,
 			60*60*24*7, // TODO: 有効期限を短くする
-			"/auth/refresh",
-			"."+c.Request.Host,
+			"/api/refresh",
+			"."+ah.AllowedDomain,
 			true, // Secure
 			true, // HttpOnly
 		)

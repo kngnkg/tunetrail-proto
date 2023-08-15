@@ -18,7 +18,7 @@ type Config struct {
 	CognitoUserPoolId   string `env:"COGNITO_USER_POOL_ID" envDefault:""`
 	CognitoClientId     string `env:"COGNITO_CLIENT_ID" envDefault:""`
 	CognitoClientSecret string `env:"COGNITO_CLIENT_SECRET" envDefault:""`
-	AllowedDomain       string `env:"ALLOWED_DOMAIN" envDefault:"localhost:3000"`
+	AllowedDomain       string `env:"ALLOWED_DOMAIN" envDefault:"localhost"`
 }
 
 // Newは環境変数から設定を取得してConfigを返す
