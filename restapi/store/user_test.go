@@ -58,6 +58,7 @@ func initUserStoreTest(
 	t.Cleanup(func() { _ = tx.Rollback() })
 
 	// テーブルを初期化する
+	testutil.DeletePostAll(t, ctx, tx)
 	testutil.DeleteUserAll(t, ctx, tx)
 	// テスト用のダミーユーザーを登録する
 	if err := r.RegisterUser(ctx, tx, dummy); err != nil {

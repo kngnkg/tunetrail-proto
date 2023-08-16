@@ -15,16 +15,16 @@ CREATE TABLE users (
     updated_at TIMESTAMP NOT NULL
 );
 
--- /*
---  * 投稿
---  */
--- CREATE TABLE posts (
---     id serial PRIMARY KEY,
---     user_id VARCHAR(100) NOT NULL REFERENCES users(id),
---     body VARCHAR(1000),
---     created_at TIMESTAMP NOT NULL,
---     updated_at TIMESTAMP NOT NULL
--- );
+/*
+ * 投稿
+ */
+CREATE TABLE posts (
+    id serial PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id),
+    body VARCHAR(1000),
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
 
 -- /*
 --  * 投稿に添付される画像
