@@ -12,6 +12,7 @@
 | GET          | `/user/hoge`     | ユーザー名が`hoge`のユーザーを取得する |
 | PUT          | `/user`          | ユーザーを更新する                     |
 | DELETE       | `/user/hoge`     | ユーザー名が`hoge`のユーザーを削除する |
+| POST         | `/post`          | 投稿を追加する                     |
 
 ## エラーレスポンス
 

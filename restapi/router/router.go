@@ -45,6 +45,9 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		},
 		AllowedDomain: cfg.AllowedDomain,
 	}
+	ph := &handler.PostHandler{
+		Service: &service.PostService{DB: db, Repo: r},
+	}
 
 	router := gin.Default()
 
@@ -66,9 +69,15 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		user.Use(handler.AuthMiddleware(j))
 		user.GET("/:user_name", uh.GetUserByUserName) // ログインユーザ以外のユーザー情報取得
 		// auth.GET("/me", uh.GetMe)                     // ログインユーザー情報取得
-		user.PUT("/", uh.UpdateUser) // TODO: 改修予定
+		user.PUT("", uh.UpdateUser) // TODO: 改修予定
 		// user.PUT("/:user_name", uh.UpdateUser)        // TODO: 改修予定
 		user.DELETE("/:user_name", uh.DeleteUserByUserName)
+	}
+
+	post := router.Group("/post")
+	{
+		// post.Use(handler.AuthMiddleware(j))
+		post.POST("", ph.AddPost)
 	}
 
 	return router, cleanup, nil
