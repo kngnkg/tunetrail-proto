@@ -15,6 +15,7 @@ type UserService interface {
 	UpdateUser(ctx context.Context, u *model.UserUpdateData) error
 	DeleteUserByUserName(ctx context.Context, userName string) error
 	FollowUser(ctx context.Context, userName, follweeUserName string) error
+	UnfollowUser(ctx context.Context, userName, follweeUserName string) error
 }
 
 type UserHandler struct {
@@ -122,4 +123,36 @@ func (uh *UserHandler) FollowUser(c *gin.Context) {
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
 		return
 	}
+
+	c.Status(http.StatusNoContent)
+}
+
+// DELETE /user/:user_name/follow
+// ユーザーのフォローを解除する
+func (uh *UserHandler) UnfollowUser(c *gin.Context) {
+	userName := c.Param("user_name")
+
+	var b struct {
+		FollweeUserName string `json:"followee_user_name"`
+	}
+
+	if err := c.ShouldBindJSON(&b); err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
+		return
+	}
+
+	if err := uh.Service.UnfollowUser(c.Request.Context(), userName, b.FollweeUserName); err != nil {
+		// ユーザーが存在しない場合
+		if errors.Is(err, service.ErrUserNotFound) {
+			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
+			return
+		}
+
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }

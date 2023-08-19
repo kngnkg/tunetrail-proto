@@ -175,3 +175,19 @@ func (r *Repository) AddFollow(ctx context.Context, db Execer, userName, followe
 	}
 	return nil
 }
+
+// ユーザーのフォローを削除する
+func (r *Repository) DeleteFollow(ctx context.Context, db Execer, userName, followeeUserName string) error {
+	// 論理削除されていないユーザーかどうかをusersテーブルから確認してからフォローを削除する
+	query := `
+	DELETE FROM follows
+	WHERE user_id = (SELECT id FROM users WHERE user_name = $1 AND is_deleted = false)
+	AND followee_id = (SELECT id FROM users WHERE user_name = $2 AND is_deleted = false);
+	`
+
+	_, err := db.ExecContext(ctx, query, userName, followeeUserName)
+	if err != nil {
+		return err
+	}
+	return nil
+}

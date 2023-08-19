@@ -12,6 +12,8 @@
 | GET          | `/users/:user_name`        | ユーザーを取得する                 |
 | PUT          | `/users`                   | ユーザーを更新する                     |
 | DELETE       | `/users/:user_name`        | ユーザーを削除する               |
+| POST         | `/users/:user_name/follow` | ユーザーをフォローする               |
+| DELETE       | `/users/:user_name/follow` | ユーザーのフォローを解除する             |
 | POST         | `/posts`                   | 投稿を追加する                     |
 
 ## エラーレスポンス
