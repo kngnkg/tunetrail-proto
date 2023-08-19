@@ -77,6 +77,7 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		follow := users.Group("/:user_name/follow")
 		{
 			follow.POST("", uh.FollowUser)
+			follow.DELETE("", uh.UnfollowUser)
 		}
 
 		// posts := users.Group("/:user_name/posts")
