@@ -11,6 +11,7 @@ CREATE TABLE users (
     name VARCHAR(100),
     icon_url VARCHAR(100),
     bio VARCHAR(1000),
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );

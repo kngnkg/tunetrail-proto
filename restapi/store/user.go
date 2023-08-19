@@ -20,7 +20,8 @@ func (r *Repository) GetUserByUserId(ctx context.Context, db Queryer, id model.U
 	u := &model.User{}
 	query := `SELECT id, user_name, name, icon_url, bio, created_at, updated_at
 			FROM users
-			WHERE id = $1;`
+			WHERE is_deleted = false
+			AND id = $1;`
 
 	if err := db.GetContext(ctx, u, query, string(id)); err != nil {
 		// ユーザーが存在しない場合はエラーをラップして返す
@@ -40,7 +41,8 @@ func (r *Repository) GetUserByUserName(ctx context.Context, db Queryer, userName
 	u := &model.User{}
 	query := `SELECT id, user_name, name, icon_url, bio, created_at, updated_at
 			FROM users
-			WHERE user_name = $1;`
+			WHERE is_deleted = false
+			AND user_name = $1;`
 
 	if err := db.GetContext(ctx, u, query, userName); err != nil {
 		// ユーザーが存在しない場合はエラーをラップして返す
@@ -57,7 +59,11 @@ func (r *Repository) GetUserByUserName(ctx context.Context, db Queryer, userName
 
 // UserExistsByUserName はユーザー名が既に存在するかどうかを返す
 func (r *Repository) UserExistsByUserName(ctx context.Context, db Queryer, userName string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM users WHERE user_name = $1);`
+	query := `SELECT EXISTS(
+			SELECT 1 FROM users
+			WHERE is_deleted = false
+			AND user_name = $1
+			);`
 
 	var exists bool
 	err := db.QueryRowxContext(ctx, query, userName).Scan(&exists)
@@ -94,7 +100,8 @@ func (r *Repository) UpdateUser(ctx context.Context, db Execer, u *model.User) e
 	u.UpdatedAt = r.Clocker.Now()
 	query := `UPDATE users
 			SET user_name = $2, name = $3, icon_url = $4, bio = $5, updated_at = $6
-			WHERE id = $1;`
+			WHERE is_deleted = false
+			AND id = $1;`
 
 	row, err := db.ExecContext(ctx, query, u.Id, u.UserName, u.Name, u.IconUrl, u.Bio, u.UpdatedAt)
 	if err != nil {
@@ -124,20 +131,23 @@ func (r *Repository) UpdateUser(ctx context.Context, db Execer, u *model.User) e
 	return nil
 }
 
-// DeleteUserByUserName はユーザー名からユーザーを削除する
+// DeleteUserByUserName はユーザー名からユーザーを論理削除する
 func (r *Repository) DeleteUserByUserName(ctx context.Context, db Execer, userName string) error {
-	query := `DELETE FROM users WHERE user_name = $1;`
+	query := `UPDATE users
+			SET is_deleted = true
+			WHERE is_deleted = false
+			AND user_name = $1;`
 
 	row, err := db.ExecContext(ctx, query, userName)
 	if err != nil {
 		return err
 	}
-	// 削除された行数を取得
+	// 更新された行数を取得
 	affected, err := row.RowsAffected()
 	if err != nil {
 		return err
 	}
-	// 削除された行数が0の場合はエラーを返す
+	// 更新された行数が0の場合はエラーを返す
 	if affected == 0 {
 		return ErrUserNotFound
 	}
