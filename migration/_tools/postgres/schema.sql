@@ -27,6 +27,17 @@ CREATE TABLE posts (
     updated_at TIMESTAMP NOT NULL
 );
 
+/*
+ * フォロー
+ */
+CREATE TABLE follows (
+    user_id UUID NOT NULL REFERENCES users(id),
+    followee_id UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (user_id, followee_id)
+);
+
 -- /*
 --  * 投稿に添付される画像
 --  * 1つの投稿に複数の画像を添付できる

@@ -153,3 +153,25 @@ func (r *Repository) DeleteUserByUserName(ctx context.Context, db Execer, userNa
 	}
 	return nil
 }
+
+// ユーザーのフォローを追加する
+func (r *Repository) AddFollow(ctx context.Context, db Execer, userName, followeeUserName string) error {
+	createdAt := r.Clocker.Now()
+	updatedAt := r.Clocker.Now()
+
+	// ユーザーテーブルからフォローするユーザーとフォローされるユーザーのIDを取得してからフォローを追加する
+	query := `
+	INSERT INTO follows (user_id, followee_id, created_at, updated_at)
+	SELECT u1.id, u2.id, $3, $4
+	FROM users u1
+	INNER JOIN users u2 ON u1.user_name = $1 AND u2.user_name = $2
+	WHERE u1.is_deleted = false
+	AND u2.is_deleted = false;
+	`
+
+	_, err := db.ExecContext(ctx, query, userName, followeeUserName, createdAt, updatedAt)
+	if err != nil {
+		return err
+	}
+	return nil
+}
