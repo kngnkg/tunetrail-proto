@@ -1,8 +1,8 @@
 import * as React from "react"
 
-import { isApiError } from "@/types/error"
-import { isUser } from "@/types/user"
+import { User, isUser } from "@/types/user"
 import { MESSAGE } from "@/config/messages"
+import fetcher from "@/lib/fetcher"
 
 import { useSignedInUser } from "./use-signedin-user"
 
@@ -24,7 +24,7 @@ export const useSignin = () => {
 
   const signin = async (apiRoot: string, param: SigninData): Promise<void> => {
     try {
-      const response = await fetch(`${apiRoot}/auth/signin`, {
+      const data = await fetcher(`${apiRoot}/auth/signin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -33,32 +33,17 @@ export const useSignin = () => {
         body: JSON.stringify(param),
       })
 
-      if (!response.ok) {
-        const errorResponse = await response.json()
-        if (!isApiError(errorResponse)) {
-          const error = new Error(
-            errorResponse.message ??
-              `Failed to fetch data from the API. Status: ${response.status}`
-          )
-
-          throw error
-        }
-
-        setError(errorResponse.userMessage)
-      }
-
-      const data = await response.json()
       if (!isUser(data)) {
-        const error = new Error(
-          `Failed to fetch data from the API. Status: ${response.status}`
-        )
-
-        throw error
+        throw new Error("Failed to fetch data from the API.")
       }
 
       setSignedInUser(data)
     } catch (e) {
       console.error(e)
+      if (e instanceof Error) {
+        setError(e.message)
+        return
+      }
 
       setError(MESSAGE.UNKNOWN_ERROR)
     }

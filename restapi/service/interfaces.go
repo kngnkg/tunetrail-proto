@@ -36,6 +36,10 @@ type UserRepository interface {
 	DeleteUserByUserName(ctx context.Context, db store.Execer, userName string) error
 }
 
+type PostRepository interface {
+	AddPost(ctx context.Context, db store.Preparer, p *model.Post) (*model.Post, error)
+}
+
 type HealthRepository interface {
 	Ping(ctx context.Context, db store.Queryer) error
 }

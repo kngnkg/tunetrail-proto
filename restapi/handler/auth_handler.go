@@ -15,7 +15,7 @@ type AuthService interface {
 	ConfirmEmail(ctx context.Context, userName, code string) error
 	SignIn(ctx context.Context, data *model.UserSignInData) (*model.Tokens, error)
 	GetSignedInUser(ctx context.Context, idToken string) (*model.User, error)
-	RefreshToken(ctx context.Context, userIdentifier, refreshToken string) (string, error)
+	RefreshToken(ctx context.Context, idToken, refreshToken string) (*model.Tokens, error)
 }
 
 type AuthHandler struct {
@@ -130,27 +130,10 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 		return
 	}
 
-	// HttpOnly で Secure なクッキーを設定する
-
-	c.SetCookie(
-		"accessToken",
-		tokens.Access,
-		60*60*24*7, // TODO: 有効期限を短くする
-		"/",
-		"."+ah.AllowedDomain,
-		true, // Secure
-		true, // HttpOnly
-	)
-
-	c.SetCookie(
-		"refreshToken",
-		tokens.Refresh,
-		60*60*24*7, // TODO: 有効期限を考える
-		"/auth/refresh",
-		"."+ah.AllowedDomain,
-		true, // Secure
-		true, // HttpOnly
-	)
+	// HttpOnly Cookie にトークンをセット
+	ah.setCookie(c, IdTokenKey, tokens.Id)
+	ah.setCookie(c, AccessTokenKey, tokens.Access)
+	ah.setCookie(c, RefreshTokenKey, tokens.Refresh)
 
 	// サインインしたユーザーの情報を取得する
 	user, err := ah.Service.GetSignedInUser(c.Request.Context(), tokens.Id)
@@ -167,7 +150,7 @@ func (ah *AuthHandler) SignIn(c *gin.Context) {
 // リフレッシュトークンを使ってアクセストークンを更新する
 func (ah *AuthHandler) RefreshToken(c *gin.Context) {
 	var b struct {
-		Id           string `json:"id" binding:"required"`
+		IdToken      string `json:"idToken" binding:"required"`
 		RefreshToken string `json:"refreshToken" binding:"required"`
 	}
 
@@ -177,7 +160,7 @@ func (ah *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := ah.Service.RefreshToken(c.Request.Context(), b.Id, b.RefreshToken)
+	tokens, err := ah.Service.RefreshToken(c.Request.Context(), b.IdToken, b.RefreshToken)
 	if err != nil {
 		// // リフレッシュトークンが不正な場合
 		// if errors.Is(err, service.ErrInvalidRefreshToken) {
@@ -195,5 +178,45 @@ func (ah *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"accessToken": accessToken})
+	c.JSON(http.StatusOK, gin.H{
+		"idToken":     tokens.Id,
+		"accessToken": tokens.Access,
+	})
+}
+
+func (ah *AuthHandler) setCookie(c *gin.Context, key, value string) {
+	switch key {
+	case IdTokenKey:
+		c.SetCookie(
+			key,
+			value,
+			60*60*24*7, // TODO: 有効期限を短くする
+			"/",
+			"."+ah.AllowedDomain,
+			true, // Secure
+			true, // HttpOnly
+		)
+	case AccessTokenKey:
+		c.SetCookie(
+			key,
+			value,
+			60*60*24*7, // TODO: 有効期限を短くする
+			"/",
+			"."+ah.AllowedDomain,
+			true, // Secure
+			true, // HttpOnly
+		)
+	case RefreshTokenKey:
+		c.SetCookie(
+			key,
+			value,
+			60*60*24*7, // TODO: 有効期限を短くする
+			"/api/refresh",
+			"."+ah.AllowedDomain,
+			true, // Secure
+			true, // HttpOnly
+		)
+	default:
+		panic("invalid key")
+	}
 }

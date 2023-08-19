@@ -11,20 +11,21 @@ CREATE TABLE users (
     name VARCHAR(100),
     icon_url VARCHAR(100),
     bio VARCHAR(1000),
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
 
--- /*
---  * 投稿
---  */
--- CREATE TABLE posts (
---     id serial PRIMARY KEY,
---     user_id VARCHAR(100) NOT NULL REFERENCES users(id),
---     body VARCHAR(1000),
---     created_at TIMESTAMP NOT NULL,
---     updated_at TIMESTAMP NOT NULL
--- );
+/*
+ * 投稿
+ */
+CREATE TABLE posts (
+    id serial PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id),
+    body VARCHAR(1000),
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
 
 -- /*
 --  * 投稿に添付される画像

@@ -2,18 +2,22 @@ import { createEnv } from "@t3-oss/env-nextjs"
 import { z } from "zod"
 
 export const env = createEnv({
-  //   server: {
-  //     COGNITO_CLIENT_ID: z.string(),
-  //     COGNITO_CLIENT_SECRET: z.string(),
-  //     COGNITO_ISSUER: z.string().url(),
-  //   },
+  server: {
+    TUNETRAIL_AWS_REGION: z.string(),
+    COGNITO_USER_POOL_ID: z.string(),
+    ALLOWED_DOMAIN: z.string(),
+    API_ROOT: z.string().url(),
+  },
   client: {
     NEXT_PUBLIC_API_ROOT: z.string().url(),
+    NEXT_PUBLIC_AUTH_API_ROOT: z.string().url(),
   },
   runtimeEnv: {
     NEXT_PUBLIC_API_ROOT: process.env.NEXT_PUBLIC_API_ROOT,
-    // COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
-    // COGNITO_CLIENT_SECRET: process.env.COGNITO_CLIENT_SECRET,
-    // COGNITO_ISSUER: process.env.COGNITO_ISSUER,
+    NEXT_PUBLIC_AUTH_API_ROOT: process.env.NEXT_PUBLIC_AUTH_API_ROOT,
+    TUNETRAIL_AWS_REGION: process.env.TUNETRAIL_AWS_REGION,
+    COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID,
+    ALLOWED_DOMAIN: process.env.ALLOWED_DOMAIN,
+    API_ROOT: process.env.API_ROOT,
   },
 })

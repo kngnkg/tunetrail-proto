@@ -64,3 +64,11 @@ func AssertUser(t *testing.T, expected, actial *model.User) {
 		assert.Equal(t, ev.Field(i).Interface(), av.Field(i).Interface())
 	}
 }
+
+func DeletePostAll(t *testing.T, ctx context.Context, tx *sqlx.Tx) {
+	t.Helper()
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM posts"); err != nil {
+		t.Fatal(err)
+	}
+}

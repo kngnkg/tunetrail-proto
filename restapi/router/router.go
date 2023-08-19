@@ -45,6 +45,9 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		},
 		AllowedDomain: cfg.AllowedDomain,
 	}
+	ph := &handler.PostHandler{
+		Service: &service.PostService{DB: db, Repo: r},
+	}
 
 	router := gin.Default()
 
@@ -87,6 +90,12 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		posts.Use(handler.AuthMiddleware(j))
 
 		posts.POST("", ph.AddPost)
+	}
+
+	post := router.Group("/post")
+	{
+		// post.Use(handler.AuthMiddleware(j))
+		post.POST("", ph.AddPost)
 	}
 
 	return router, cleanup, nil
