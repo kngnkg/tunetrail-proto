@@ -2,16 +2,17 @@
 
 ## エンドポイント
 
-| HTTPメソッド  | パス              | 概要                                   |
-| :----------- | :--------------- | :------------------------------------- |
-| GET          | `/health`        | 疎通を確認する                         |
-| POST         | `/auth/register` | ユーザーを登録する                     |
-| PUT          | `/auth/confirm`  | メールアドレスを検証する                     |
-| POST         | `/auth/signin`   | サインインする                     |
-| POST         | `/auth/refresh`  | アクセストークンをリフレッシュする           |
-| GET          | `/user/hoge`     | ユーザー名が`hoge`のユーザーを取得する |
-| PUT          | `/user`          | ユーザーを更新する                     |
-| DELETE       | `/user/hoge`     | ユーザー名が`hoge`のユーザーを削除する |
+| HTTPメソッド  | パス                        | 概要                                   |
+| :----------- | :------------------------- | :------------------------------------- |
+| GET          | `/health`                  | 疎通を確認する                         |
+| POST         | `/auth/register`           | ユーザーを登録する                     |
+| PUT          | `/auth/confirm`            | メールアドレスを検証する                     |
+| POST         | `/auth/signin`             | サインインする                     |
+| POST         | `/auth/refresh`            | アクセストークンをリフレッシュする           |
+| GET          | `/users/:user_name`        | ユーザーを取得する                 |
+| PUT          | `/users`                   | ユーザーを更新する                     |
+| DELETE       | `/users/:user_name`        | ユーザーを削除する               |
+| POST         | `/posts`                   | 投稿を追加する                     |
 
 ## エラーレスポンス
 
