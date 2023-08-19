@@ -109,3 +109,23 @@ func (us *UserService) FollowUser(ctx context.Context, userName, follweeUserName
 
 	return nil
 }
+
+// UnfollowUserはユーザーのフォローを解除する
+func (us *UserService) UnfollowUser(ctx context.Context, userName, follweeUserName string) error {
+	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
+		if err := us.Repo.DeleteFollow(ctx, tx, userName, follweeUserName); err != nil {
+			if errors.Is(err, store.ErrUserNotFound) {
+				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, userName, err)
+			}
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
