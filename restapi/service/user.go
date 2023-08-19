@@ -89,3 +89,23 @@ func (us *UserService) DeleteUserByUserName(ctx context.Context, userName string
 	}
 	return nil
 }
+
+// FollowUserはユーザーをフォローする
+func (us *UserService) FollowUser(ctx context.Context, userName, follweeUserName string) error {
+	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
+		if err := us.Repo.AddFollow(ctx, tx, userName, follweeUserName); err != nil {
+			if errors.Is(err, store.ErrUserNotFound) {
+				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, userName, err)
+			}
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

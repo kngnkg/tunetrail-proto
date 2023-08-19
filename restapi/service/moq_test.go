@@ -93,6 +93,12 @@ var _ UserRepository = &UserRepositoryMock{}
 //
 //		// make and configure a mocked UserRepository
 //		mockedUserRepository := &UserRepositoryMock{
+//			AddFollowFunc: func(ctx context.Context, db store.Execer, userName string, followeeUserName string) error {
+//				panic("mock out the AddFollow method")
+//			},
+//			DeleteFollowFunc: func(ctx context.Context, db store.Execer, userName string, followeeUserName string) error {
+//				panic("mock out the DeleteFollow method")
+//			},
 //			DeleteUserByUserNameFunc: func(ctx context.Context, db store.Execer, userName string) error {
 //				panic("mock out the DeleteUserByUserName method")
 //			},
@@ -121,6 +127,12 @@ var _ UserRepository = &UserRepositoryMock{}
 //
 //	}
 type UserRepositoryMock struct {
+	// AddFollowFunc mocks the AddFollow method.
+	AddFollowFunc func(ctx context.Context, db store.Execer, userName string, followeeUserName string) error
+
+	// DeleteFollowFunc mocks the DeleteFollow method.
+	DeleteFollowFunc func(ctx context.Context, db store.Execer, userName string, followeeUserName string) error
+
 	// DeleteUserByUserNameFunc mocks the DeleteUserByUserName method.
 	DeleteUserByUserNameFunc func(ctx context.Context, db store.Execer, userName string) error
 
@@ -144,6 +156,28 @@ type UserRepositoryMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// AddFollow holds details about calls to the AddFollow method.
+		AddFollow []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Db is the db argument value.
+			Db store.Execer
+			// UserName is the userName argument value.
+			UserName string
+			// FolloweeUserName is the followeeUserName argument value.
+			FolloweeUserName string
+		}
+		// DeleteFollow holds details about calls to the DeleteFollow method.
+		DeleteFollow []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Db is the db argument value.
+			Db store.Execer
+			// UserName is the userName argument value.
+			UserName string
+			// FolloweeUserName is the followeeUserName argument value.
+			FolloweeUserName string
+		}
 		// DeleteUserByUserName holds details about calls to the DeleteUserByUserName method.
 		DeleteUserByUserName []struct {
 			// Ctx is the ctx argument value.
@@ -208,6 +242,8 @@ type UserRepositoryMock struct {
 			F func(tx *sqlx.Tx) error
 		}
 	}
+	lockAddFollow            sync.RWMutex
+	lockDeleteFollow         sync.RWMutex
 	lockDeleteUserByUserName sync.RWMutex
 	lockGetUserByUserId      sync.RWMutex
 	lockGetUserByUserName    sync.RWMutex
@@ -215,6 +251,94 @@ type UserRepositoryMock struct {
 	lockUpdateUser           sync.RWMutex
 	lockUserExistsByUserName sync.RWMutex
 	lockWithTransaction      sync.RWMutex
+}
+
+// AddFollow calls AddFollowFunc.
+func (mock *UserRepositoryMock) AddFollow(ctx context.Context, db store.Execer, userName string, followeeUserName string) error {
+	if mock.AddFollowFunc == nil {
+		panic("UserRepositoryMock.AddFollowFunc: method is nil but UserRepository.AddFollow was just called")
+	}
+	callInfo := struct {
+		Ctx              context.Context
+		Db               store.Execer
+		UserName         string
+		FolloweeUserName string
+	}{
+		Ctx:              ctx,
+		Db:               db,
+		UserName:         userName,
+		FolloweeUserName: followeeUserName,
+	}
+	mock.lockAddFollow.Lock()
+	mock.calls.AddFollow = append(mock.calls.AddFollow, callInfo)
+	mock.lockAddFollow.Unlock()
+	return mock.AddFollowFunc(ctx, db, userName, followeeUserName)
+}
+
+// AddFollowCalls gets all the calls that were made to AddFollow.
+// Check the length with:
+//
+//	len(mockedUserRepository.AddFollowCalls())
+func (mock *UserRepositoryMock) AddFollowCalls() []struct {
+	Ctx              context.Context
+	Db               store.Execer
+	UserName         string
+	FolloweeUserName string
+} {
+	var calls []struct {
+		Ctx              context.Context
+		Db               store.Execer
+		UserName         string
+		FolloweeUserName string
+	}
+	mock.lockAddFollow.RLock()
+	calls = mock.calls.AddFollow
+	mock.lockAddFollow.RUnlock()
+	return calls
+}
+
+// DeleteFollow calls DeleteFollowFunc.
+func (mock *UserRepositoryMock) DeleteFollow(ctx context.Context, db store.Execer, userName string, followeeUserName string) error {
+	if mock.DeleteFollowFunc == nil {
+		panic("UserRepositoryMock.DeleteFollowFunc: method is nil but UserRepository.DeleteFollow was just called")
+	}
+	callInfo := struct {
+		Ctx              context.Context
+		Db               store.Execer
+		UserName         string
+		FolloweeUserName string
+	}{
+		Ctx:              ctx,
+		Db:               db,
+		UserName:         userName,
+		FolloweeUserName: followeeUserName,
+	}
+	mock.lockDeleteFollow.Lock()
+	mock.calls.DeleteFollow = append(mock.calls.DeleteFollow, callInfo)
+	mock.lockDeleteFollow.Unlock()
+	return mock.DeleteFollowFunc(ctx, db, userName, followeeUserName)
+}
+
+// DeleteFollowCalls gets all the calls that were made to DeleteFollow.
+// Check the length with:
+//
+//	len(mockedUserRepository.DeleteFollowCalls())
+func (mock *UserRepositoryMock) DeleteFollowCalls() []struct {
+	Ctx              context.Context
+	Db               store.Execer
+	UserName         string
+	FolloweeUserName string
+} {
+	var calls []struct {
+		Ctx              context.Context
+		Db               store.Execer
+		UserName         string
+		FolloweeUserName string
+	}
+	mock.lockDeleteFollow.RLock()
+	calls = mock.calls.DeleteFollow
+	mock.lockDeleteFollow.RUnlock()
+	return calls
 }
 
 // DeleteUserByUserName calls DeleteUserByUserNameFunc.

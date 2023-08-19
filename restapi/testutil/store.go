@@ -72,3 +72,11 @@ func DeletePostAll(t *testing.T, ctx context.Context, tx *sqlx.Tx) {
 		t.Fatal(err)
 	}
 }
+
+func DeleteFollowAll(t *testing.T, ctx context.Context, tx *sqlx.Tx) {
+	t.Helper()
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM follows"); err != nil {
+		t.Fatal(err)
+	}
+}
