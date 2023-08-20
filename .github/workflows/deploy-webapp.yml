@@ -23,11 +23,11 @@ jobs:
     - name: Generate .env.production
       run: |
         echo NEXT_PUBLIC_API_ROOT=${{ secrets.NEXT_PUBLIC_API_ROOT }} \
-          \nNEXT_PUBLIC_AUTH_API_ROOT=${{ secrets.DOMAIN }}/api \
+          \nNEXT_PUBLIC_AUTH_API_ROOT=https://${{ secrets.DOMAIN }}/api \
           \nTUNETRAIL_AWS_REGION=${{ secrets.AWS_REGION }} \
           \nCOGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }} \
           \nALLOWED_DOMAIN=${{ secrets.DOMAIN }} \
-          \nAPI_ROOT=api.${{ secrets.DOMAIN }} > webapp/.env.production
+          \nAPI_ROOT=https://api.${{ secrets.DOMAIN }} > webapp/.env.production
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
