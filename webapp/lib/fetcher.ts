@@ -1,7 +1,9 @@
 import { refreshToken } from "@/services/auth/refreshToken"
 
 import { env } from "@/env.mjs"
-import { isApiError } from "@/types/error"
+import ApiError, { isApiError } from "@/types/error"
+
+const tokenExpiredCode = 4105
 
 export const fetcher = async (
   resource: RequestInfo,
@@ -24,7 +26,7 @@ export const fetcher = async (
       // 認証エラーの場合
       if (response.status === 401) {
         switch (errResp.code) {
-          case 4105:
+          case tokenExpiredCode:
             // トークンが期限切れの場合はリフレッシュトークンを送信して再度リクエストを送る
             await refreshToken(env.NEXT_PUBLIC_AUTH_API_ROOT)
             return fetcher(resource, init)
@@ -35,7 +37,11 @@ export const fetcher = async (
         }
       }
 
-      throw new Error(errResp.userMessage)
+      throw new ApiError(
+        errResp.code,
+        errResp.developerMessage,
+        errResp.userMessage
+      )
     }
 
     return response.json()
