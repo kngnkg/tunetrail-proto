@@ -1,10 +1,10 @@
 import * as React from "react"
 
-import { User, isUser } from "@/types/user"
+import { isUser } from "@/types/user"
 import { MESSAGE } from "@/config/messages"
 import fetcher from "@/lib/fetcher"
 
-import { useSignedInUser } from "./use-signedin-user"
+import { useSetSignedInUser } from "./use-signedin-user"
 
 export interface SigninData {
   userName: string
@@ -19,7 +19,7 @@ export const isSigninData = (arg: any): arg is SigninData => {
 }
 
 export const useSignin = () => {
-  const { setSignedInUser } = useSignedInUser()
+  const setSignedInUser = useSetSignedInUser()
   const [error, setError] = React.useState<null | string>(null)
 
   const signin = async (apiRoot: string, param: SigninData): Promise<void> => {

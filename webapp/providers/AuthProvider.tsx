@@ -2,25 +2,11 @@
 
 import * as React from "react"
 
-import { User, isUser } from "@/types/user"
-
-export interface SigninData {
-  userName: string
-  email: string
-  password: string
-}
-export const isSigninData = (arg: any): arg is SigninData => {
-  return (
-    (arg.userName !== undefined || arg.email !== undefined) &&
-    arg.password !== undefined
-  )
-}
-
-type SignedInUser = User
+import { User } from "@/types/user"
 
 export type AuthContextType = {
-  signedInUser: SignedInUser | null
-  setSignedInUser: React.Dispatch<React.SetStateAction<SignedInUser | null>>
+  signedInUser: User | null
+  setSignedInUser: React.Dispatch<React.SetStateAction<User | null>>
 }
 
 export const AuthContext = React.createContext<AuthContextType>(
@@ -32,9 +18,7 @@ export interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [signedInUser, setSignedInUser] = React.useState<SignedInUser | null>(
-    null
-  )
+  const [signedInUser, setSignedInUser] = React.useState<User | null>(null)
 
   return (
     <AuthContext.Provider value={{ signedInUser, setSignedInUser }}>
