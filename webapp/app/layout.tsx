@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/containers/Toaster/Toaster"
+import { Toaster } from "@/components/features/Toaster/Toaster"
 
 import "./globals.css"
 import { Inter } from "next/font/google"
