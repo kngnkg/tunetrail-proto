@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { SigninForm } from "@/components/containers/SigninForm/SigninForm"
+import { SigninForm } from "@/components/features/SigninForm/SigninForm"
 
 // サインインページ
 export default function SigninPage() {
