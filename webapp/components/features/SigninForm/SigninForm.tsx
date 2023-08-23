@@ -10,6 +10,7 @@ import { env } from "@/env.mjs"
 import { MESSAGE } from "@/config/messages"
 import { mergeClasses } from "@/lib/utils"
 import { signInSchema } from "@/lib/validations/auth.schema"
+import { useSignedInUser } from "@/hooks/auth/use-signedin-user"
 import { useSignin } from "@/hooks/auth/use-signin"
 import { useToast } from "@/hooks/toast/use-toast"
 import { Button } from "@/components/ui/Button/Button"
@@ -31,6 +32,8 @@ export const SigninForm: React.FC<SigninFormProps> = ({
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const { error, signin } = useSignin()
   const { showToast } = useToast()
+
+  const signedInUser = useSignedInUser()
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
