@@ -38,7 +38,6 @@ export default async function UserPage({ params }: UserPageProps) {
 
   return (
     <div className="container mx-auto p-8">
-      <Link href="/home">ホームへ</Link>
       <h1 className="text-3xl mb-8">User Page</h1>
       <div>
         <FollowButton userName={user.userName} isFollowing={user.isFollowing} />
