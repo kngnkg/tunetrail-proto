@@ -31,9 +31,6 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
   const signedInUser = useSignedInUser()
 
   React.useEffect(() => {
-    console.log("signedInUser")
-    console.log(isFollowing)
-
     if (signedInUser) {
       return
     }
