@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { getUser } from "@/services/user/get-user"
 
 import { env } from "@/env.mjs"
@@ -17,10 +17,9 @@ export default async function UserPage({ params }: UserPageProps) {
   const idCookie = cookieStore.get("idToken")
   const accessCookie = cookieStore.get("accessToken")
 
-  // これでいいか？
   if (idCookie === undefined || accessCookie === undefined) {
-    // サインインページにリダイレクトしたほうがいいかも
-    notFound()
+    // 暫定としてサインインページにリダイレクト
+    redirect("/signin")
   }
 
   const tokens: Tokens = {
@@ -35,14 +34,13 @@ export default async function UserPage({ params }: UserPageProps) {
     notFound()
   }
 
-  // ログインユーザーの場合...
+  // TODO: ログインユーザーの場合の制御
 
   return (
     <div className="container mx-auto p-8">
       <Link href="/home">ホームへ</Link>
       <h1 className="text-3xl mb-8">User Page</h1>
       <div>
-        {/* フォローボタンを押すと再レンダリングされない */}
         <FollowButton userName={user.userName} isFollowing={user.isFollowing} />
       </div>
       <div>
