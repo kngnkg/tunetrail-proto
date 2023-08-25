@@ -4,6 +4,8 @@ export type User = {
   name: string
   iconUrl: string
   bio: string
+  isFollowing: boolean
+  isFollowed: boolean
   createdAt: string
   updatedAt: string
 }
