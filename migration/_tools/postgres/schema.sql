@@ -2,6 +2,8 @@
  * データベースのスキーマを定義する
  */
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 /*
  * ユーザー
  */
@@ -20,7 +22,7 @@ CREATE TABLE users (
  * 投稿
  */
 CREATE TABLE posts (
-    id serial PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id),
     body VARCHAR(1000),
     created_at TIMESTAMP NOT NULL,
