@@ -2,7 +2,7 @@ import * as React from "react"
 
 import { isUser } from "@/types/user"
 import { MESSAGE } from "@/config/messages"
-import fetcher from "@/lib/fetcher"
+import { clientFetcher } from "@/lib/fetcher"
 
 import { useSetSignedInUser } from "./use-signedin-user"
 
@@ -24,12 +24,11 @@ export const useSignin = () => {
 
   const signin = async (apiRoot: string, param: SigninData): Promise<void> => {
     try {
-      const data = await fetcher(`${apiRoot}/auth/signin`, {
+      const data = await clientFetcher(`${apiRoot}/auth/signin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify(param),
       })
 

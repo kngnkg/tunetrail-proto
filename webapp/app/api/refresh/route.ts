@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { env } from "@/env.mjs"
-import fetcher from "@/lib/fetcher"
+import { serverFetcher } from "@/lib/fetcher"
 
 type RefreshToken = {
   IdToken: string
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     RefreshToken: refreshCookie.value,
   }
 
-  const apiResp = await fetcher(`${env.API_ROOT}/auth/refresh`, {
+  const apiResp = await serverFetcher(`${env.API_ROOT}/auth/refresh`, {
     method: "POST",
     body: JSON.stringify(body),
   })
