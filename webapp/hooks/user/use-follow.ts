@@ -1,7 +1,7 @@
 import * as React from "react"
 
 import { MESSAGE } from "@/config/messages"
-import fetcher from "@/lib/fetcher"
+import { clientFetcher } from "@/lib/fetcher"
 
 export interface UseFollowProps {
   apiRoot: string
@@ -24,11 +24,10 @@ export const useFollow = ({
     followUserName: string
   ): Promise<void> => {
     try {
-      const resp = await fetcher(
+      const resp = await clientFetcher(
         `${props.apiRoot}/users/${signinUserName}/follow`,
         {
           method: "POST",
-          credentials: "include",
           body: JSON.stringify({
             followee_user_name: followUserName,
           }),
@@ -51,11 +50,10 @@ export const useFollow = ({
     followUserName: string
   ): Promise<void> => {
     try {
-      const resp = await fetcher(
+      const resp = await clientFetcher(
         `${props.apiRoot}/users/${signinUserName}/follow`,
         {
           method: "DELETE",
-          credentials: "include",
           body: JSON.stringify({
             followee_user_name: followUserName,
           }),

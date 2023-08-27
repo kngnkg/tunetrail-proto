@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { env } from "@/env.mjs"
-import fetcher from "@/lib/fetcher"
+import { serverFetcher } from "@/lib/fetcher"
 
 export async function POST(req: NextRequest) {
   const refreshToken = req.cookies.get("refreshToken")
 
-  const apiResp = await fetcher(`${env.NEXT_PUBLIC_API_ROOT}/auth/refresh`, {
+  const apiResp = await serverFetcher(`${env.API_ROOT}/auth/refresh`, {
     method: "POST",
     // credentials: "include",
     headers: {
