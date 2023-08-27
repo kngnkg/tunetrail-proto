@@ -12,10 +12,10 @@ type PostService struct {
 	Repo PostRepository
 }
 
-func (ps *PostService) AddPost(ctx context.Context, data *model.PostRegistrationData) (*model.Post, error) {
+func (ps *PostService) AddPost(ctx context.Context, signedInUserId model.UserID, body string) (*model.Post, error) {
 	p := &model.Post{
-		UserId: data.UserId,
-		Body:   data.Body,
+		UserId: signedInUserId,
+		Body:   body,
 	}
 
 	added, err := ps.Repo.AddPost(ctx, ps.DB, p)

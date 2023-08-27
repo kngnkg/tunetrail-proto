@@ -9,7 +9,7 @@ import (
 )
 
 type PostService interface {
-	AddPost(ctx context.Context, post *model.PostRegistrationData) (*model.Post, error)
+	AddPost(ctx context.Context, signedInUserId model.UserID, body string) (*model.Post, error)
 }
 
 type PostHandler struct {
@@ -18,14 +18,19 @@ type PostHandler struct {
 
 // POST /posts
 func (h *PostHandler) AddPost(c *gin.Context) {
-	var data *model.PostRegistrationData
-	if err := c.ShouldBindJSON(&data); err != nil {
+	var b struct {
+		Body string `json:"body" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&b); err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
 
-	p, err := h.Service.AddPost(c.Request.Context(), data)
+	signedInUserId := getSignedInUserId(c)
+
+	p, err := h.Service.AddPost(c.Request.Context(), signedInUserId, b.Body)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
