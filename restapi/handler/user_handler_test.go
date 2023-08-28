@@ -180,7 +180,7 @@ func setupUserServiceMock(t *testing.T) *UserServiceMock {
 
 	fc := &clock.FixedClocker{}
 	mock := &UserServiceMock{
-		GetUserByUserNameFunc: func(ctx context.Context, userName string) (*model.User, error) {
+		GetUserByUserNameFunc: func(ctx context.Context, userName string, signedInUserId model.UserID) (*model.User, error) {
 			u := &model.User{
 				Id:        "1",
 				UserName:  "dummy",

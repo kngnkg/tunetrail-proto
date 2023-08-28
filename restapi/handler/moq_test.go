@@ -91,7 +91,10 @@ var _ UserService = &UserServiceMock{}
 //			FollowUserFunc: func(ctx context.Context, userName string, follweeUserName string) error {
 //				panic("mock out the FollowUser method")
 //			},
-//			GetUserByUserNameFunc: func(ctx context.Context, userName string) (*model.User, error) {
+//			GetSignedInUserFunc: func(ctx context.Context, userId model.UserID) (*model.User, error) {
+//				panic("mock out the GetSignedInUser method")
+//			},
+//			GetUserByUserNameFunc: func(ctx context.Context, userName string, signedInUserId model.UserID) (*model.User, error) {
 //				panic("mock out the GetUserByUserName method")
 //			},
 //			UnfollowUserFunc: func(ctx context.Context, userName string, follweeUserName string) error {
@@ -113,8 +116,11 @@ type UserServiceMock struct {
 	// FollowUserFunc mocks the FollowUser method.
 	FollowUserFunc func(ctx context.Context, userName string, follweeUserName string) error
 
+	// GetSignedInUserFunc mocks the GetSignedInUser method.
+	GetSignedInUserFunc func(ctx context.Context, userId model.UserID) (*model.User, error)
+
 	// GetUserByUserNameFunc mocks the GetUserByUserName method.
-	GetUserByUserNameFunc func(ctx context.Context, userName string) (*model.User, error)
+	GetUserByUserNameFunc func(ctx context.Context, userName string, signedInUserId model.UserID) (*model.User, error)
 
 	// UnfollowUserFunc mocks the UnfollowUser method.
 	UnfollowUserFunc func(ctx context.Context, userName string, follweeUserName string) error
@@ -140,12 +146,21 @@ type UserServiceMock struct {
 			// FollweeUserName is the follweeUserName argument value.
 			FollweeUserName string
 		}
+		// GetSignedInUser holds details about calls to the GetSignedInUser method.
+		GetSignedInUser []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserId is the userId argument value.
+			UserId model.UserID
+		}
 		// GetUserByUserName holds details about calls to the GetUserByUserName method.
 		GetUserByUserName []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// UserName is the userName argument value.
 			UserName string
+			// SignedInUserId is the signedInUserId argument value.
+			SignedInUserId model.UserID
 		}
 		// UnfollowUser holds details about calls to the UnfollowUser method.
 		UnfollowUser []struct {
@@ -166,6 +181,7 @@ type UserServiceMock struct {
 	}
 	lockDeleteUserByUserName sync.RWMutex
 	lockFollowUser           sync.RWMutex
+	lockGetSignedInUser      sync.RWMutex
 	lockGetUserByUserName    sync.RWMutex
 	lockUnfollowUser         sync.RWMutex
 	lockUpdateUser           sync.RWMutex
@@ -247,22 +263,60 @@ func (mock *UserServiceMock) FollowUserCalls() []struct {
 	return calls
 }
 
+// GetSignedInUser calls GetSignedInUserFunc.
+func (mock *UserServiceMock) GetSignedInUser(ctx context.Context, userId model.UserID) (*model.User, error) {
+	if mock.GetSignedInUserFunc == nil {
+		panic("UserServiceMock.GetSignedInUserFunc: method is nil but UserService.GetSignedInUser was just called")
+	}
+	callInfo := struct {
+		Ctx    context.Context
+		UserId model.UserID
+	}{
+		Ctx:    ctx,
+		UserId: userId,
+	}
+	mock.lockGetSignedInUser.Lock()
+	mock.calls.GetSignedInUser = append(mock.calls.GetSignedInUser, callInfo)
+	mock.lockGetSignedInUser.Unlock()
+	return mock.GetSignedInUserFunc(ctx, userId)
+}
+
+// GetSignedInUserCalls gets all the calls that were made to GetSignedInUser.
+// Check the length with:
+//
+//	len(mockedUserService.GetSignedInUserCalls())
+func (mock *UserServiceMock) GetSignedInUserCalls() []struct {
+	Ctx    context.Context
+	UserId model.UserID
+} {
+	var calls []struct {
+		Ctx    context.Context
+		UserId model.UserID
+	}
+	mock.lockGetSignedInUser.RLock()
+	calls = mock.calls.GetSignedInUser
+	mock.lockGetSignedInUser.RUnlock()
+	return calls
+}
+
 // GetUserByUserName calls GetUserByUserNameFunc.
-func (mock *UserServiceMock) GetUserByUserName(ctx context.Context, userName string) (*model.User, error) {
+func (mock *UserServiceMock) GetUserByUserName(ctx context.Context, userName string, signedInUserId model.UserID) (*model.User, error) {
 	if mock.GetUserByUserNameFunc == nil {
 		panic("UserServiceMock.GetUserByUserNameFunc: method is nil but UserService.GetUserByUserName was just called")
 	}
 	callInfo := struct {
-		Ctx      context.Context
-		UserName string
+		Ctx            context.Context
+		UserName       string
+		SignedInUserId model.UserID
 	}{
-		Ctx:      ctx,
-		UserName: userName,
+		Ctx:            ctx,
+		UserName:       userName,
+		SignedInUserId: signedInUserId,
 	}
 	mock.lockGetUserByUserName.Lock()
 	mock.calls.GetUserByUserName = append(mock.calls.GetUserByUserName, callInfo)
 	mock.lockGetUserByUserName.Unlock()
-	return mock.GetUserByUserNameFunc(ctx, userName)
+	return mock.GetUserByUserNameFunc(ctx, userName, signedInUserId)
 }
 
 // GetUserByUserNameCalls gets all the calls that were made to GetUserByUserName.
@@ -270,12 +324,14 @@ func (mock *UserServiceMock) GetUserByUserName(ctx context.Context, userName str
 //
 //	len(mockedUserService.GetUserByUserNameCalls())
 func (mock *UserServiceMock) GetUserByUserNameCalls() []struct {
-	Ctx      context.Context
-	UserName string
+	Ctx            context.Context
+	UserName       string
+	SignedInUserId model.UserID
 } {
 	var calls []struct {
-		Ctx      context.Context
-		UserName string
+		Ctx            context.Context
+		UserName       string
+		SignedInUserId model.UserID
 	}
 	mock.lockGetUserByUserName.RLock()
 	calls = mock.calls.GetUserByUserName

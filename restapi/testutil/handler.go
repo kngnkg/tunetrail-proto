@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kngnkg/tunetrail/restapi/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,6 +30,12 @@ func SetGinTestMode(t *testing.T) {
 func RunTestServer(t *testing.T, reqMethod string, endpoint string, handler gin.HandlerFunc) string {
 	t.Helper()
 	router := gin.New()
+
+	router.Use(func(c *gin.Context) {
+		userId := model.UserID("dummy")
+		c.Set("userId", userId)
+		c.Next()
+	})
 
 	// ハンドラの登録
 	switch reqMethod {

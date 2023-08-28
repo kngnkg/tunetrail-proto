@@ -15,11 +15,33 @@ type UserService struct {
 	Repo UserRepository
 }
 
-// GetUserByUserNameはユーザー名からユーザーを取得する
-func (us *UserService) GetUserByUserName(ctx context.Context, userName string) (*model.User, error) {
+func (us *UserService) GetSignedInUser(ctx context.Context, userId model.UserID) (*model.User, error) {
 	var u *model.User
 	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
-		got, err := us.Repo.GetUserByUserName(ctx, tx, userName)
+		got, err := us.Repo.GetUserByUserId(ctx, tx, userId)
+		if err != nil {
+			if errors.Is(err, store.ErrUserNotFound) {
+				return fmt.Errorf("%w: userId=%v: %w", ErrUserNotFound, userId, err)
+			}
+			return err
+		}
+
+		u = got
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
+// GetUserByUserNameはユーザー名からユーザーを取得する
+func (us *UserService) GetUserByUserName(ctx context.Context, userName string, signedInUserId model.UserID) (*model.User, error) {
+	var u *model.User
+	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
+		got, err := us.Repo.GetUserByUserNameWithFollowInfo(ctx, tx, userName, signedInUserId)
 		if err != nil {
 			if errors.Is(err, store.ErrUserNotFound) {
 				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, userName, err)
