@@ -10,6 +10,10 @@ export const MESSAGE = {
       PASSWORD_TOO_LONG: "パスワードが長すぎます",
       PASSWORD_CONFIRM: "パスワードと確認用パスワードが一致しません",
     },
+    POST: {
+      BODY_TOO_SHORT: "ポストは1文字以上である必要があります",
+      BODY_TOO_LONG: "ポストは1000文字以内である必要があります",
+    },
   },
   SUCCESS_SIGNUP: "登録に成功しました!",
   SUCCESS_LOGIN: "ログインしました!",
