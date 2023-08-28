@@ -57,6 +57,44 @@ func (r *Repository) GetUserByUserName(ctx context.Context, db Queryer, userName
 	return u, nil
 }
 
+// 暫定
+// TODO: フォロー情報を取得する処理を別のメソッドに分ける
+func (r *Repository) GetUserByUserNameWithFollowInfo(ctx context.Context, db Queryer, userName string, signedInUserId model.UserID) (*model.User, error) {
+	u := &model.User{}
+
+	// f1: ログインユーザーがフォローしている
+	// f2: ログインユーザーがフォローされている
+	query := `
+	SELECT
+		u.id,
+		u.user_name,
+		u.name,
+		u.icon_url,
+		u.bio,
+		CASE WHEN f1.user_id IS NULL THEN false ELSE true END AS is_following,
+		CASE WHEN f2.followee_id IS NULL THEN false ELSE true END AS is_followed,
+		u.created_at,
+		u.updated_at
+	FROM users u
+	LEFT OUTER JOIN follows f1 ON u.id = f1.followee_id AND f1.user_id = $2
+	LEFT OUTER JOIN follows f2 ON u.id = f2.user_id AND f2.followee_id = $2
+	WHERE u.user_name = $1
+	AND u.is_deleted = false
+	`
+
+	if err := db.GetContext(ctx, u, query, userName, signedInUserId); err != nil {
+		// ユーザーが存在しない場合はエラーをラップして返す
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("%w: %w", ErrUserNotFound, err)
+		}
+		return nil, err
+	}
+	// UTCに変換
+	u.CreatedAt = u.CreatedAt.UTC()
+	u.UpdatedAt = u.UpdatedAt.UTC()
+	return u, nil
+}
+
 // UserExistsByUserName はユーザー名が既に存在するかどうかを返す
 func (r *Repository) UserExistsByUserName(ctx context.Context, db Queryer, userName string) (bool, error) {
 	query := `SELECT EXISTS(

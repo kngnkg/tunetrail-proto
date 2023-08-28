@@ -46,8 +46,9 @@ func (s *UserServiceTestSuite) SetupTest() {
 
 func (s *UserServiceTestSuite) TestGetUserByUserName() {
 	type args struct {
-		ctx      context.Context
-		userName string
+		ctx            context.Context
+		userName       string
+		signedInUserId model.UserID
 	}
 
 	tests := []struct {
@@ -59,8 +60,9 @@ func (s *UserServiceTestSuite) TestGetUserByUserName() {
 		{
 			"ok",
 			args{
-				ctx:      context.Background(),
-				userName: s.dummyUsers[0].UserName,
+				ctx:            context.Background(),
+				userName:       s.dummyUsers[0].UserName,
+				signedInUserId: s.dummyUsers[0].Id,
 			},
 			s.dummyUsers[0],
 			nil,
@@ -79,7 +81,7 @@ func (s *UserServiceTestSuite) TestGetUserByUserName() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got, err := s.us.GetUserByUserName(tt.args.ctx, tt.args.userName)
+			got, err := s.us.GetUserByUserName(tt.args.ctx, tt.args.userName, tt.args.signedInUserId)
 			if !errors.Is(err, tt.wantErr) {
 				s.T().Errorf("UserService.GetUserByUserName() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -240,6 +242,14 @@ func (s *UserServiceTestSuite) setupRepoMock() *UserRepositoryMock {
 			return false, nil
 		},
 		GetUserByUserNameFunc: func(ctx context.Context, db store.Queryer, userName string) (*model.User, error) {
+			for _, u := range s.dummyUsers {
+				if userName == u.UserName {
+					return u, nil
+				}
+			}
+			return nil, store.ErrUserNotFound
+		},
+		GetUserByUserNameWithFollowInfoFunc: func(ctx context.Context, db store.Queryer, userName string, signedInUserId model.UserID) (*model.User, error) {
 			for _, u := range s.dummyUsers {
 				if userName == u.UserName {
 					return u, nil

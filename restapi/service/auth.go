@@ -77,6 +77,7 @@ func (as *AuthService) RegisterUser(ctx context.Context, data *model.UserRegistr
 }
 
 func (as *AuthService) ConfirmEmail(ctx context.Context, userName, code string) error {
+	// TODO: 後でリファクタリングする
 	user, err := as.Repo.GetUserByUserName(ctx, as.DB, userName)
 	if err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
@@ -118,6 +119,7 @@ func (as *AuthService) SignIn(ctx context.Context, data *model.UserSignInData) (
 	}
 
 	// ユーザー名でサインインする場合
+	// TODO: 後でリファクタリングする
 	user, err := as.Repo.GetUserByUserName(ctx, as.DB, data.UserName)
 	if err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
