@@ -1,17 +1,18 @@
+"use client"
+
+import * as React from "react"
 import Link from "next/link"
 
 import { mergeClasses } from "@/lib/utils"
+import { useSignedInUser } from "@/hooks/auth/use-signedin-user"
 import { Button } from "@/components/ui/Button/Button"
+import { NewPostDialog } from "../NewPostDialog/NewPostDialog"
 
-interface SideBarProps extends React.HTMLAttributes<HTMLDivElement> {
-  signedInUserName: string
-}
+interface SideBarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-export const SideBar: React.FC<SideBarProps> = ({
-  className,
-  signedInUserName,
-  ...props
-}) => {
+export const SideBar: React.FC<SideBarProps> = ({ className, ...props }) => {
+  const signedInUser = useSignedInUser()
+
   return (
     <div
       className={mergeClasses("flex flex-col space-y-4", className)}
@@ -24,12 +25,14 @@ export const SideBar: React.FC<SideBarProps> = ({
         Notification
       </Link>
       <Link
-        href={`/${signedInUserName}`}
+        href={`/${signedInUser?.userName}`}
         className="text-2xl text-gray-lightest"
       >
         Profile
       </Link>
-      <Button>Post</Button>
+      <NewPostDialog>
+        <Button>Post</Button>
+      </NewPostDialog>
     </div>
   )
 }
