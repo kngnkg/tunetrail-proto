@@ -40,7 +40,10 @@ type UserRepository interface {
 }
 
 type PostRepository interface {
+	WithTransaction(ctx context.Context, db store.Beginner, f func(tx *sqlx.Tx) error) error
 	AddPost(ctx context.Context, db store.Preparer, p *model.Post) (*model.Post, error)
+	GetFolloweesByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
+	GetPostsByUserIdsNext(ctx context.Context, db store.Queryer, userId []model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
 }
 
 type HealthRepository interface {
