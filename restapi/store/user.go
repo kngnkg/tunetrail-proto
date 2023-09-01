@@ -229,3 +229,32 @@ func (r *Repository) DeleteFollow(ctx context.Context, db Execer, userName, foll
 	}
 	return nil
 }
+
+func (r *Repository) GetFolloweesByUserId(ctx context.Context, db Queryer, userId model.UserID) ([]*model.User, error) {
+	var users []*model.User
+	query := `
+	SELECT
+		u.id,
+		u.user_name,
+		u.name,
+		u.icon_url,
+		u.bio,
+		u.created_at,
+		u.updated_at
+	FROM users u
+	INNER JOIN follows f ON u.id = f.followee_id AND user_id = $1
+	WHERE u.is_deleted = false;
+	`
+
+	if err := db.SelectContext(ctx, &users, query, userId); err != nil {
+		return nil, err
+	}
+
+	// UTCに変換
+	for _, u := range users {
+		u.CreatedAt = u.CreatedAt.UTC()
+		u.UpdatedAt = u.UpdatedAt.UTC()
+	}
+
+	return users, nil
+}
