@@ -32,9 +32,9 @@ func (r *Repository) GetPostsByUserIdsNext(ctx context.Context, db Queryer, user
 			AND created_at <= (
 				SELECT created_at
 				FROM posts
-				WHERE id = $2)
+				WHERE id = $3)
 			ORDER BY created_at DESC
-			LIMIT $3;
+			LIMIT $2;
 		`
 
 		queryArgs = append(queryArgs, pagenation.NextCursor)
