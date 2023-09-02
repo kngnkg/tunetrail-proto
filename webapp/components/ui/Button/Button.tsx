@@ -25,17 +25,15 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {}
 
-export const Button: React.FC<ButtonProps> = ({
-  className,
-  intent,
-  size,
-  ...props
-}) => {
-  return (
-    <button
-      className={mergeClasses(buttonVariants({ intent, size }), className)}
-      {...props}
-    />
-  )
-}
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, intent, size, ...props }, ref) => {
+    return (
+      <button
+        className={mergeClasses(buttonVariants({ intent, size }), className)}
+        {...props}
+        ref={ref}
+      />
+    )
+  }
+)
 Button.displayName = "Button"
