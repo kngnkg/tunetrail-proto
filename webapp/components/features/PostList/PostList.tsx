@@ -3,13 +3,14 @@
 import Link from "next/link"
 
 import { env } from "@/env.mjs"
-import { Post } from "@/types/post"
-import { Timeline, usePosts } from "@/hooks/post/use-posts"
+import { Post, Timeline } from "@/types/post"
+import { usePosts } from "@/hooks/post/use-posts"
+import { Button } from "@/components/ui/Button/Button"
 
 export const PostList: React.FC = () => {
-  const { data, error } = usePosts(env.NEXT_PUBLIC_API_ROOT)
+  const { data, error, size, setSize } = usePosts(env.NEXT_PUBLIC_API_ROOT)
 
-  console.log(data)
+  // console.log(data)
 
   return (
     <div className="container mx-auto p-8">
@@ -27,6 +28,7 @@ export const PostList: React.FC = () => {
           </div>
         )
       })}
+      <Button onClick={() => setSize(size + 1)}>more</Button>
     </div>
   )
 }
