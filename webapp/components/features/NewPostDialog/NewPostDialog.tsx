@@ -6,12 +6,13 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 
 import { env } from "@/env.mjs"
+import { MESSAGE } from "@/config/messages"
 import { postSchema } from "@/lib/validations/post.schema"
 import { usePosts } from "@/hooks/post/use-posts"
+import { useToast } from "@/hooks/toast/use-toast"
 import { Button } from "@/components/ui/Button/Button"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/Dialog/Dialog"
@@ -32,26 +33,48 @@ export const NewPostDialog: React.FC<NewPostDialogProps> = ({
   const { register, handleSubmit, formState } = useForm<FormData>({
     resolver: zodResolver(postSchema),
   })
-  const { data, error, addPost } = usePosts(env.NEXT_PUBLIC_API_ROOT)
+  const { error, addPost } = usePosts(env.NEXT_PUBLIC_API_ROOT)
+  const { showToast } = useToast()
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
+  const [open, setOpen] = React.useState<boolean>(false)
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
 
-    await addPost(data)
+    try {
+      await addPost(data)
 
-    setIsLoading(false)
+      showToast({
+        intent: "success",
+        description: MESSAGE.SUCCESS_POST,
+      })
+    } catch (e) {
+      if (e instanceof Error) {
+        showToast({
+          intent: "error",
+          description: e.message,
+        })
+      }
+
+      showToast({
+        intent: "error",
+        description: MESSAGE.UNKNOWN_ERROR,
+      })
+    } finally {
+      setOpen(false)
+      setIsLoading(false)
+    }
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent {...props}>
         <h1>Post Dialog!</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <Input
             id="body"
-            type="textarea"
+            type="text"
             placeholderText="投稿内容を入力する"
             disabled={isLoading}
             {...register("body")}
@@ -61,9 +84,7 @@ export const NewPostDialog: React.FC<NewPostDialogProps> = ({
               {formState.errors.body.message}
             </p>
           )}
-          <DialogClose asChild>
-            <Button>Post</Button>
-          </DialogClose>
+          <Button type="submit">Post</Button>
         </form>
       </DialogContent>
     </Dialog>

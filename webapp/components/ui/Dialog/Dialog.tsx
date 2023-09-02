@@ -47,5 +47,3 @@ export const DialogContent = React.forwardRef<
   )
 })
 DialogContent.displayName = "DialogContent"
-
-export const DialogClose = DialogPrimitive.Close
