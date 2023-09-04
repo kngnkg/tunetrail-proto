@@ -38,11 +38,13 @@ export default async function DefaultLayout({ children }: DefaultLayoutProps) {
   // }
 
   return (
-    <div className="flex min-h-screen">
-      <main className="flex-1">{children}</main>
-      <aside className="w-1/3">
-        <SideBar />
+    <div className="fixed top-0 left-0 flex w-full h-screen">
+      <aside className="w-1/3 fixed top-0 left-0 h-screen border-r border-gray-light">
+        <SideBar className="mt-12 ml-8" />
       </aside>
+      <main className="flex-1 overflow-y-auto">
+        <div className="w-2/3 ml-auto">{children}</div>
+      </main>
     </div>
   )
 }
