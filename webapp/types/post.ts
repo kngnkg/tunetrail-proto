@@ -1,7 +1,8 @@
+import { User } from "@/types/user"
+
 export type Post = {
   id: string
-  user_id: string
-  user_name: string
+  user: User
   body: string
 }
 
