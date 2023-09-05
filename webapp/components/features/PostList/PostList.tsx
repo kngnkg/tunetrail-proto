@@ -18,7 +18,7 @@ export const PostList: React.FC = () => {
             {tl.posts.map((post: Post, postIdx: number) => {
               return (
                 <div key={postIdx}>
-                  <PostCard post={post} />
+                  <PostCard post={post} className="w-128" />
                 </div>
               )
             })}
