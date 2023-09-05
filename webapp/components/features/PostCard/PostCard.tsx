@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ChatBubbleIcon, HeartIcon } from "@radix-ui/react-icons"
+import { ChatBubbleIcon } from "@radix-ui/react-icons"
 
 import { Post } from "@/types/post"
 import { mergeClasses } from "@/lib/utils"
@@ -10,6 +10,7 @@ import {
   CardHooter,
 } from "@/components/ui/Card/Card"
 
+import { LikeButton } from "../LikeButton/LikeButton"
 import { UserAvatar } from "../UserAvatar/UserAvatar"
 
 interface PostCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -24,11 +25,11 @@ export const PostCard: React.FC<PostCardProps> = ({
 }) => {
   const userPagePath = `/${post.user.userName}`
 
-  const hooterIconClasses = "w-4 h-4 text-gray-lightest"
+  const hooterIconClasses = "w-5 h-5"
 
   return (
     <Card className={mergeClasses("flex gap-2 pt-2", className)} {...props}>
-      <CardHeader className="w-12 h-full pt-1 pl-2 flex-shrink-0">
+      <CardHeader className="w-12 h-full pt-2 pl-2 flex-shrink-0">
         <Link href={userPagePath}>
           <UserAvatar user={post.user} />
         </Link>
@@ -41,12 +42,14 @@ export const PostCard: React.FC<PostCardProps> = ({
             className="text-sm text-gray-lightest"
           >{`@${post.user.userName}`}</Link>
         </div>
-        <div className="pb-1 pl-2 pr-3">
+        <div className="pb-2 pl-2 pr-3">
           <p>{post.body}</p>
         </div>
-        <CardHooter className="flex gap-4 items-center pb-1">
-          <ChatBubbleIcon className={hooterIconClasses} />
-          <HeartIcon className={hooterIconClasses} />
+        <CardHooter className="flex gap-6 items-center pb-1">
+          <ChatBubbleIcon
+            className={hooterIconClasses + " text-gray-lightest"}
+          />
+          <LikeButton post={post} className={hooterIconClasses} />
         </CardHooter>
       </CardContent>
     </Card>
