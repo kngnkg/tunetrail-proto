@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/Card/Card"
 
 import { LikeButton } from "../LikeButton/LikeButton"
+import { ReplyButton } from "../ReplyButton/ReplyButton"
 import { UserAvatar } from "../UserAvatar/UserAvatar"
 
 interface PostCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -46,9 +47,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           <p>{post.body}</p>
         </div>
         <CardHooter className="flex gap-6 items-center pb-1">
-          <ChatBubbleIcon
-            className={hooterIconClasses + " text-gray-lightest"}
-          />
+          <ReplyButton post={post} className={hooterIconClasses} />
           <LikeButton post={post} className={hooterIconClasses} />
         </CardHooter>
       </CardContent>
