@@ -39,12 +39,15 @@ export default async function DefaultLayout({ children }: DefaultLayoutProps) {
 
   return (
     <div className="fixed top-0 left-0 flex w-full h-screen">
-      <aside className="w-1/3 fixed top-0 left-0 h-screen border-r border-gray-light">
-        <SideBar className="mt-12 ml-8" />
-      </aside>
-      <main className="flex-1 overflow-y-auto">
-        <div className="w-2/3 ml-auto">{children}</div>
+      <main className="flex-1 flex overflow-y-auto relative">
+        <div className="ml-64 flex-1 w-128">{children}</div>
+        <div className="fixed mid:w-64 midlg:w-96 top-0 right-0 h-screen border-l border-gray-light pl-4">
+          <p>開発中(リプライ投稿フォーム)</p>
+        </div>
       </main>
+      <aside className="w-64 fixed top-0 left-0 h-screen border-r border-gray-light">
+        <SideBar className="ml-8 mt-8" />
+      </aside>
     </div>
   )
 }

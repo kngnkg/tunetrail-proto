@@ -12,6 +12,14 @@ module.exports = {
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
+      width: {
+        128: "32rem",
+      },
+      screens: {
+        midsm: "30rem",
+        mid: "48rem",
+        midlg: "82rem",
+      },
       colors: {
         primary: {
           DEFAULT: "rgb(var(--color-primary-rgb))",
