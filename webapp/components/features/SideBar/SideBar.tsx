@@ -30,7 +30,7 @@ export const SideBar: React.FC<SideBarProps> = ({ className, ...props }) => {
             <p className="text-2xl">Home</p>
           </div>
         </Link>
-        <Link href="/notification" className="text-gray-lightest">
+        <Link href="/notifications" className="text-gray-lightest">
           <div className="flex items-center space-x-3">
             <BellIcon className="h-6 w-6" />
             <p className="text-2xl">Notification</p>
