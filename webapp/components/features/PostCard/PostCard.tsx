@@ -25,6 +25,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   ...props
 }) => {
   const userPagePath = `/${post.user.userName}`
+  const postPagePath = `/${post.user.userName}/${post.id}`
 
   const hooterIconClasses = "w-5 h-5"
 
@@ -44,7 +45,9 @@ export const PostCard: React.FC<PostCardProps> = ({
           >{`@${post.user.userName}`}</Link>
         </div>
         <div className="pb-2 pl-2 pr-3">
-          <p>{post.body}</p>
+          <Link href={postPagePath}>
+            <p>{post.body}</p>
+          </Link>
         </div>
         <CardHooter className="flex gap-6 items-center pb-1">
           <ReplyButton post={post} className={hooterIconClasses} />
