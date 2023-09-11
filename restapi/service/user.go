@@ -151,3 +151,21 @@ func (us *UserService) UnfollowUser(ctx context.Context, userId, follweeUserId m
 
 	return nil
 }
+
+func (us *UserService) GetFollowees(ctx context.Context, userId model.UserID) ([]*model.User, error) {
+	users, err := us.Repo.GetFolloweesByUserId(ctx, us.DB, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (us *UserService) GetFollowers(ctx context.Context, userId model.UserID) ([]*model.User, error) {
+	users, err := us.Repo.GetFollowersByUserId(ctx, us.DB, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}

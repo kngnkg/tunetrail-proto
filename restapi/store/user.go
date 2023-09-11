@@ -198,12 +198,12 @@ func (r *Repository) AddFollow(ctx context.Context, db Execer, userId, followeeU
 	updatedAt := r.Clocker.Now()
 
 	query := `
-	INSERT INTO follows (user_id, followee_id, created_at, updated_at)
-	SELECT u1.id, u2.id, $3, $4
-	FROM users u1
-	INNER JOIN users u2 ON u1.id = $1 AND u2.id = $2
-	WHERE u1.is_deleted = false
-	AND u2.is_deleted = false;
+		INSERT INTO follows (user_id, followee_id, created_at, updated_at)
+		SELECT u1.id, u2.id, $3, $4
+		FROM users u1
+		INNER JOIN users u2 ON u1.id = $1 AND u2.id = $2
+		WHERE u1.is_deleted = false
+		AND u2.is_deleted = false;
 	`
 
 	_, err := db.ExecContext(ctx, query, userId, followeeUserId, createdAt, updatedAt)
@@ -217,9 +217,9 @@ func (r *Repository) AddFollow(ctx context.Context, db Execer, userId, followeeU
 func (r *Repository) DeleteFollow(ctx context.Context, db Execer, userId, followeeUserId model.UserID) error {
 	// 論理削除されていないユーザーかどうかをusersテーブルから確認してからフォローを削除する
 	query := `
-	DELETE FROM follows
-	WHERE user_id = (SELECT id FROM users WHERE id = $1 AND is_deleted = false)
-	AND followee_id = (SELECT id FROM users WHERE id = $2 AND is_deleted = false);
+		DELETE FROM follows
+		WHERE user_id = (SELECT id FROM users WHERE id = $1 AND is_deleted = false)
+		AND followee_id = (SELECT id FROM users WHERE id = $2 AND is_deleted = false);
 	`
 
 	_, err := db.ExecContext(ctx, query, userId, followeeUserId)
@@ -232,17 +232,47 @@ func (r *Repository) DeleteFollow(ctx context.Context, db Execer, userId, follow
 func (r *Repository) GetFolloweesByUserId(ctx context.Context, db Queryer, userId model.UserID) ([]*model.User, error) {
 	var users []*model.User
 	query := `
-	SELECT
-		u.id,
-		u.user_name,
-		u.name,
-		u.icon_url,
-		u.bio,
-		u.created_at,
-		u.updated_at
-	FROM users u
-	INNER JOIN follows f ON u.id = f.followee_id AND user_id = $1
-	WHERE u.is_deleted = false;
+		SELECT
+			u.id,
+			u.user_name,
+			u.name,
+			u.icon_url,
+			u.bio,
+			u.created_at,
+			u.updated_at
+		FROM users u
+		INNER JOIN follows f ON u.id = f.followee_id AND f.user_id = $1
+		WHERE u.is_deleted = false;
+	`
+
+	if err := db.SelectContext(ctx, &users, query, userId); err != nil {
+		return nil, err
+	}
+
+	// UTCに変換
+	for _, u := range users {
+		u.CreatedAt = u.CreatedAt.UTC()
+		u.UpdatedAt = u.UpdatedAt.UTC()
+	}
+
+	return users, nil
+}
+
+func (r *Repository) GetFollowersByUserId(ctx context.Context, db Queryer, userId model.UserID) ([]*model.User, error) {
+	var users []*model.User
+
+	query := `
+		SELECT
+			u.id,
+			u.user_name,
+			u.name,
+			u.icon_url,
+			u.bio,
+			u.created_at,
+			u.updated_at
+		FROM users u
+		INNER JOIN follows f ON u.id = f.user_id AND f.followee_id = $1
+		WHERE u.is_deleted = false;
 	`
 
 	if err := db.SelectContext(ctx, &users, query, userId); err != nil {

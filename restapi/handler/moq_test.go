@@ -91,6 +91,12 @@ var _ UserService = &UserServiceMock{}
 //			FollowUserFunc: func(ctx context.Context, userId model.UserID, follweeUserId model.UserID) error {
 //				panic("mock out the FollowUser method")
 //			},
+//			GetFolloweesFunc: func(ctx context.Context, userId model.UserID) ([]*model.User, error) {
+//				panic("mock out the GetFollowees method")
+//			},
+//			GetFollowersFunc: func(ctx context.Context, userId model.UserID) ([]*model.User, error) {
+//				panic("mock out the GetFollowers method")
+//			},
 //			GetSignedInUserFunc: func(ctx context.Context, userId model.UserID) (*model.User, error) {
 //				panic("mock out the GetSignedInUser method")
 //			},
@@ -115,6 +121,12 @@ type UserServiceMock struct {
 
 	// FollowUserFunc mocks the FollowUser method.
 	FollowUserFunc func(ctx context.Context, userId model.UserID, follweeUserId model.UserID) error
+
+	// GetFolloweesFunc mocks the GetFollowees method.
+	GetFolloweesFunc func(ctx context.Context, userId model.UserID) ([]*model.User, error)
+
+	// GetFollowersFunc mocks the GetFollowers method.
+	GetFollowersFunc func(ctx context.Context, userId model.UserID) ([]*model.User, error)
 
 	// GetSignedInUserFunc mocks the GetSignedInUser method.
 	GetSignedInUserFunc func(ctx context.Context, userId model.UserID) (*model.User, error)
@@ -145,6 +157,20 @@ type UserServiceMock struct {
 			UserId model.UserID
 			// FollweeUserId is the follweeUserId argument value.
 			FollweeUserId model.UserID
+		}
+		// GetFollowees holds details about calls to the GetFollowees method.
+		GetFollowees []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserId is the userId argument value.
+			UserId model.UserID
+		}
+		// GetFollowers holds details about calls to the GetFollowers method.
+		GetFollowers []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// UserId is the userId argument value.
+			UserId model.UserID
 		}
 		// GetSignedInUser holds details about calls to the GetSignedInUser method.
 		GetSignedInUser []struct {
@@ -181,6 +207,8 @@ type UserServiceMock struct {
 	}
 	lockDeleteUserByUserName sync.RWMutex
 	lockFollowUser           sync.RWMutex
+	lockGetFollowees         sync.RWMutex
+	lockGetFollowers         sync.RWMutex
 	lockGetSignedInUser      sync.RWMutex
 	lockGetUserByUserName    sync.RWMutex
 	lockUnfollowUser         sync.RWMutex
@@ -260,6 +288,78 @@ func (mock *UserServiceMock) FollowUserCalls() []struct {
 	mock.lockFollowUser.RLock()
 	calls = mock.calls.FollowUser
 	mock.lockFollowUser.RUnlock()
+	return calls
+}
+
+// GetFollowees calls GetFolloweesFunc.
+func (mock *UserServiceMock) GetFollowees(ctx context.Context, userId model.UserID) ([]*model.User, error) {
+	if mock.GetFolloweesFunc == nil {
+		panic("UserServiceMock.GetFolloweesFunc: method is nil but UserService.GetFollowees was just called")
+	}
+	callInfo := struct {
+		Ctx    context.Context
+		UserId model.UserID
+	}{
+		Ctx:    ctx,
+		UserId: userId,
+	}
+	mock.lockGetFollowees.Lock()
+	mock.calls.GetFollowees = append(mock.calls.GetFollowees, callInfo)
+	mock.lockGetFollowees.Unlock()
+	return mock.GetFolloweesFunc(ctx, userId)
+}
+
+// GetFolloweesCalls gets all the calls that were made to GetFollowees.
+// Check the length with:
+//
+//	len(mockedUserService.GetFolloweesCalls())
+func (mock *UserServiceMock) GetFolloweesCalls() []struct {
+	Ctx    context.Context
+	UserId model.UserID
+} {
+	var calls []struct {
+		Ctx    context.Context
+		UserId model.UserID
+	}
+	mock.lockGetFollowees.RLock()
+	calls = mock.calls.GetFollowees
+	mock.lockGetFollowees.RUnlock()
+	return calls
+}
+
+// GetFollowers calls GetFollowersFunc.
+func (mock *UserServiceMock) GetFollowers(ctx context.Context, userId model.UserID) ([]*model.User, error) {
+	if mock.GetFollowersFunc == nil {
+		panic("UserServiceMock.GetFollowersFunc: method is nil but UserService.GetFollowers was just called")
+	}
+	callInfo := struct {
+		Ctx    context.Context
+		UserId model.UserID
+	}{
+		Ctx:    ctx,
+		UserId: userId,
+	}
+	mock.lockGetFollowers.Lock()
+	mock.calls.GetFollowers = append(mock.calls.GetFollowers, callInfo)
+	mock.lockGetFollowers.Unlock()
+	return mock.GetFollowersFunc(ctx, userId)
+}
+
+// GetFollowersCalls gets all the calls that were made to GetFollowers.
+// Check the length with:
+//
+//	len(mockedUserService.GetFollowersCalls())
+func (mock *UserServiceMock) GetFollowersCalls() []struct {
+	Ctx    context.Context
+	UserId model.UserID
+} {
+	var calls []struct {
+		Ctx    context.Context
+		UserId model.UserID
+	}
+	mock.lockGetFollowers.RLock()
+	calls = mock.calls.GetFollowers
+	mock.lockGetFollowers.RUnlock()
 	return calls
 }
 
