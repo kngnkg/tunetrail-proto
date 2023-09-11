@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"log"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/kngnkg/tunetrail/restapi/model"
@@ -18,14 +17,17 @@ func (ps *PostService) AddPost(ctx context.Context, signedInUserId model.UserID,
 	var p *model.Post
 	err := ps.Repo.WithTransaction(ctx, ps.DB, func(tx *sqlx.Tx) error {
 
+		// idが返される
 		added, err := ps.Repo.AddPost(ctx, ps.DB, &model.Post{
-			UserId: signedInUserId,
-			Body:   body,
+			User: &model.User{Id: signedInUserId},
+			Body: body,
 		})
 
 		if err != nil {
 			return err
 		}
+
+		// TODO: 追加したポストの情報を取得する
 
 		p = added
 		return nil
@@ -39,7 +41,7 @@ func (ps *PostService) AddPost(ctx context.Context, signedInUserId model.UserID,
 }
 
 func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
-	// ユーザーがフォローしているユーザーのIDを取得する
+	// ユーザーがフォローしているユーザーの情報を取得する
 	users, err := ps.Repo.GetFolloweesByUserId(ctx, ps.DB, signedInUserId)
 
 	if err != nil {
@@ -53,9 +55,20 @@ func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.Us
 		userIds[i+1] = u.Id
 	}
 
-	for _, u := range userIds {
-		log.Printf("userId: %v", u)
+	// フィードを取得する
+	timeline, err := ps.Repo.GetPostsByUserIdsNext(ctx, ps.DB, userIds, pagenation)
+
+	if err != nil {
+		return nil, err
 	}
+
+	return timeline, nil
+}
+
+func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
+	// ユーザーIDのスライスを作成する
+	userIds := make([]model.UserID, 1)
+	userIds[0] = userId
 
 	// フィードを取得する
 	timeline, err := ps.Repo.GetPostsByUserIdsNext(ctx, ps.DB, userIds, pagenation)

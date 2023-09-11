@@ -64,10 +64,12 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		// auth.POST("/signout", handler.AuthMiddleware(j), ah.SignOut) // サインアウト
 	}
 
+	// TODO: user_idで指定する
 	users := router.Group("/users")
 	{
 		users.Use(handler.AuthMiddleware(j))
 
+		// TODO: /users/by/username/:user_name に変更する
 		users.GET("/:user_name", uh.GetUserByUserName) // ログインユーザ以外のユーザー情報取得
 		users.GET("/me", uh.GetMe)                     // ログインユーザー情報取得
 		users.PUT("", uh.UpdateUser)                   // TODO: 改修予定
@@ -82,6 +84,11 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 			follow.DELETE("", uh.UnfollowUser)
 		}
 
+		// userPosts := users.Group("/:user_id/posts")
+		// {
+		// 	userPosts.GET("", ph.GetPostsByUserId)
+		// }
+
 		// posts := users.Group("/:user_name/posts")
 		// {
 		// 	posts.GET("", ph.GetPostsByUserName)
@@ -93,6 +100,9 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		posts.Use(handler.AuthMiddleware(j))
 
 		posts.POST("", ph.AddPost)
+
+		// 暫定的にここに置く
+		posts.GET("/:user_id", ph.GetPostsByUserId)
 	}
 
 	return router, cleanup, nil

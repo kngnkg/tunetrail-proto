@@ -12,6 +12,7 @@ import (
 type PostService interface {
 	AddPost(ctx context.Context, signedInUserId model.UserID, body string) (*model.Post, error)
 	GetTimelines(ctx context.Context, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
+	GetPostsByUserId(ctx context.Context, userId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
 }
 
 type PostHandler struct {
@@ -70,36 +71,36 @@ func (h *PostHandler) GetTimeline(c *gin.Context) {
 		return
 	}
 
-	// timeline := &model.Timeline{
-	// 	Posts: []*model.Post{
-	// 		{
-	// 			Id:        "1",
-	// 			UserId:    "1",
-	// 			Body:      "body",
-	// 			CreatedAt: time.Now(),
-	// 			UpdatedAt: time.Now(),
-	// 		},
-	// 		{
-	// 			Id:        "2",
-	// 			UserId:    "2",
-	// 			Body:      "body2",
-	// 			CreatedAt: time.Now(),
-	// 			UpdatedAt: time.Now(),
-	// 		},
-	// 		{
-	// 			Id:        "3",
-	// 			UserId:    "3",
-	// 			Body:      "body3",
-	// 			CreatedAt: time.Now(),
-	// 			UpdatedAt: time.Now(),
-	// 		},
-	// 	},
-	// 	Pagenation: &model.Pagenation{
-	// 		NextCursor:     "next",
-	// 		PreviousCursor: "previous",
-	// 		Limit:          10,
-	// 	},
-	// }
+	c.JSON(http.StatusOK, timeline)
+}
+
+func (h *PostHandler) GetPostsByUserId(c *gin.Context) {
+	userId := model.UserID(c.Param("user_id"))
+
+	nc := c.DefaultQuery("next_cursor", "")
+	pc := c.DefaultQuery("previous_cursor", "")
+	lstr := c.DefaultQuery("limit", "10")
+
+	l, err := strconv.Atoi(lstr)
+	if err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
+		return
+	}
+
+	pagenation := &model.Pagenation{
+		NextCursor:     nc,
+		PreviousCursor: pc,
+		Limit:          l,
+	}
+
+	// TODO: Timeline構造体の名前を変える
+	timeline, err := h.Service.GetPostsByUserId(c.Request.Context(), userId, pagenation)
+	if err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
+		return
+	}
 
 	c.JSON(http.StatusOK, timeline)
 }
