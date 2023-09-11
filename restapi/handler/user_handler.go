@@ -16,8 +16,8 @@ type UserService interface {
 	GetUserByUserName(ctx context.Context, userName string, signedInUserId model.UserID) (*model.User, error)
 	UpdateUser(ctx context.Context, u *model.UserUpdateData) error
 	DeleteUserByUserName(ctx context.Context, userName string) error
-	FollowUser(ctx context.Context, userName, follweeUserName string) error
-	UnfollowUser(ctx context.Context, userName, follweeUserName string) error
+	FollowUser(ctx context.Context, userId, follweeUserId model.UserID) error
+	UnfollowUser(ctx context.Context, userId, follweeUserId model.UserID) error
 }
 
 type UserHandler struct {
@@ -105,7 +105,7 @@ func (uh *UserHandler) UpdateUser(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// DELETE /users/:user_name
+// DELETE /users/:user_id
 // ユーザーを削除する
 func (uh *UserHandler) DeleteUserByUserName(c *gin.Context) {
 	userName := c.Param("user_name")
@@ -125,13 +125,13 @@ func (uh *UserHandler) DeleteUserByUserName(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// POST /users/:user_name/follow
+// POST /users/:user_id/follow
 // ユーザーをフォローする
 func (uh *UserHandler) FollowUser(c *gin.Context) {
-	userName := c.Param("user_name")
+	userId := getUserIdFromPath(c)
 
 	var b struct {
-		FollweeUserName string `json:"followee_user_name"`
+		FollweeUserId string `json:"followee_user_id"`
 	}
 
 	if err := c.ShouldBindJSON(&b); err != nil {
@@ -140,7 +140,7 @@ func (uh *UserHandler) FollowUser(c *gin.Context) {
 		return
 	}
 
-	if err := uh.Service.FollowUser(c.Request.Context(), userName, b.FollweeUserName); err != nil {
+	if err := uh.Service.FollowUser(c.Request.Context(), userId, model.UserID(b.FollweeUserId)); err != nil {
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
 			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
@@ -155,13 +155,13 @@ func (uh *UserHandler) FollowUser(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// DELETE /users/:user_name/follow
+// DELETE /users/:user_id/follow
 // ユーザーのフォローを解除する
 func (uh *UserHandler) UnfollowUser(c *gin.Context) {
-	userName := c.Param("user_name")
+	userId := getUserIdFromPath(c)
 
 	var b struct {
-		FollweeUserName string `json:"followee_user_name"`
+		FollweeUserId string `json:"followee_user_id"`
 	}
 
 	if err := c.ShouldBindJSON(&b); err != nil {
@@ -170,7 +170,7 @@ func (uh *UserHandler) UnfollowUser(c *gin.Context) {
 		return
 	}
 
-	if err := uh.Service.UnfollowUser(c.Request.Context(), userName, b.FollweeUserName); err != nil {
+	if err := uh.Service.UnfollowUser(c.Request.Context(), userId, model.UserID(b.FollweeUserId)); err != nil {
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
 			errorResponse(c, http.StatusNotFound, UserNotFoundCode)

@@ -8,3 +8,7 @@ import (
 func getSignedInUserId(c *gin.Context) model.UserID {
 	return c.MustGet(UserIdKey).(model.UserID)
 }
+
+func getUserIdFromPath(c *gin.Context) model.UserID {
+	return model.UserID(c.Param("user_id"))
+}

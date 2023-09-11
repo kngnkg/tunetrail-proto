@@ -75,7 +75,7 @@ func (h *PostHandler) GetTimeline(c *gin.Context) {
 }
 
 func (h *PostHandler) GetPostsByUserId(c *gin.Context) {
-	userId := model.UserID(c.Param("user_id"))
+	userId := getUserIdFromPath(c)
 
 	nc := c.DefaultQuery("next_cursor", "")
 	pc := c.DefaultQuery("previous_cursor", "")
