@@ -2,13 +2,13 @@
 
 import { env } from "@/env.mjs"
 import { Post, Timeline } from "@/types/post"
-import { usePosts } from "@/hooks/post/use-posts"
+import { useTimeline } from "@/hooks/post/use-timeline"
 import { Button } from "@/components/ui/Button/Button"
 
 import { PostCard } from "../PostCard/PostCard"
 
 export const PostList: React.FC = () => {
-  const { data, error, size, setSize } = usePosts(env.NEXT_PUBLIC_API_ROOT)
+  const { data, error, size, setSize } = useTimeline(env.NEXT_PUBLIC_API_ROOT)
 
   return (
     <div className="container mx-auto p-8">

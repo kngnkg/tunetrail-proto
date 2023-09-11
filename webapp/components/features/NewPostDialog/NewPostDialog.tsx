@@ -7,8 +7,9 @@ import * as z from "zod"
 
 import { env } from "@/env.mjs"
 import { MESSAGE } from "@/config/messages"
+import { mergeClasses } from "@/lib/utils"
 import { postSchema } from "@/lib/validations/post.schema"
-import { usePosts } from "@/hooks/post/use-posts"
+import { useTimeline } from "@/hooks/post/use-timeline"
 import { useToast } from "@/hooks/toast/use-toast"
 import { Button } from "@/components/ui/Button/Button"
 import {
@@ -33,7 +34,7 @@ export const NewPostDialog: React.FC<NewPostDialogProps> = ({
   const { register, handleSubmit, formState } = useForm<FormData>({
     resolver: zodResolver(postSchema),
   })
-  const { error, addPost } = usePosts(env.NEXT_PUBLIC_API_ROOT)
+  const { error, addPost } = useTimeline(env.NEXT_PUBLIC_API_ROOT)
   const { showToast } = useToast()
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [open, setOpen] = React.useState<boolean>(false)
@@ -69,7 +70,7 @@ export const NewPostDialog: React.FC<NewPostDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent {...props}>
+      <DialogContent className={className} {...props}>
         <h1>Post Dialog!</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <Input

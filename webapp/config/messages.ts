@@ -18,5 +18,7 @@ export const MESSAGE = {
   SUCCESS_SIGNUP: "登録に成功しました!",
   SUCCESS_LOGIN: "ログインしました!",
   SUCCESS_POST: "ポストしました!",
+  SUCCESS_FOLLOW: "フォローしました!",
+  SUCCESS_UNFOLLOW: "フォローを解除しました",
   UNKNOWN_ERROR: "不明なエラーが発生しました",
 }

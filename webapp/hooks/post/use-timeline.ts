@@ -7,7 +7,7 @@ export interface PostParams {
   body: string
 }
 
-export const usePosts = (
+export const useTimeline = (
   apiRoot: string
 ): {
   data: Timeline[]

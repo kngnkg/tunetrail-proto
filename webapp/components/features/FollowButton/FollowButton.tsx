@@ -4,19 +4,21 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 
 import { env } from "@/env.mjs"
+import { User } from "@/types/user"
+import { MESSAGE } from "@/config/messages"
 import { useSignedInUser } from "@/hooks/auth/use-signedin-user"
 import { useToast } from "@/hooks/toast/use-toast"
 import { useFollow } from "@/hooks/user/use-follow"
 import { Button, ButtonProps } from "@/components/ui/Button/Button"
 
 export interface FollowButtonProps extends ButtonProps {
-  userName: string
+  user: User
   isFollowing: boolean
 }
 
 export const FollowButton: React.FC<FollowButtonProps> = ({
   className,
-  userName,
+  user,
   isFollowing: initialIsFollowing,
   ...props
 }) => {
@@ -46,10 +48,26 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
     setIsLoading(true)
 
     if (isFollowing) {
-      await unfollow(signedInUser.userName, userName)
-    } else {
-      await follow(signedInUser.userName, userName)
+      await unfollow(signedInUser.id, user.id)
+
+      if (error) {
+        showToast({
+          intent: "error",
+          description: error,
+        })
+      }
+
+      showToast({
+        intent: "success",
+        description: MESSAGE.SUCCESS_UNFOLLOW,
+      })
+
+      setIsLoading(false)
+
+      return
     }
+
+    await follow(signedInUser.id, user.id)
 
     if (error) {
       showToast({
@@ -57,6 +75,11 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
         description: error,
       })
     }
+
+    showToast({
+      intent: "success",
+      description: MESSAGE.SUCCESS_FOLLOW,
+    })
 
     setIsLoading(false)
   }
