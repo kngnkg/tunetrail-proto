@@ -11,12 +11,15 @@ export const getUser = async (
   userName: string
 ): Promise<User | null> => {
   try {
-    const data = await serverFetcher(`${apiRoot}/users/${userName}`, {
-      cache: "no-store",
-      headers: {
-        Cookie: `idToken=${tokens.idToken}; accessToken=${tokens.accessToken};`,
-      },
-    })
+    const data = await serverFetcher(
+      `${apiRoot}/users/by/username/${userName}`,
+      {
+        cache: "no-store",
+        headers: {
+          Cookie: `idToken=${tokens.idToken}; accessToken=${tokens.accessToken};`,
+        },
+      }
+    )
 
     if (!isUser(data)) {
       throw new Error("Failed to fetch data from the API.")
