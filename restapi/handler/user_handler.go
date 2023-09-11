@@ -45,7 +45,7 @@ func (uh *UserHandler) GetMe(c *gin.Context) {
 	c.JSON(http.StatusOK, u)
 }
 
-// GET /users/:user_name
+// GET /users/by/username/:user_name
 // ユーザー名からユーザーを取得する
 func (uh *UserHandler) GetUserByUserName(c *gin.Context) {
 	userName := c.Param("user_name")

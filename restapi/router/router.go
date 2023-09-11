@@ -69,11 +69,10 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	{
 		users.Use(handler.AuthMiddleware(j))
 
-		// TODO: /users/by/username/:user_name に変更する
-		users.GET("/:user_name", uh.GetUserByUserName) // ログインユーザ以外のユーザー情報取得
-		users.GET("/me", uh.GetMe)                     // ログインユーザー情報取得
-		users.PUT("", uh.UpdateUser)                   // TODO: 改修予定
-		// user.PUT("/:user_name", uh.UpdateUser)        // TODO: 改修予定
+		users.GET("/by/username/:user_name", uh.GetUserByUserName)
+		users.GET("/me", uh.GetMe)   // ログインユーザー情報取得
+		users.PUT("", uh.UpdateUser) // TODO: 改修予定
+		// user.PUT("/:user_id", uh.UpdateUser)        // TODO: 改修予定
 		users.DELETE("/:user_name", uh.DeleteUserByUserName)
 
 		users.GET("/timelines", ph.GetTimeline)
