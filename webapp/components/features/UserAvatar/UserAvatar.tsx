@@ -1,3 +1,5 @@
+"use client"
+
 import React from "react"
 import { AvatarProps } from "@radix-ui/react-avatar"
 import { AvatarIcon } from "@radix-ui/react-icons"
