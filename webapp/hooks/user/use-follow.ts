@@ -20,16 +20,16 @@ export const useFollow = ({
   const [error, setError] = React.useState<null | string>(null)
 
   const follow = async (
-    signinUserName: string,
-    followUserName: string
+    signinUserId: string,
+    followUserId: string
   ): Promise<void> => {
     try {
       const resp = await clientFetcher(
-        `${props.apiRoot}/users/${signinUserName}/follow`,
+        `${props.apiRoot}/users/${signinUserId}/follow`,
         {
           method: "POST",
           body: JSON.stringify({
-            followee_user_name: followUserName,
+            followee_user_id: followUserId,
           }),
         }
       )
@@ -46,16 +46,16 @@ export const useFollow = ({
   }
 
   const unfollow = async (
-    signinUserName: string,
-    followUserName: string
+    signinUserId: string,
+    followUserId: string
   ): Promise<void> => {
     try {
       const resp = await clientFetcher(
-        `${props.apiRoot}/users/${signinUserName}/follow`,
+        `${props.apiRoot}/users/${signinUserId}/follow`,
         {
           method: "DELETE",
           body: JSON.stringify({
-            followee_user_name: followUserName,
+            followee_user_id: followUserId,
           }),
         }
       )
