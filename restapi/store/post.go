@@ -11,8 +11,19 @@ func (r *Repository) GetPostsByUserIdsNext(ctx context.Context, db Queryer, user
 	var posts []*model.Post
 
 	baseQuery := `
-		SELECT id, user_id, body, created_at, updated_at
-		FROM posts
+		SELECT
+			p.id,
+			p.body,
+			p.created_at,
+			p.updated_at,
+			u.id AS "user.id",
+			u.user_name AS "user.user_name",
+			u.name AS "user.name",
+			u.icon_url AS "user.icon_url",
+			u.bio AS "user.bio",
+			u.created_at AS "user.created_at"
+		FROM posts p
+		INNER JOIN users u ON p.user_id = u.id
 		WHERE user_id = ANY ($1)
 	`
 
@@ -24,16 +35,16 @@ func (r *Repository) GetPostsByUserIdsNext(ctx context.Context, db Queryer, user
 
 	if pagenation.NextCursor == "" {
 		statement = baseQuery + `
-			ORDER BY created_at DESC
+			ORDER BY p.created_at DESC
 			LIMIT $2;
 		`
 	} else {
 		statement = baseQuery + `
-			AND created_at <= (
+			AND p.created_at <= (
 				SELECT created_at
 				FROM posts
 				WHERE id = $3)
-			ORDER BY created_at DESC
+			ORDER BY p.created_at DESC
 			LIMIT $2;
 		`
 
@@ -60,20 +71,46 @@ func (r *Repository) GetPostsByUserIdsNext(ctx context.Context, db Queryer, user
 	return tl, nil
 }
 
+func (r *Repository) GetPostsByUserIdsPrevious(ctx context.Context, db Queryer, userId []model.UserID, previousCursor string) ([]*model.Post, error) {
+	var posts []*model.Post
+
+	statement := `
+	SELECT id, user_id, body, created_at, updated_at
+	FROM posts
+	WHERE user_id = ANY ($1)
+	AND created_at <= (
+		SELECT created_at
+		FROM posts
+		WHERE id = $2)
+	ORDER BY created_at ASC
+	LIMIT 10;
+	`
+
+	err := db.SelectContext(ctx, &posts, statement, userId, previousCursor)
+	if err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
+// TODO: idを返すようにする
 func (r *Repository) AddPost(ctx context.Context, db Preparer, p *model.Post) (*model.Post, error) {
 	p.CreatedAt = r.Clocker.Now()
 	p.UpdatedAt = r.Clocker.Now()
 
-	statement := `INSERT INTO posts (user_id, body, created_at, updated_at)
-				VALUES ($1, $2, $3, $4)
-				RETURNING id, user_id, body, created_at, updated_at;`
+	statement := `
+		INSERT INTO posts (user_id, body, created_at, updated_at)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id;
+		`
 
 	stmt, err := db.PreparexContext(ctx, statement)
 	if err != nil {
 		return nil, err
 	}
 
-	err = stmt.QueryRowxContext(ctx, p.UserId, p.Body, p.CreatedAt, p.UpdatedAt).StructScan(p)
+	err = stmt.QueryRowxContext(ctx, p.User.Id, p.Body, p.CreatedAt, p.UpdatedAt).StructScan(p)
 	if err != nil {
 		return nil, err
 	}
