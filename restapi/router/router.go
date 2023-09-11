@@ -69,30 +69,20 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	{
 		users.Use(handler.AuthMiddleware(j))
 
-		// TODO: /users/by/username/:user_name に変更する
-		users.GET("/:user_name", uh.GetUserByUserName) // ログインユーザ以外のユーザー情報取得
-		users.GET("/me", uh.GetMe)                     // ログインユーザー情報取得
-		users.PUT("", uh.UpdateUser)                   // TODO: 改修予定
-		// user.PUT("/:user_name", uh.UpdateUser)        // TODO: 改修予定
-		users.DELETE("/:user_name", uh.DeleteUserByUserName)
+		users.GET("/by/username/:user_name", uh.GetUserByUserName)
+		users.GET("/me", uh.GetMe) // ログインユーザー情報取得
 
 		users.GET("/timelines", ph.GetTimeline)
 
-		follow := users.Group("/:user_name/follow")
+		id := users.Group("/:user_id")
 		{
-			follow.POST("", uh.FollowUser)
-			follow.DELETE("", uh.UnfollowUser)
+			// id.GET("", uh.GetUserByUserId) // TODO: 改修予定
+			// id.PUT("", uh.UpdateUser) // TODO: 改修予定
+			// id.DELETE("", uh.DeleteUserByUserName) // TODO: 改修予定
+			id.GET("/posts", ph.GetPostsByUserId)
+			id.POST("/follow", uh.FollowUser)
+			id.DELETE("/follow", uh.UnfollowUser)
 		}
-
-		// userPosts := users.Group("/:user_id/posts")
-		// {
-		// 	userPosts.GET("", ph.GetPostsByUserId)
-		// }
-
-		// posts := users.Group("/:user_name/posts")
-		// {
-		// 	posts.GET("", ph.GetPostsByUserName)
-		// }
 	}
 
 	posts := router.Group("/posts")
@@ -100,9 +90,6 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		posts.Use(handler.AuthMiddleware(j))
 
 		posts.POST("", ph.AddPost)
-
-		// 暫定的にここに置く
-		posts.GET("/:user_id", ph.GetPostsByUserId)
 	}
 
 	return router, cleanup, nil

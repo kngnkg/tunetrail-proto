@@ -34,8 +34,8 @@ type UserRepository interface {
 	UpdateUser(ctx context.Context, db store.Execer, u *model.User) error
 	// DeleteUserByUserNameはユーザー名からユーザーを削除する
 	DeleteUserByUserName(ctx context.Context, db store.Execer, userName string) error
-	AddFollow(ctx context.Context, db store.Execer, userName, followeeUserName string) error
-	DeleteFollow(ctx context.Context, db store.Execer, userName, followeeUserName string) error
+	AddFollow(ctx context.Context, db store.Execer, userId, follweeUserId model.UserID) error
+	DeleteFollow(ctx context.Context, db store.Execer, userId, follweeUserId model.UserID) error
 	GetUserByUserNameWithFollowInfo(ctx context.Context, db store.Queryer, userName string, signedInUserId model.UserID) (*model.User, error)
 }
 

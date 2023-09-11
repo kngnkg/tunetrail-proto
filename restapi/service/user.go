@@ -113,11 +113,11 @@ func (us *UserService) DeleteUserByUserName(ctx context.Context, userName string
 }
 
 // FollowUserはユーザーをフォローする
-func (us *UserService) FollowUser(ctx context.Context, userName, follweeUserName string) error {
+func (us *UserService) FollowUser(ctx context.Context, userId, follweeUserId model.UserID) error {
 	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
-		if err := us.Repo.AddFollow(ctx, tx, userName, follweeUserName); err != nil {
+		if err := us.Repo.AddFollow(ctx, tx, userId, follweeUserId); err != nil {
 			if errors.Is(err, store.ErrUserNotFound) {
-				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, userName, err)
+				return fmt.Errorf("%w: userId=%v: %w", ErrUserNotFound, userId, err)
 			}
 			return err
 		}
@@ -133,11 +133,11 @@ func (us *UserService) FollowUser(ctx context.Context, userName, follweeUserName
 }
 
 // UnfollowUserはユーザーのフォローを解除する
-func (us *UserService) UnfollowUser(ctx context.Context, userName, follweeUserName string) error {
+func (us *UserService) UnfollowUser(ctx context.Context, userId, follweeUserId model.UserID) error {
 	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
-		if err := us.Repo.DeleteFollow(ctx, tx, userName, follweeUserName); err != nil {
+		if err := us.Repo.DeleteFollow(ctx, tx, userId, follweeUserId); err != nil {
 			if errors.Is(err, store.ErrUserNotFound) {
-				return fmt.Errorf("%w: userName=%v: %w", ErrUserNotFound, userName, err)
+				return fmt.Errorf("%w: userId=%v: %w", ErrUserNotFound, userId, err)
 			}
 			return err
 		}
