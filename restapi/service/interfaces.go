@@ -38,6 +38,7 @@ type UserRepository interface {
 	DeleteFollow(ctx context.Context, db store.Execer, userId, follweeUserId model.UserID) error
 	GetUserByUserNameWithFollowInfo(ctx context.Context, db store.Queryer, userName string, signedInUserId model.UserID) (*model.User, error)
 	GetFolloweesByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
+	GetFollowersByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
 }
 
 type PostRepository interface {

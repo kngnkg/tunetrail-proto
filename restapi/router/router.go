@@ -81,6 +81,7 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 			// id.DELETE("", uh.DeleteUserByUserName) // TODO: 改修予定
 			id.GET("/posts", ph.GetPostsByUserId)
 			id.GET("/followees", uh.GetFollowees)
+			id.GET("/followers", uh.GetFollowers)
 			id.POST("/follow", uh.FollowUser)
 			id.DELETE("/follow", uh.UnfollowUser)
 		}

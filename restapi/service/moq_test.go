@@ -105,6 +105,9 @@ var _ UserRepository = &UserRepositoryMock{}
 //			GetFolloweesByUserIdFunc: func(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error) {
 //				panic("mock out the GetFolloweesByUserId method")
 //			},
+//			GetFollowersByUserIdFunc: func(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error) {
+//				panic("mock out the GetFollowersByUserId method")
+//			},
 //			GetUserByUserIdFunc: func(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error) {
 //				panic("mock out the GetUserByUserId method")
 //			},
@@ -144,6 +147,9 @@ type UserRepositoryMock struct {
 
 	// GetFolloweesByUserIdFunc mocks the GetFolloweesByUserId method.
 	GetFolloweesByUserIdFunc func(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
+
+	// GetFollowersByUserIdFunc mocks the GetFollowersByUserId method.
+	GetFollowersByUserIdFunc func(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
 
 	// GetUserByUserIdFunc mocks the GetUserByUserId method.
 	GetUserByUserIdFunc func(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error)
@@ -201,6 +207,15 @@ type UserRepositoryMock struct {
 		}
 		// GetFolloweesByUserId holds details about calls to the GetFolloweesByUserId method.
 		GetFolloweesByUserId []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Db is the db argument value.
+			Db store.Queryer
+			// SignedInUserId is the signedInUserId argument value.
+			SignedInUserId model.UserID
+		}
+		// GetFollowersByUserId holds details about calls to the GetFollowersByUserId method.
+		GetFollowersByUserId []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Db is the db argument value.
@@ -278,6 +293,7 @@ type UserRepositoryMock struct {
 	lockDeleteFollow                    sync.RWMutex
 	lockDeleteUserByUserName            sync.RWMutex
 	lockGetFolloweesByUserId            sync.RWMutex
+	lockGetFollowersByUserId            sync.RWMutex
 	lockGetUserByUserId                 sync.RWMutex
 	lockGetUserByUserName               sync.RWMutex
 	lockGetUserByUserNameWithFollowInfo sync.RWMutex
@@ -452,6 +468,46 @@ func (mock *UserRepositoryMock) GetFolloweesByUserIdCalls() []struct {
 	mock.lockGetFolloweesByUserId.RLock()
 	calls = mock.calls.GetFolloweesByUserId
 	mock.lockGetFolloweesByUserId.RUnlock()
+	return calls
+}
+
+// GetFollowersByUserId calls GetFollowersByUserIdFunc.
+func (mock *UserRepositoryMock) GetFollowersByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error) {
+	if mock.GetFollowersByUserIdFunc == nil {
+		panic("UserRepositoryMock.GetFollowersByUserIdFunc: method is nil but UserRepository.GetFollowersByUserId was just called")
+	}
+	callInfo := struct {
+		Ctx            context.Context
+		Db             store.Queryer
+		SignedInUserId model.UserID
+	}{
+		Ctx:            ctx,
+		Db:             db,
+		SignedInUserId: signedInUserId,
+	}
+	mock.lockGetFollowersByUserId.Lock()
+	mock.calls.GetFollowersByUserId = append(mock.calls.GetFollowersByUserId, callInfo)
+	mock.lockGetFollowersByUserId.Unlock()
+	return mock.GetFollowersByUserIdFunc(ctx, db, signedInUserId)
+}
+
+// GetFollowersByUserIdCalls gets all the calls that were made to GetFollowersByUserId.
+// Check the length with:
+//
+//	len(mockedUserRepository.GetFollowersByUserIdCalls())
+func (mock *UserRepositoryMock) GetFollowersByUserIdCalls() []struct {
+	Ctx            context.Context
+	Db             store.Queryer
+	SignedInUserId model.UserID
+} {
+	var calls []struct {
+		Ctx            context.Context
+		Db             store.Queryer
+		SignedInUserId model.UserID
+	}
+	mock.lockGetFollowersByUserId.RLock()
+	calls = mock.calls.GetFollowersByUserId
+	mock.lockGetFollowersByUserId.RUnlock()
 	return calls
 }
 

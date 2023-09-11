@@ -19,6 +19,7 @@ type UserService interface {
 	FollowUser(ctx context.Context, userId, follweeUserId model.UserID) error
 	UnfollowUser(ctx context.Context, userId, follweeUserId model.UserID) error
 	GetFollowees(ctx context.Context, userId model.UserID) ([]*model.User, error)
+	GetFollowers(ctx context.Context, userId model.UserID) ([]*model.User, error)
 }
 
 type UserHandler struct {
@@ -190,6 +191,25 @@ func (uh *UserHandler) GetFollowees(c *gin.Context) {
 	userId := getUserIdFromPath(c)
 
 	users, err := uh.Service.GetFollowees(c.Request.Context(), userId)
+	if err != nil {
+		// ユーザーが存在しない場合
+		if errors.Is(err, service.ErrUserNotFound) {
+			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
+			return
+		}
+
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
+		return
+	}
+
+	c.JSON(http.StatusOK, users)
+}
+
+func (uh *UserHandler) GetFollowers(c *gin.Context) {
+	userId := getUserIdFromPath(c)
+
+	users, err := uh.Service.GetFollowers(c.Request.Context(), userId)
 	if err != nil {
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
