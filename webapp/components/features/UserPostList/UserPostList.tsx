@@ -3,25 +3,29 @@
 import * as React from "react"
 
 import { env } from "@/env.mjs"
-import { Post } from "@/types/post"
-import { Button } from "@/components/ui/Button/Button"
+import { User } from "@/types/user"
+import { useUserPosts } from "@/hooks/post/use-user-posts"
 
-import { PostCard } from "../PostCard/PostCard"
+import { PostList } from "../PostList/PostList"
 
-export const UserPostList: React.FC = () => {
-  const [posts] = React.useState<Post[]>([])
-  const [size, setSize] = React.useState<number>(1)
+export interface UserPostListProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  user: User
+}
+
+export const UserPostList: React.FC<UserPostListProps> = ({
+  user,
+  className,
+  ...props
+}) => {
+  const { data, error, size, setSize } = useUserPosts(
+    env.NEXT_PUBLIC_API_ROOT,
+    user.id
+  )
 
   return (
-    <div className="container mx-auto p-8">
-      {posts.map((post: Post, idx: number) => {
-        return (
-          <div key={idx}>
-            <PostCard post={post} className="w-128" />
-          </div>
-        )
-      })}
-      <Button onClick={() => setSize(size + 1)}>more</Button>
-    </div>
+    <>
+      <PostList timelines={data} size={size} setSize={setSize} />
+    </>
   )
 }
