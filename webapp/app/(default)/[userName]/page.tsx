@@ -61,7 +61,7 @@ export default async function UserPage({ params }: UserPageProps) {
         <p className="text-xl mb-4">Created: {user.createdAt}</p>
       </div>
       <div>
-        <UserPostList />
+        <UserPostList user={user} />
       </div>
     </div>
   )

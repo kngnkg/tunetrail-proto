@@ -2,17 +2,27 @@
 
 import { env } from "@/env.mjs"
 import { Post, Timeline } from "@/types/post"
-import { useTimeline } from "@/hooks/post/use-timeline"
 import { Button } from "@/components/ui/Button/Button"
 
 import { PostCard } from "../PostCard/PostCard"
 
-export const PostList: React.FC = () => {
-  const { data, error, size, setSize } = useTimeline(env.NEXT_PUBLIC_API_ROOT)
+export interface PostListProps extends React.HTMLAttributes<HTMLDivElement> {
+  timelines: Timeline[]
+  size: number
+  setSize: (
+    size: number | ((size: number) => number)
+  ) => Promise<any[] | undefined>
+}
 
+export const PostList: React.FC<PostListProps> = ({
+  timelines,
+  size,
+  setSize,
+  ...props
+}) => {
   return (
     <div className="container mx-auto p-8">
-      {data.map((tl: Timeline, tlIdx: number) => {
+      {timelines.map((tl: Timeline, tlIdx: number) => {
         return (
           <div key={tlIdx}>
             {tl.posts.map((post: Post, postIdx: number) => {
