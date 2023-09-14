@@ -13,23 +13,26 @@ type PostService struct {
 	Repo PostRepository
 }
 
-func (ps *PostService) AddPost(ctx context.Context, signedInUserId model.UserID, body string) (*model.Post, error) {
+func (ps *PostService) AddPost(ctx context.Context, signedInUserId model.UserID, parentId string, body string) (*model.Post, error) {
 	var p *model.Post
 	err := ps.Repo.WithTransaction(ctx, ps.DB, func(tx *sqlx.Tx) error {
-
-		// idが返される
-		added, err := ps.Repo.AddPost(ctx, ps.DB, &model.Post{
-			User: &model.User{Id: signedInUserId},
-			Body: body,
+		id, err := ps.Repo.AddPost(ctx, ps.DB, &model.Post{
+			ParentId: parentId,
+			User:     &model.User{Id: signedInUserId},
+			Body:     body,
 		})
 
 		if err != nil {
 			return err
 		}
 
-		// TODO: 追加したポストの情報を取得する
+		registered, err := ps.Repo.GetPostById(ctx, ps.DB, id)
 
-		p = added
+		if err != nil {
+			return err
+		}
+
+		p = registered
 		return nil
 	})
 

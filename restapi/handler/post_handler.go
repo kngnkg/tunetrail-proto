@@ -10,7 +10,7 @@ import (
 )
 
 type PostService interface {
-	AddPost(ctx context.Context, signedInUserId model.UserID, body string) (*model.Post, error)
+	AddPost(ctx context.Context, signedInUserId model.UserID, ParentId, body string) (*model.Post, error)
 	GetTimelines(ctx context.Context, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
 	GetPostsByUserId(ctx context.Context, userId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
 }
@@ -22,7 +22,8 @@ type PostHandler struct {
 // POST /posts
 func (h *PostHandler) AddPost(c *gin.Context) {
 	var b struct {
-		Body string `json:"body" binding:"required"`
+		ParentId string `json:"parent_id"`
+		Body     string `json:"body" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&b); err != nil {
@@ -33,7 +34,7 @@ func (h *PostHandler) AddPost(c *gin.Context) {
 
 	signedInUserId := getSignedInUserId(c)
 
-	p, err := h.Service.AddPost(c.Request.Context(), signedInUserId, b.Body)
+	p, err := h.Service.AddPost(c.Request.Context(), signedInUserId, b.ParentId, b.Body)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)

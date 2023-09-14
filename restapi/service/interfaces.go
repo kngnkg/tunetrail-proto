@@ -20,19 +20,12 @@ type JWTer interface {
 }
 
 type UserRepository interface {
-	// WithTransactionはトランザクションを実行する
 	WithTransaction(ctx context.Context, db store.Beginner, f func(tx *sqlx.Tx) error) error
-	// UserExistsByUserNameはユーザー名が既に存在するかどうかを返す
 	UserExistsByUserName(ctx context.Context, db store.Queryer, userName string) (bool, error)
-	// GetUserByUserNameはユーザー名からユーザーを取得する
 	GetUserByUserName(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
-	// GetUserByUserIdはユーザーIDからユーザーを取得する
 	GetUserByUserId(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error)
-	// RegisterUserはユーザーを登録する
 	RegisterUser(ctx context.Context, db store.Execer, u *model.User) error
-	// UpdateUserはユーザーを更新する
 	UpdateUser(ctx context.Context, db store.Execer, u *model.User) error
-	// DeleteUserByUserNameはユーザー名からユーザーを削除する
 	DeleteUserByUserName(ctx context.Context, db store.Execer, userName string) error
 	AddFollow(ctx context.Context, db store.Execer, userId, follweeUserId model.UserID) error
 	DeleteFollow(ctx context.Context, db store.Execer, userId, follweeUserId model.UserID) error
@@ -43,7 +36,8 @@ type UserRepository interface {
 
 type PostRepository interface {
 	WithTransaction(ctx context.Context, db store.Beginner, f func(tx *sqlx.Tx) error) error
-	AddPost(ctx context.Context, db store.Preparer, p *model.Post) (*model.Post, error)
+	AddPost(ctx context.Context, db store.Queryer, p *model.Post) (string, error)
+	GetPostById(ctx context.Context, db store.Queryer, postId string) (*model.Post, error)
 	GetFolloweesByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
 	GetPostsByUserIdsNext(ctx context.Context, db store.Queryer, userId []model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
 }
