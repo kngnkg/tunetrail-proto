@@ -20,9 +20,12 @@ CREATE TABLE users (
 
 /*
  * 投稿
+ * リプライも投稿として扱う
+ * 再帰クエリを使うため、parent_id は NOT NULL にしない
  */
 CREATE TABLE posts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    parent_id UUID REFERENCES posts(id),
     user_id UUID NOT NULL REFERENCES users(id),
     body VARCHAR(1000),
     created_at TIMESTAMP NOT NULL,

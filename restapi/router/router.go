@@ -64,7 +64,6 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		// auth.POST("/signout", handler.AuthMiddleware(j), ah.SignOut) // サインアウト
 	}
 
-	// TODO: user_idで指定する
 	users := router.Group("/users")
 	{
 		users.Use(handler.AuthMiddleware(j))
