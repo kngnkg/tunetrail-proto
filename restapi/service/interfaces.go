@@ -40,6 +40,7 @@ type PostRepository interface {
 	GetPostById(ctx context.Context, db store.Queryer, postId string) (*model.Post, error)
 	GetFolloweesByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
 	GetPostsByUserIdsNext(ctx context.Context, db store.Queryer, userId []model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
+	GetReplies(ctx context.Context, db store.Queryer, parentPostId string, pagenation *model.Pagenation) (*model.Timeline, error)
 }
 
 type HealthRepository interface {
