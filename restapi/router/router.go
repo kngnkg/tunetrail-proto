@@ -91,7 +91,7 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		posts.Use(handler.AuthMiddleware(j))
 
 		posts.POST("", ph.AddPost)
-		// posts.GET("/:post_id", ph.GetPostById)
+		posts.GET("/:post_id", ph.GetPostById)
 		posts.GET("/:post_id/replies", ph.GetReplies)
 	}
 

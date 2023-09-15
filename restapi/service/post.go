@@ -83,6 +83,16 @@ func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID
 	return timeline, nil
 }
 
+func (ps *PostService) GetPostById(ctx context.Context, postId string) (*model.Post, error) {
+	p, err := ps.Repo.GetPostById(ctx, ps.DB, postId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
 func (ps *PostService) GetReplies(ctx context.Context, postId string, pagenation *model.Pagenation) (*model.Timeline, error) {
 	timeline, err := ps.Repo.GetReplies(ctx, ps.DB, postId, pagenation)
 

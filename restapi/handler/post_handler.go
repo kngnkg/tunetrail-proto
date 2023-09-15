@@ -12,6 +12,7 @@ type PostService interface {
 	AddPost(ctx context.Context, signedInUserId model.UserID, ParentId, body string) (*model.Post, error)
 	GetTimelines(ctx context.Context, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
 	GetPostsByUserId(ctx context.Context, userId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
+	GetPostById(ctx context.Context, postId string) (*model.Post, error)
 	GetReplies(ctx context.Context, postId string, pagenation *model.Pagenation) (*model.Timeline, error)
 }
 
@@ -84,6 +85,19 @@ func (h *PostHandler) GetPostsByUserId(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, timeline)
+}
+
+func (h *PostHandler) GetPostById(c *gin.Context) {
+	postId := getPostIdFromPath(c)
+
+	p, err := h.Service.GetPostById(c.Request.Context(), postId)
+	if err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
+		return
+	}
+
+	c.JSON(http.StatusOK, p)
 }
 
 func (h *PostHandler) GetReplies(c *gin.Context) {

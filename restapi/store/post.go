@@ -69,7 +69,7 @@ func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string)
 	statement := `
 		SELECT
 			p.id,
-			p.parent_id,
+			COALESCE(CAST(p.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
 			u.id AS "user.id",
 			u.user_name AS "user.user_name",
 			u.name AS "user.name",
@@ -85,7 +85,7 @@ func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string)
 		WHERE p.id = $1;
 	`
 
-	if err := db.GetContext(ctx, &p, statement, postId); err != nil {
+	if err := db.GetContext(ctx, p, statement, postId); err != nil {
 		return nil, err
 	}
 
