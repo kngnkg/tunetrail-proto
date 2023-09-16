@@ -198,25 +198,13 @@ func (r *Repository) AddPost(ctx context.Context, db Queryer, p *model.Post) (st
 	p.CreatedAt = r.Clocker.Now()
 	p.UpdatedAt = r.Clocker.Now()
 
-	var statement string
+	statement := `
+		INSERT INTO posts (user_id, body, created_at, updated_at)
+		VALUES($1, $2, $3, $4)
+		RETURNING id;
+	`
+
 	queryArgs := []interface{}{p.User.Id, p.Body, p.CreatedAt, p.UpdatedAt}
-
-	if p.ParentId == "" {
-		statement = `
-			INSERT INTO posts (user_id, body, created_at, updated_at)
-			VALUES($1, $2, $3, $4)
-			RETURNING id;
-		`
-	} else {
-		// リプライの場合
-		statement = `
-			INSERT INTO posts (user_id, parent_id, body, created_at, updated_at)
-			VALUES($1, $5, $2, $3, $4)
-			RETURNING id;
-		`
-
-		queryArgs = append(queryArgs, p.ParentId)
-	}
 
 	var id string
 	err := db.QueryRowxContext(ctx, statement, queryArgs...).Scan(&id)
@@ -226,6 +214,23 @@ func (r *Repository) AddPost(ctx context.Context, db Queryer, p *model.Post) (st
 	}
 
 	return id, nil
+}
+
+func (r *Repository) AddReplyRelation(ctx context.Context, db Execer, postId, parentId string) error {
+	statement := `
+			INSERT INTO replies (post_id, parent_id, created_at)
+			VALUES($1, $2, $3);
+		`
+
+	queryArgs := []interface{}{postId, parentId, r.Clocker.Now()}
+
+	_, err := db.ExecContext(ctx, statement, queryArgs...)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func handlePagenation(posts []*model.Post, pagenation *model.Pagenation) *model.Timeline {

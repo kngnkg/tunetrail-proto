@@ -26,6 +26,14 @@ func (ps *PostService) AddPost(ctx context.Context, signedInUserId model.UserID,
 			return err
 		}
 
+		if parentId != "" {
+			err = ps.Repo.AddReplyRelation(ctx, ps.DB, id, parentId)
+
+			if err != nil {
+				return err
+			}
+		}
+
 		registered, err := ps.Repo.GetPostById(ctx, ps.DB, id)
 
 		if err != nil {
