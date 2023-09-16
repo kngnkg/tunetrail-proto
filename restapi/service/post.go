@@ -100,5 +100,14 @@ func (ps *PostService) GetReplies(ctx context.Context, postId string, pagenation
 		return nil, err
 	}
 
+	for _, p := range timeline.Posts {
+		if p.User.Id != "" {
+			continue
+		}
+
+		// 削除されたポストの場合
+		p.Body = "このポストは削除されました。"
+	}
+
 	return timeline, nil
 }

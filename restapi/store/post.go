@@ -97,48 +97,67 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 	var posts []*model.Post
 
 	baseQuery := `
-		WITH RECURSIVE post_tree AS (
-			-- ベースケース
-			SELECT
-				p.id,
-				p.parent_id,
-				p.body,
-				p.created_at,
-				p.updated_at,
-				u.id AS "user.id",
-				u.user_name AS "user.user_name",
-				u.name AS "user.name",
-				u.icon_url AS "user.icon_url",
-				u.bio AS "user.bio",
-				u.created_at AS "user.created_at",
-				u.updated_at AS "user.updated_at"
-			FROM posts p
-			JOIN users u ON p.user_id = u.id
-			WHERE p.id = $1 -- ルートの投稿を取得
+	WITH RECURSIVE post_tree AS (
+		-- ベースケース
+		SELECT
+			r1.post_id AS "id",
+			r1.parent_id AS "parent_id",
+			r1.created_at AS "reply_created_at",
+			p.body,
+			p.created_at,
+			p.updated_at,
+			u.id AS "user_id",
+			u.user_name AS "user_user_name",
+			u.name AS "user_name",
+			u.icon_url AS "user_icon_url",
+			u.bio AS "user_bio",
+			u.created_at AS "user_created_at",
+			u.updated_at AS "user_updated_at"
+		FROM
+			replies r1 -- ツリー構造をたどるためにrepliesテーブルを左テーブルとして結合する
+		LEFT OUTER JOIN posts p ON r1.post_id = p.id -- 削除された投稿の場合はNULLになる
+		LEFT OUTER JOIN users u ON p.user_id = u.id
+	WHERE
+		r1.parent_id = $1 -- 最初のリプライを取得する
 
-			UNION ALL
+	UNION ALL
 
-			-- 再帰的ケース
-			SELECT
-				child.id,
-				child.parent_id,
-				child.body,
-				child.created_at,
-				child.updated_at,
-				u.id AS "user.id",
-				u.user_name AS "user.user_name",
-				u.name AS "user.name",
-				u.icon_url AS "user.icon_url",
-				u.bio AS "user.bio",
-				u.created_at AS "user.created_at",
-				u.updated_at AS "user.updated_at"
-			FROM posts child
-			JOIN post_tree pt ON child.parent_id = pt.id
-			JOIN users u ON child.user_id = u.id
-		)
-
-		SELECT * FROM post_tree
-		WHERE parent_id IS NOT NULL -- ルートの投稿を除く
+	-- 再帰的ケース
+	SELECT
+		r2.post_id AS "id",
+		r2.parent_id AS "parent_id",
+		r2.created_at AS "reply_created_at",
+		p.body,
+		p.created_at,
+		p.updated_at,
+		u.id AS "user_id",
+		u.user_name AS "user_user_name",
+		u.name AS "user_name",
+		u.icon_url AS "user_icon_url",
+		u.bio AS "user_bio",
+		u.created_at AS "user_created_at",
+		u.updated_at AS "user_updated_at"
+	FROM
+		replies r2
+		LEFT OUTER JOIN posts p ON r2.post_id = p.id
+		LEFT OUTER JOIN users u ON p.user_id = u.id
+		INNER JOIN post_tree pt ON r2.parent_id = pt.id
+	)
+	SELECT
+		COALESCE(CAST(id AS text), '') AS "id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
+		COALESCE(CAST(parent_id AS text), '') AS "parent_id",
+		COALESCE(body, '') AS "body",
+		COALESCE(created_at, now()) AS "created_at",
+		COALESCE(updated_at, now()) AS "updated_at",
+		COALESCE(CAST(user_id AS text), '') AS "user.id",
+		COALESCE(user_user_name, '') AS "user.user_name",
+		COALESCE(user_name, '') AS "user.name",
+		COALESCE(user_icon_url, '') AS "user.icon_url",
+		COALESCE(user_bio, '') AS "user.bio",
+		COALESCE(user_created_at, now()) AS "user.created_at",
+		COALESCE(user_updated_at, now()) AS "user.updated_at"
+	FROM
+		post_tree
 	`
 
 	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
@@ -149,16 +168,16 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 
 	if pagenation.NextCursor == "" {
 		statement = baseQuery + `
-			ORDER BY created_at ASC
+			ORDER BY reply_created_at ASC -- リプライの作成日時の昇順で取得する
 			LIMIT $2;
 		`
 	} else {
 		statement = baseQuery + `
-			AND created_at <= (
+			AND reply_created_at <= (
 				SELECT created_at
-				FROM posts
-				WHERE id = $3)
-			ORDER BY p.created_at ASC
+				FROM replies
+				WHERE post_id = $3)
+			ORDER BY reply_created_at ASC
 			LIMIT $2;
 		`
 
