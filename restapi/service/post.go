@@ -119,3 +119,21 @@ func (ps *PostService) GetReplies(ctx context.Context, postId string, pagenation
 
 	return timeline, nil
 }
+
+func (ps *PostService) DeletePost(ctx context.Context, postId string) error {
+	err := ps.Repo.WithTransaction(ctx, ps.DB, func(tx *sqlx.Tx) error {
+		if err := ps.Repo.DeletePost(ctx, tx, postId); err != nil {
+			return err
+		}
+
+		// ツリー構造が破壊されてしまうので、リプライ関係は削除しない
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

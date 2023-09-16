@@ -14,6 +14,7 @@ type PostService interface {
 	GetPostsByUserId(ctx context.Context, userId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
 	GetPostById(ctx context.Context, postId string) (*model.Post, error)
 	GetReplies(ctx context.Context, postId string, pagenation *model.Pagenation) (*model.Timeline, error)
+	DeletePost(ctx context.Context, postId string) error
 }
 
 type PostHandler struct {
@@ -118,4 +119,16 @@ func (h *PostHandler) GetReplies(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, timeline)
+}
+
+func (h *PostHandler) DeletePost(c *gin.Context) {
+	postId := getPostIdFromPath(c)
+
+	if err := h.Service.DeletePost(c.Request.Context(), postId); err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
