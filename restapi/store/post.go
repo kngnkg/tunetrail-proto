@@ -13,7 +13,7 @@ func (r *Repository) GetPostsByUserIdsNext(ctx context.Context, db Queryer, user
 	baseQuery := `
 		SELECT
 			p.id,
-			p.parent_id,
+			COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
 			u.id AS "user.id",
 			u.user_name AS "user.user_name",
 			u.name AS "user.name",
@@ -25,9 +25,9 @@ func (r *Repository) GetPostsByUserIdsNext(ctx context.Context, db Queryer, user
 			p.created_at,
 			p.updated_at
 		FROM posts p
+		LEFT OUTER JOIN replies r ON p.id = r.post_id
 		INNER JOIN users u ON p.user_id = u.id
-		WHERE user_id = ANY ($1)
-		AND p.parent_id IS NULL;
+		WHERE user_id = ANY ($1) AND r.parent_id IS NULL
 	`
 
 	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
@@ -69,7 +69,7 @@ func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string)
 	statement := `
 		SELECT
 			p.id,
-			COALESCE(CAST(p.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
+			COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
 			u.id AS "user.id",
 			u.user_name AS "user.user_name",
 			u.name AS "user.name",
@@ -81,6 +81,7 @@ func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string)
 			p.created_at,
 			p.updated_at
 		FROM posts p
+		LEFT OUTER JOIN replies r ON p.id = r.post_id
 		INNER JOIN users u ON p.user_id = u.id
 		WHERE p.id = $1;
 	`
