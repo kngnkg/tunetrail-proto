@@ -233,6 +233,20 @@ func (r *Repository) AddReplyRelation(ctx context.Context, db Execer, postId, pa
 	return nil
 }
 
+func (r *Repository) DeletePost(ctx context.Context, db Execer, postId string) error {
+	statement := `
+		DELETE FROM posts WHERE id = $1;
+	`
+
+	_, err := db.ExecContext(ctx, statement, postId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func handlePagenation(posts []*model.Post, pagenation *model.Pagenation) *model.Timeline {
 	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
