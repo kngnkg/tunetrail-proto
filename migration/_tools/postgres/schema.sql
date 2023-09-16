@@ -20,12 +20,9 @@ CREATE TABLE users (
 
 /*
  * 投稿
- * リプライも投稿として扱う
- * 再帰クエリを使うため、parent_id は NOT NULL にしない
  */
 CREATE TABLE posts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    parent_id UUID REFERENCES posts(id),
     user_id UUID NOT NULL REFERENCES users(id),
     body VARCHAR(1000),
     created_at TIMESTAMP NOT NULL,
@@ -33,15 +30,25 @@ CREATE TABLE posts (
 );
 
 /*
- * フォロー
+ * リプライ
+ * ある投稿に対して、別の投稿がリプライされたことを表す
+ * 削除された投稿に対するリプライはアプリケーション側で制御する
  */
-CREATE TABLE follows (
-    user_id UUID NOT NULL REFERENCES users(id),
-    followee_id UUID NOT NULL REFERENCES users(id),
+CREATE TABLE replies (
+    post_id UUID NOT NULL,
+    parent_id UUID NOT NULL,
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
-    PRIMARY KEY (user_id, followee_id)
+    PRIMARY KEY (post_id, parent_id)
 );
+
+-- /*
+--  * リプライにメンションされたユーザー
+--  */
+-- CREATE TABLE reply_destination_users (
+--     post_id INTEGER NOT NULL REFERENCES posts(id),
+--     dest_user_id INTEGER NOT NULL REFERENCES posts(id),
+--     PRIMARY KEY (post_id, dest_user_id)
+-- );
 
 -- /*
 --  * 投稿に添付される画像
@@ -53,24 +60,16 @@ CREATE TABLE follows (
 --     image_url VARCHAR(100)
 -- );
 
--- /*
---  * リプライ
---  * 投稿を継承している
---  * ある投稿に対して、別の投稿がリプライされたことを表す
---  */
--- CREATE TABLE replies (
---     post_id INTEGER PRIMARY KEY REFERENCES posts(id),
---     dest_post_id INTEGER NOT NULL REFERENCES posts(id)
--- );
-
--- /*
---  * リプライにメンションされたユーザー
---  */
--- CREATE TABLE reply_destination_users (
---     post_id INTEGER NOT NULL REFERENCES posts(id),
---     dest_user_id INTEGER NOT NULL REFERENCES posts(id),
---     PRIMARY KEY (post_id, dest_user_id)
--- );
+/*
+ * フォロー
+ */
+CREATE TABLE follows (
+    user_id UUID NOT NULL REFERENCES users(id),
+    followee_id UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (user_id, followee_id)
+);
 
 -- /*
 --  * いいね

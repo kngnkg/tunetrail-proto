@@ -26,6 +26,14 @@ func (ps *PostService) AddPost(ctx context.Context, signedInUserId model.UserID,
 			return err
 		}
 
+		if parentId != "" {
+			err = ps.Repo.AddReplyRelation(ctx, ps.DB, id, parentId)
+
+			if err != nil {
+				return err
+			}
+		}
+
 		registered, err := ps.Repo.GetPostById(ctx, ps.DB, id)
 
 		if err != nil {
@@ -98,6 +106,15 @@ func (ps *PostService) GetReplies(ctx context.Context, postId string, pagenation
 
 	if err != nil {
 		return nil, err
+	}
+
+	for _, p := range timeline.Posts {
+		if p.User.Id != "" {
+			continue
+		}
+
+		// 削除されたポストの場合
+		p.Body = "このポストは削除されました。"
 	}
 
 	return timeline, nil
