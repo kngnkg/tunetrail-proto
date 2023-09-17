@@ -154,7 +154,7 @@ func (uh *UserHandler) FollowUser(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	c.Status(http.StatusCreated)
 }
 
 // DELETE /users/:user_id/follow
