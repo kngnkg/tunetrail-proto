@@ -48,6 +48,9 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 	ph := &handler.PostHandler{
 		Service: &service.PostService{DB: db, Repo: r},
 	}
+	lh := &handler.LikeHandler{
+		Service: &service.LikeService{DB: db, Repo: r},
+	}
 
 	router := gin.Default()
 
@@ -94,6 +97,11 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		posts.GET("/:post_id", ph.GetPostById)
 		posts.DELETE("/:post_id", ph.DeletePost)
 		posts.GET("/:post_id/replies", ph.GetReplies)
+
+		likes := posts.Group("/:post_id/likes")
+		{
+			likes.POST("", lh.AddLike)
+		}
 	}
 
 	return router, cleanup, nil
