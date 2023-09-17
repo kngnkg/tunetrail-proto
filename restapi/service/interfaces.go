@@ -19,8 +19,12 @@ type JWTer interface {
 	ParseIdToken(ctx context.Context, idToken string) (*model.AuthInfo, error)
 }
 
-type UserRepository interface {
+type Transactioner interface {
 	WithTransaction(ctx context.Context, db store.Beginner, f func(tx *sqlx.Tx) error) error
+}
+
+type UserRepository interface {
+	Transactioner
 	UserExistsByUserName(ctx context.Context, db store.Queryer, userName string) (bool, error)
 	GetUserByUserName(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
 	GetUserByUserId(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error)
@@ -35,7 +39,7 @@ type UserRepository interface {
 }
 
 type PostRepository interface {
-	WithTransaction(ctx context.Context, db store.Beginner, f func(tx *sqlx.Tx) error) error
+	Transactioner
 	AddPost(ctx context.Context, db store.Queryer, p *model.Post) (string, error)
 	GetPostById(ctx context.Context, db store.Queryer, postId string) (*model.Post, error)
 	GetFolloweesByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
@@ -43,6 +47,11 @@ type PostRepository interface {
 	GetReplies(ctx context.Context, db store.Queryer, parentPostId string, pagenation *model.Pagenation) (*model.Timeline, error)
 	AddReplyRelation(ctx context.Context, db store.Execer, postId, parentId string) error
 	DeletePost(ctx context.Context, db store.Execer, postId string) error
+}
+
+type LikeRepository interface {
+	Transactioner
+	AddLike(ctx context.Context, db store.Execer, userId model.UserID, postId string) error
 }
 
 type HealthRepository interface {

@@ -19,6 +19,17 @@ CREATE TABLE users (
 );
 
 /*
+ * フォロー
+ */
+CREATE TABLE follows (
+    user_id UUID NOT NULL REFERENCES users(id),
+    followee_id UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (user_id, followee_id)
+);
+
+/*
  * 投稿
  */
 CREATE TABLE posts (
@@ -41,12 +52,23 @@ CREATE TABLE replies (
     PRIMARY KEY (post_id, parent_id)
 );
 
+/*
+ * いいね
+ */
+CREATE TABLE likes (
+    post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (user_id, post_id)
+);
+
 -- /*
 --  * リプライにメンションされたユーザー
 --  */
 -- CREATE TABLE reply_destination_users (
---     post_id INTEGER NOT NULL REFERENCES posts(id),
---     dest_user_id INTEGER NOT NULL REFERENCES posts(id),
+--     post_id UUID NOT NULL REFERENCES posts(id),
+--     dest_user_id UUID NOT NULL REFERENCES posts(id),
 --     PRIMARY KEY (post_id, dest_user_id)
 -- );
 
@@ -56,30 +78,8 @@ CREATE TABLE replies (
 --  */
 -- CREATE TABLE post_images (
 --     id serial PRIMARY KEY,
---     post_id INTEGER NOT NULL REFERENCES posts(id),
+--     post_id UUID NOT NULL REFERENCES posts(id),
 --     image_url VARCHAR(100)
--- );
-
-/*
- * フォロー
- */
-CREATE TABLE follows (
-    user_id UUID NOT NULL REFERENCES users(id),
-    followee_id UUID NOT NULL REFERENCES users(id),
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
-    PRIMARY KEY (user_id, followee_id)
-);
-
--- /*
---  * いいね
---  */
--- CREATE TABLE likes (
---     user_id INTEGER NOT NULL REFERENCES users(id),
---     post_id INTEGER NOT NULL REFERENCES posts(id),
---     created_at TIMESTAMP NOT NULL,
---     updated_at TIMESTAMP NOT NULL,
---     PRIMARY KEY (user_id, post_id)
 -- );
 
 -- /*
@@ -96,7 +96,7 @@ CREATE TABLE follows (
 --  * 投稿とタグの関連付け
 --  */
 -- CREATE TABLE post_tag (
---     post_id INTEGER NOT NULL REFERENCES posts(id),
---     tag_id INTEGER NOT NULL REFERENCES tags(id),
+--     post_id UUID NOT NULL REFERENCES posts(id),
+--     tag_id UUID NOT NULL REFERENCES tags(id),
 --     PRIMARY KEY (post_id, tag_id)
 -- );
