@@ -28,3 +28,19 @@ func (r *Repository) AddLike(ctx context.Context, db Execer, userId model.UserID
 
 	return nil
 }
+
+func (r *Repository) DeleteLike(ctx context.Context, db Execer, userId model.UserID, postId string) error {
+	statement := `
+		DELETE FROM likes
+		WHERE post_id = (SELECT id FROM posts WHERE id = $1)
+		AND user_id = (SELECT id FROM users WHERE id = $2);
+	`
+
+	_, err := db.ExecContext(ctx, statement, postId, userId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

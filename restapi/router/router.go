@@ -101,6 +101,7 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		likes := posts.Group("/:post_id/likes")
 		{
 			likes.POST("", lh.AddLike)
+			likes.DELETE("", lh.DeleteLike)
 		}
 	}
 
