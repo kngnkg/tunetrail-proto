@@ -52,6 +52,7 @@ type PostRepository interface {
 type LikeRepository interface {
 	Transactioner
 	AddLike(ctx context.Context, db store.Execer, userId model.UserID, postId string) error
+	DeleteLike(ctx context.Context, db store.Execer, userId model.UserID, postId string) error
 }
 
 type HealthRepository interface {
