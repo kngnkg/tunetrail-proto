@@ -34,7 +34,7 @@ func (ps *PostService) AddPost(ctx context.Context, signedInUserId model.UserID,
 			}
 		}
 
-		registered, err := ps.Repo.GetPostById(ctx, ps.DB, id)
+		registered, err := ps.Repo.GetPostById(ctx, ps.DB, id, signedInUserId)
 
 		if err != nil {
 			return err
@@ -85,8 +85,8 @@ func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID
 	return timeline, nil
 }
 
-func (ps *PostService) GetPostById(ctx context.Context, postId string) (*model.Post, error) {
-	p, err := ps.Repo.GetPostById(ctx, ps.DB, postId)
+func (ps *PostService) GetPostById(ctx context.Context, postId string, signedInUserId model.UserID) (*model.Post, error) {
+	p, err := ps.Repo.GetPostById(ctx, ps.DB, postId, signedInUserId)
 
 	if err != nil {
 		return nil, err

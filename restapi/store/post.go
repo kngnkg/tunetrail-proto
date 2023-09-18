@@ -7,36 +7,42 @@ import (
 	"github.com/lib/pq"
 )
 
+const selectBasePostQuery = `
+	SELECT
+		p.id,
+		COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
+		u.id AS "user.id",
+		u.user_name AS "user.user_name",
+		u.name AS "user.name",
+		u.icon_url AS "user.icon_url",
+		u.bio AS "user.bio",
+		u.created_at AS "user.created_at",
+		u.updated_at AS "user.updated_at",
+		p.body,
+		COUNT(l.post_id) AS "likes_count",
+		CASE WHEN BOOL_OR(l.user_id = $1) THEN TRUE ELSE FALSE END AS "liked",
+		p.created_at,
+		p.updated_at
+	FROM
+		posts p
+		INNER JOIN users u ON p.user_id = u.id
+		LEFT OUTER JOIN replies r ON p.id = r.post_id
+		LEFT OUTER JOIN likes l ON p.id = l.post_id
+	`
+
+const selectBasePostQueryGroupBy = `
+	GROUP BY p.id, r.parent_id, u.id
+	`
+
 func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds []model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
 	var posts []*model.Post
 
 	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
-	queryArgs := []interface{}{pq.Array(userIds), signedInUserId, limit}
+	queryArgs := []interface{}{signedInUserId, pq.Array(userIds), limit}
 
-	statement := `
-		SELECT
-			p.id,
-			COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
-			u.id AS "user.id",
-			u.user_name AS "user.user_name",
-			u.name AS "user.name",
-			u.icon_url AS "user.icon_url",
-			u.bio AS "user.bio",
-			u.created_at AS "user.created_at",
-			u.updated_at AS "user.updated_at",
-			p.body,
-			COUNT(l.post_id) AS "likes_count",
-			CASE WHEN BOOL_OR(l.user_id = $2) THEN TRUE ELSE FALSE END AS "liked",
-			p.created_at,
-			p.updated_at
-		FROM
-			posts p
-			INNER JOIN users u ON p.user_id = u.id
-			LEFT OUTER JOIN replies r ON p.id = r.post_id
-			LEFT OUTER JOIN likes l ON p.id = l.post_id
-		WHERE
-			p.user_id = ANY ($1) AND r.parent_id IS NULL
+	statement := selectBasePostQuery + `
+		WHERE p.user_id = ANY ($2) AND r.parent_id IS NULL
 	`
 
 	if pagenation.NextCursor != "" {
@@ -47,8 +53,7 @@ func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds 
 		queryArgs = append(queryArgs, pagenation.NextCursor)
 	}
 
-	statement = statement + `
-		GROUP BY p.id, r.parent_id, u.id
+	statement = statement + selectBasePostQueryGroupBy + `
 		ORDER BY p.created_at DESC
 		LIMIT $3;
 	`
@@ -69,29 +74,8 @@ func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId mo
 
 	queryArgs := []interface{}{userId, signedInUserId, limit}
 
-	statement := `
-		SELECT
-			p.id,
-			COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
-			u.id AS "user.id",
-			u.user_name AS "user.user_name",
-			u.name AS "user.name",
-			u.icon_url AS "user.icon_url",
-			u.bio AS "user.bio",
-			u.created_at AS "user.created_at",
-			u.updated_at AS "user.updated_at",
-			p.body,
-			COUNT(l.post_id) AS "likes_count",
-			CASE WHEN BOOL_OR(l.user_id = $2) THEN TRUE ELSE FALSE END AS "liked",
-			p.created_at,
-			p.updated_at
-		FROM
-			posts p
-			INNER JOIN users u ON p.user_id = u.id
-			LEFT OUTER JOIN replies r ON p.id = r.post_id
-			LEFT OUTER JOIN likes l ON p.id = l.post_id
-		WHERE
-			p.user_id = $1
+	statement := selectBasePostQuery + `
+		WHERE p.user_id = $2
 	`
 
 	if pagenation.NextCursor != "" {
@@ -102,8 +86,7 @@ func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId mo
 		queryArgs = append(queryArgs, pagenation.NextCursor)
 	}
 
-	statement = statement + `
-		GROUP BY p.id, r.parent_id, u.id
+	statement = statement + selectBasePostQueryGroupBy + `
 		ORDER BY p.created_at DESC
 		LIMIT $3;
 	`
@@ -117,30 +100,12 @@ func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId mo
 	return tl, nil
 }
 
-func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string) (*model.Post, error) {
+func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string, signedInUserId model.UserID) (*model.Post, error) {
 	p := &model.Post{}
 
-	statement := `
-		SELECT
-			p.id,
-			COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
-			u.id AS "user.id",
-			u.user_name AS "user.user_name",
-			u.name AS "user.name",
-			u.icon_url AS "user.icon_url",
-			u.bio AS "user.bio",
-			u.created_at AS "user.created_at",
-			u.updated_at AS "user.updated_at",
-			p.body,
-			p.created_at,
-			p.updated_at
-		FROM posts p
-		LEFT OUTER JOIN replies r ON p.id = r.post_id
-		INNER JOIN users u ON p.user_id = u.id
-		WHERE p.id = $1;
-	`
+	statement := selectBasePostQuery + `WHERE p.id = $2` + selectBasePostQueryGroupBy + `;`
 
-	if err := db.GetContext(ctx, p, statement, postId); err != nil {
+	if err := db.GetContext(ctx, p, statement, signedInUserId, postId); err != nil {
 		return nil, err
 	}
 
