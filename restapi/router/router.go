@@ -73,7 +73,6 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 
 		users.GET("/by/username/:user_name", uh.GetUserByUserName)
 		users.GET("/me", uh.GetMe) // ログインユーザー情報取得
-
 		users.GET("/timelines", ph.GetTimeline)
 
 		id := users.Group("/:user_id")
@@ -82,10 +81,15 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 			// id.PUT("", uh.UpdateUser) // TODO: 改修予定
 			// id.DELETE("", uh.DeleteUserByUserName) // TODO: 改修予定
 			id.GET("/posts", ph.GetPostsByUserId)
+			id.GET("/likes", ph.GetLikedPostsByUserId)
 			id.GET("/followees", uh.GetFollowees)
 			id.GET("/followers", uh.GetFollowers)
-			id.POST("/follow", uh.FollowUser)
-			id.DELETE("/follow", uh.UnfollowUser)
+
+			follow := id.Group("/follow")
+			{
+				follow.POST("", uh.FollowUser)
+				follow.DELETE("", uh.UnfollowUser)
+			}
 		}
 	}
 
@@ -94,14 +98,18 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 		posts.Use(handler.AuthMiddleware(j))
 
 		posts.POST("", ph.AddPost)
-		posts.GET("/:post_id", ph.GetPostById)
-		posts.DELETE("/:post_id", ph.DeletePost)
-		posts.GET("/:post_id/replies", ph.GetReplies)
 
-		likes := posts.Group("/:post_id/likes")
+		postId := posts.Group("/:post_id")
 		{
-			likes.POST("", lh.AddLike)
-			likes.DELETE("", lh.DeleteLike)
+			postId.GET("", ph.GetPostById)
+			postId.DELETE("", ph.DeletePost)
+			postId.GET("/replies", ph.GetReplies)
+
+			likes := postId.Group("/likes")
+			{
+				likes.POST("", lh.AddLike)
+				likes.DELETE("", lh.DeleteLike)
+			}
 		}
 	}
 

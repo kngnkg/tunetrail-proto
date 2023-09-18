@@ -7,86 +7,138 @@ import (
 	"github.com/lib/pq"
 )
 
-func (r *Repository) GetPostsByUserIdsNext(ctx context.Context, db Queryer, userIds []model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
-	var posts []*model.Post
-
-	baseQuery := `
-		SELECT
-			p.id,
-			COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
-			u.id AS "user.id",
-			u.user_name AS "user.user_name",
-			u.name AS "user.name",
-			u.icon_url AS "user.icon_url",
-			u.bio AS "user.bio",
-			u.created_at AS "user.created_at",
-			u.updated_at AS "user.updated_at",
-			p.body,
-			p.created_at,
-			p.updated_at
-		FROM posts p
-		LEFT OUTER JOIN replies r ON p.id = r.post_id
+const selectBasePostQuery = `
+	SELECT
+		p.id,
+		COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
+		u.id AS "user.id",
+		u.user_name AS "user.user_name",
+		u.name AS "user.name",
+		u.icon_url AS "user.icon_url",
+		u.bio AS "user.bio",
+		u.created_at AS "user.created_at",
+		u.updated_at AS "user.updated_at",
+		p.body,
+		COUNT(l.post_id) AS "likes_count",
+		CASE WHEN BOOL_OR(l.user_id = $1) THEN TRUE ELSE FALSE END AS "liked",
+		p.created_at,
+		p.updated_at
+	FROM
+		posts p
 		INNER JOIN users u ON p.user_id = u.id
-		WHERE user_id = ANY ($1) AND r.parent_id IS NULL
+		LEFT OUTER JOIN replies r ON p.id = r.post_id
+		LEFT OUTER JOIN likes l ON p.id = l.post_id
 	`
 
-	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+const selectBasePostQueryGroupBy = `
+	GROUP BY p.id, r.parent_id, u.id
+	`
 
-	queryArgs := []interface{}{pq.Array(userIds), limit}
+func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds []model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
+	var posts []*model.Post
 
-	var statement string
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
-	if pagenation.NextCursor == "" {
-		statement = baseQuery + `
-			ORDER BY p.created_at DESC
-			LIMIT $2;
+	queryArgs := []interface{}{signedInUserId, pq.Array(userIds), limit}
+
+	statement := selectBasePostQuery + `
+		WHERE p.user_id = ANY ($2) AND r.parent_id IS NULL
+	`
+
+	if pagination.NextCursor != "" {
+		statement = statement + `
+			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
 		`
-	} else {
-		statement = baseQuery + `
-			AND p.created_at <= (
-				SELECT created_at
-				FROM posts
-				WHERE id = $3)
-			ORDER BY p.created_at DESC
-			LIMIT $2;
-		`
 
-		queryArgs = append(queryArgs, pagenation.NextCursor)
+		queryArgs = append(queryArgs, pagination.NextCursor)
 	}
+
+	statement = statement + selectBasePostQueryGroupBy + `
+		ORDER BY p.created_at DESC
+		LIMIT $3;
+	`
 
 	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
 		return nil, err
 	}
 
-	tl := handlePagenation(posts, pagenation)
+	tl := handlePagination(posts, pagination)
 
 	return tl, nil
 }
 
-func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string) (*model.Post, error) {
-	p := &model.Post{}
+func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
+	var posts []*model.Post
 
-	statement := `
-		SELECT
-			p.id,
-			COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
-			u.id AS "user.id",
-			u.user_name AS "user.user_name",
-			u.name AS "user.name",
-			u.icon_url AS "user.icon_url",
-			u.bio AS "user.bio",
-			u.created_at AS "user.created_at",
-			u.updated_at AS "user.updated_at",
-			p.body,
-			p.created_at,
-			p.updated_at
-		FROM posts p
-		LEFT OUTER JOIN replies r ON p.id = r.post_id
-		INNER JOIN users u ON p.user_id = u.id
-		WHERE p.id = $1;
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+
+	queryArgs := []interface{}{userId, signedInUserId, limit}
+
+	statement := selectBasePostQuery + `
+		WHERE p.user_id = $2
 	`
 
-	if err := db.GetContext(ctx, p, statement, postId); err != nil {
+	if pagination.NextCursor != "" {
+		statement = statement + `
+			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
+		`
+
+		queryArgs = append(queryArgs, pagination.NextCursor)
+	}
+
+	statement = statement + selectBasePostQueryGroupBy + `
+		ORDER BY p.created_at DESC
+		LIMIT $3;
+	`
+
+	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
+		return nil, err
+	}
+
+	tl := handlePagination(posts, pagination)
+
+	return tl, nil
+}
+
+func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
+	var posts []*model.Post
+
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+
+	queryArgs := []interface{}{userId, signedInUserId, limit}
+
+	statement := selectBasePostQuery + `
+		WHERE l.user_id = $2
+	`
+
+	if pagination.NextCursor != "" {
+		statement = statement + `
+			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
+		`
+
+		queryArgs = append(queryArgs, pagination.NextCursor)
+	}
+
+	statement = statement + selectBasePostQueryGroupBy + `
+		ORDER BY p.created_at DESC
+		LIMIT $3;
+	`
+
+	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
+		return nil, err
+	}
+
+	tl := handlePagination(posts, pagination)
+
+	return tl, nil
+}
+
+func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string, signedInUserId model.UserID) (*model.Post, error) {
+	p := &model.Post{}
+
+	statement := selectBasePostQuery + `WHERE p.id = $2` + selectBasePostQueryGroupBy + `;`
+
+	if err := db.GetContext(ctx, p, statement, signedInUserId, postId); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +146,7 @@ func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string)
 }
 
 // 昇順で取得する
-func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId string, pagenation *model.Pagenation) (*model.Timeline, error) {
+func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId string, pagination *model.Pagination) (*model.Timeline, error) {
 	var posts []*model.Post
 
 	baseQuery := `
@@ -161,13 +213,13 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 		post_tree
 	`
 
-	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
 	queryArgs := []interface{}{parentPostId, limit}
 
 	var statement string
 
-	if pagenation.NextCursor == "" {
+	if pagination.NextCursor == "" {
 		statement = baseQuery + `
 			ORDER BY reply_created_at ASC -- リプライの作成日時の昇順で取得する
 			LIMIT $2;
@@ -182,14 +234,14 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 			LIMIT $2;
 		`
 
-		queryArgs = append(queryArgs, pagenation.NextCursor)
+		queryArgs = append(queryArgs, pagination.NextCursor)
 	}
 
 	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
 		return nil, err
 	}
 
-	tl := handlePagenation(posts, pagenation)
+	tl := handlePagination(posts, pagination)
 
 	return tl, nil
 }
@@ -247,20 +299,20 @@ func (r *Repository) DeletePost(ctx context.Context, db Execer, postId string) e
 	return nil
 }
 
-func handlePagenation(posts []*model.Post, pagenation *model.Pagenation) *model.Timeline {
-	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+func handlePagination(posts []*model.Post, pagination *model.Pagination) *model.Timeline {
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
 	if len(posts) == limit {
 		// 次のページがある場合は、次のページのためにカーソルをセットする
-		pagenation.NextCursor = posts[limit-1].Id
+		pagination.NextCursor = posts[limit-1].Id
 		posts = posts[:limit-1]
 	} else {
-		pagenation.NextCursor = ""
+		pagination.NextCursor = ""
 	}
 
 	tl := &model.Timeline{
 		Posts:      posts,
-		Pagenation: pagenation,
+		Pagination: pagination,
 	}
 
 	return tl
