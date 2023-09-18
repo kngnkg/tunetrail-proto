@@ -85,6 +85,16 @@ func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID
 	return timeline, nil
 }
 
+func (ps *PostService) GetLikedPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
+	timeline, err := ps.Repo.GetLikedPostsByUserId(ctx, ps.DB, userId, signedInUserId, pagenation)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return timeline, nil
+}
+
 func (ps *PostService) GetPostById(ctx context.Context, postId string, signedInUserId model.UserID) (*model.Post, error) {
 	p, err := ps.Repo.GetPostById(ctx, ps.DB, postId, signedInUserId)
 

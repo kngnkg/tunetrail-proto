@@ -100,6 +100,39 @@ func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId mo
 	return tl, nil
 }
 
+func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
+	var posts []*model.Post
+
+	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+
+	queryArgs := []interface{}{userId, signedInUserId, limit}
+
+	statement := selectBasePostQuery + `
+		WHERE l.user_id = $2
+	`
+
+	if pagenation.NextCursor != "" {
+		statement = statement + `
+			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
+		`
+
+		queryArgs = append(queryArgs, pagenation.NextCursor)
+	}
+
+	statement = statement + selectBasePostQueryGroupBy + `
+		ORDER BY p.created_at DESC
+		LIMIT $3;
+	`
+
+	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
+		return nil, err
+	}
+
+	tl := handlePagenation(posts, pagenation)
+
+	return tl, nil
+}
+
 func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string, signedInUserId model.UserID) (*model.Post, error) {
 	p := &model.Post{}
 
