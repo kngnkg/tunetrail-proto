@@ -11,10 +11,10 @@ import (
 type PostService interface {
 	AddPost(ctx context.Context, signedInUserId model.UserID, ParentId, body string) (*model.Post, error)
 	GetPostById(ctx context.Context, postId string, signedInUserId model.UserID) (*model.Post, error)
-	GetTimelines(ctx context.Context, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
-	GetPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
-	GetLikedPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
-	GetReplies(ctx context.Context, postId string, pagenation *model.Pagenation) (*model.Timeline, error)
+	GetTimelines(ctx context.Context, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
+	GetPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
+	GetLikedPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
+	GetReplies(ctx context.Context, postId string, pagination *model.Pagination) (*model.Timeline, error)
 	DeletePost(ctx context.Context, postId string) error
 }
 
@@ -51,14 +51,14 @@ func (h *PostHandler) AddPost(c *gin.Context) {
 func (h *PostHandler) GetTimeline(c *gin.Context) {
 	signedInUserId := getSignedInUserId(c)
 
-	pagenation, err := getPagenationFromQuery(c)
+	pagination, err := getPaginationFromQuery(c)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
 
-	timeline, err := h.Service.GetTimelines(c.Request.Context(), signedInUserId, pagenation)
+	timeline, err := h.Service.GetTimelines(c.Request.Context(), signedInUserId, pagination)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
@@ -72,7 +72,7 @@ func (h *PostHandler) GetPostsByUserId(c *gin.Context) {
 	userId := getUserIdFromPath(c)
 	signedInUserId := getSignedInUserId(c)
 
-	pagenation, err := getPagenationFromQuery(c)
+	pagination, err := getPaginationFromQuery(c)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
@@ -80,7 +80,7 @@ func (h *PostHandler) GetPostsByUserId(c *gin.Context) {
 	}
 
 	// TODO: Timeline構造体の名前を変える
-	timeline, err := h.Service.GetPostsByUserId(c.Request.Context(), userId, signedInUserId, pagenation)
+	timeline, err := h.Service.GetPostsByUserId(c.Request.Context(), userId, signedInUserId, pagination)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
@@ -94,14 +94,14 @@ func (h *PostHandler) GetLikedPostsByUserId(c *gin.Context) {
 	userId := getUserIdFromPath(c)
 	signedInUserId := getSignedInUserId(c)
 
-	pagenation, err := getPagenationFromQuery(c)
+	pagination, err := getPaginationFromQuery(c)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
 
-	timeline, err := h.Service.GetLikedPostsByUserId(c.Request.Context(), userId, signedInUserId, pagenation)
+	timeline, err := h.Service.GetLikedPostsByUserId(c.Request.Context(), userId, signedInUserId, pagination)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
@@ -128,14 +128,14 @@ func (h *PostHandler) GetPostById(c *gin.Context) {
 func (h *PostHandler) GetReplies(c *gin.Context) {
 	postId := getPostIdFromPath(c)
 
-	pagenation, err := getPagenationFromQuery(c)
+	pagination, err := getPaginationFromQuery(c)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
 
-	timeline, err := h.Service.GetReplies(c.Request.Context(), postId, pagenation)
+	timeline, err := h.Service.GetReplies(c.Request.Context(), postId, pagination)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)

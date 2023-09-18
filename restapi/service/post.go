@@ -51,7 +51,7 @@ func (ps *PostService) AddPost(ctx context.Context, signedInUserId model.UserID,
 	return p, nil
 }
 
-func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
+func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
 	// ユーザーがフォローしているユーザーの情報を取得する
 	users, err := ps.Repo.GetFolloweesByUserId(ctx, ps.DB, signedInUserId)
 
@@ -66,7 +66,7 @@ func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.Us
 		userIds[i+1] = u.Id
 	}
 
-	timeline, err := ps.Repo.GetPostsByUserIds(ctx, ps.DB, userIds, signedInUserId, pagenation)
+	timeline, err := ps.Repo.GetPostsByUserIds(ctx, ps.DB, userIds, signedInUserId, pagination)
 
 	if err != nil {
 		return nil, err
@@ -75,8 +75,8 @@ func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.Us
 	return timeline, nil
 }
 
-func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
-	timeline, err := ps.Repo.GetPostsByUserId(ctx, ps.DB, userId, signedInUserId, pagenation)
+func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
+	timeline, err := ps.Repo.GetPostsByUserId(ctx, ps.DB, userId, signedInUserId, pagination)
 
 	if err != nil {
 		return nil, err
@@ -85,8 +85,8 @@ func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID
 	return timeline, nil
 }
 
-func (ps *PostService) GetLikedPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
-	timeline, err := ps.Repo.GetLikedPostsByUserId(ctx, ps.DB, userId, signedInUserId, pagenation)
+func (ps *PostService) GetLikedPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
+	timeline, err := ps.Repo.GetLikedPostsByUserId(ctx, ps.DB, userId, signedInUserId, pagination)
 
 	if err != nil {
 		return nil, err
@@ -105,8 +105,8 @@ func (ps *PostService) GetPostById(ctx context.Context, postId string, signedInU
 	return p, nil
 }
 
-func (ps *PostService) GetReplies(ctx context.Context, postId string, pagenation *model.Pagenation) (*model.Timeline, error) {
-	timeline, err := ps.Repo.GetReplies(ctx, ps.DB, postId, pagenation)
+func (ps *PostService) GetReplies(ctx context.Context, postId string, pagination *model.Pagination) (*model.Timeline, error) {
+	timeline, err := ps.Repo.GetReplies(ctx, ps.DB, postId, pagination)
 
 	if err != nil {
 		return nil, err

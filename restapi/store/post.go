@@ -34,10 +34,10 @@ const selectBasePostQueryGroupBy = `
 	GROUP BY p.id, r.parent_id, u.id
 	`
 
-func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds []model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
+func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds []model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
 	var posts []*model.Post
 
-	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
 	queryArgs := []interface{}{signedInUserId, pq.Array(userIds), limit}
 
@@ -45,12 +45,12 @@ func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds 
 		WHERE p.user_id = ANY ($2) AND r.parent_id IS NULL
 	`
 
-	if pagenation.NextCursor != "" {
+	if pagination.NextCursor != "" {
 		statement = statement + `
 			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
 		`
 
-		queryArgs = append(queryArgs, pagenation.NextCursor)
+		queryArgs = append(queryArgs, pagination.NextCursor)
 	}
 
 	statement = statement + selectBasePostQueryGroupBy + `
@@ -62,15 +62,15 @@ func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds 
 		return nil, err
 	}
 
-	tl := handlePagenation(posts, pagenation)
+	tl := handlePagination(posts, pagination)
 
 	return tl, nil
 }
 
-func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
+func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
 	var posts []*model.Post
 
-	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
 	queryArgs := []interface{}{userId, signedInUserId, limit}
 
@@ -78,12 +78,12 @@ func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId mo
 		WHERE p.user_id = $2
 	`
 
-	if pagenation.NextCursor != "" {
+	if pagination.NextCursor != "" {
 		statement = statement + `
 			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
 		`
 
-		queryArgs = append(queryArgs, pagenation.NextCursor)
+		queryArgs = append(queryArgs, pagination.NextCursor)
 	}
 
 	statement = statement + selectBasePostQueryGroupBy + `
@@ -95,15 +95,15 @@ func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId mo
 		return nil, err
 	}
 
-	tl := handlePagenation(posts, pagenation)
+	tl := handlePagination(posts, pagination)
 
 	return tl, nil
 }
 
-func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
+func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
 	var posts []*model.Post
 
-	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
 	queryArgs := []interface{}{userId, signedInUserId, limit}
 
@@ -111,12 +111,12 @@ func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, user
 		WHERE l.user_id = $2
 	`
 
-	if pagenation.NextCursor != "" {
+	if pagination.NextCursor != "" {
 		statement = statement + `
 			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
 		`
 
-		queryArgs = append(queryArgs, pagenation.NextCursor)
+		queryArgs = append(queryArgs, pagination.NextCursor)
 	}
 
 	statement = statement + selectBasePostQueryGroupBy + `
@@ -128,7 +128,7 @@ func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, user
 		return nil, err
 	}
 
-	tl := handlePagenation(posts, pagenation)
+	tl := handlePagination(posts, pagination)
 
 	return tl, nil
 }
@@ -146,7 +146,7 @@ func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string,
 }
 
 // 昇順で取得する
-func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId string, pagenation *model.Pagenation) (*model.Timeline, error) {
+func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId string, pagination *model.Pagination) (*model.Timeline, error) {
 	var posts []*model.Post
 
 	baseQuery := `
@@ -213,13 +213,13 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 		post_tree
 	`
 
-	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
 	queryArgs := []interface{}{parentPostId, limit}
 
 	var statement string
 
-	if pagenation.NextCursor == "" {
+	if pagination.NextCursor == "" {
 		statement = baseQuery + `
 			ORDER BY reply_created_at ASC -- リプライの作成日時の昇順で取得する
 			LIMIT $2;
@@ -234,14 +234,14 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 			LIMIT $2;
 		`
 
-		queryArgs = append(queryArgs, pagenation.NextCursor)
+		queryArgs = append(queryArgs, pagination.NextCursor)
 	}
 
 	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
 		return nil, err
 	}
 
-	tl := handlePagenation(posts, pagenation)
+	tl := handlePagination(posts, pagination)
 
 	return tl, nil
 }
@@ -299,20 +299,20 @@ func (r *Repository) DeletePost(ctx context.Context, db Execer, postId string) e
 	return nil
 }
 
-func handlePagenation(posts []*model.Post, pagenation *model.Pagenation) *model.Timeline {
-	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+func handlePagination(posts []*model.Post, pagination *model.Pagination) *model.Timeline {
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
 	if len(posts) == limit {
 		// 次のページがある場合は、次のページのためにカーソルをセットする
-		pagenation.NextCursor = posts[limit-1].Id
+		pagination.NextCursor = posts[limit-1].Id
 		posts = posts[:limit-1]
 	} else {
-		pagenation.NextCursor = ""
+		pagination.NextCursor = ""
 	}
 
 	tl := &model.Timeline{
 		Posts:      posts,
-		Pagenation: pagenation,
+		Pagination: pagination,
 	}
 
 	return tl

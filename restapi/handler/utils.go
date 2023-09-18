@@ -19,7 +19,7 @@ func getPostIdFromPath(c *gin.Context) string {
 	return c.Param("post_id")
 }
 
-func getPagenationFromQuery(c *gin.Context) (*model.Pagenation, error) {
+func getPaginationFromQuery(c *gin.Context) (*model.Pagination, error) {
 	nc := c.DefaultQuery("next_cursor", "")
 	pc := c.DefaultQuery("previous_cursor", "")
 	lstr := c.DefaultQuery("limit", "10")
@@ -29,7 +29,7 @@ func getPagenationFromQuery(c *gin.Context) (*model.Pagenation, error) {
 		return nil, err
 	}
 
-	return &model.Pagenation{
+	return &model.Pagination{
 		NextCursor:     nc,
 		PreviousCursor: pc,
 		Limit:          l,
