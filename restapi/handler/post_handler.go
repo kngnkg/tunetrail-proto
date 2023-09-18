@@ -11,7 +11,7 @@ import (
 type PostService interface {
 	AddPost(ctx context.Context, signedInUserId model.UserID, ParentId, body string) (*model.Post, error)
 	GetTimelines(ctx context.Context, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
-	GetPostsByUserId(ctx context.Context, userId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
+	GetPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
 	GetPostById(ctx context.Context, postId string) (*model.Post, error)
 	GetReplies(ctx context.Context, postId string, pagenation *model.Pagenation) (*model.Timeline, error)
 	DeletePost(ctx context.Context, postId string) error
@@ -69,6 +69,7 @@ func (h *PostHandler) GetTimeline(c *gin.Context) {
 
 func (h *PostHandler) GetPostsByUserId(c *gin.Context) {
 	userId := getUserIdFromPath(c)
+	signedInUserId := getSignedInUserId(c)
 
 	pagenation, err := getPagenationFromQuery(c)
 	if err != nil {
@@ -78,7 +79,7 @@ func (h *PostHandler) GetPostsByUserId(c *gin.Context) {
 	}
 
 	// TODO: Timeline構造体の名前を変える
-	timeline, err := h.Service.GetPostsByUserId(c.Request.Context(), userId, pagenation)
+	timeline, err := h.Service.GetPostsByUserId(c.Request.Context(), userId, signedInUserId, pagenation)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)

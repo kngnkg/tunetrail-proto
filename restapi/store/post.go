@@ -7,10 +7,14 @@ import (
 	"github.com/lib/pq"
 )
 
-func (r *Repository) GetPostsByUserIdsNext(ctx context.Context, db Queryer, userIds []model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
+func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds []model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
 	var posts []*model.Post
 
-	baseQuery := `
+	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+
+	queryArgs := []interface{}{pq.Array(userIds), signedInUserId, limit}
+
+	statement := `
 		SELECT
 			p.id,
 			COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
@@ -22,37 +26,87 @@ func (r *Repository) GetPostsByUserIdsNext(ctx context.Context, db Queryer, user
 			u.created_at AS "user.created_at",
 			u.updated_at AS "user.updated_at",
 			p.body,
+			COUNT(l.post_id) AS "likes_count",
+			CASE WHEN BOOL_OR(l.user_id = $2) THEN TRUE ELSE FALSE END AS "liked",
 			p.created_at,
 			p.updated_at
-		FROM posts p
-		LEFT OUTER JOIN replies r ON p.id = r.post_id
-		INNER JOIN users u ON p.user_id = u.id
-		WHERE user_id = ANY ($1) AND r.parent_id IS NULL
+		FROM
+			posts p
+			INNER JOIN users u ON p.user_id = u.id
+			LEFT OUTER JOIN replies r ON p.id = r.post_id
+			LEFT OUTER JOIN likes l ON p.id = l.post_id
+		WHERE
+			p.user_id = ANY ($1) AND r.parent_id IS NULL
 	`
 
-	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
-
-	queryArgs := []interface{}{pq.Array(userIds), limit}
-
-	var statement string
-
-	if pagenation.NextCursor == "" {
-		statement = baseQuery + `
-			ORDER BY p.created_at DESC
-			LIMIT $2;
-		`
-	} else {
-		statement = baseQuery + `
-			AND p.created_at <= (
-				SELECT created_at
-				FROM posts
-				WHERE id = $3)
-			ORDER BY p.created_at DESC
-			LIMIT $2;
+	if pagenation.NextCursor != "" {
+		statement = statement + `
+			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
 		`
 
 		queryArgs = append(queryArgs, pagenation.NextCursor)
 	}
+
+	statement = statement + `
+		GROUP BY p.id, r.parent_id, u.id
+		ORDER BY p.created_at DESC
+		LIMIT $3;
+	`
+
+	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
+		return nil, err
+	}
+
+	tl := handlePagenation(posts, pagenation)
+
+	return tl, nil
+}
+
+func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
+	var posts []*model.Post
+
+	limit := pagenation.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+
+	queryArgs := []interface{}{userId, signedInUserId, limit}
+
+	statement := `
+		SELECT
+			p.id,
+			COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
+			u.id AS "user.id",
+			u.user_name AS "user.user_name",
+			u.name AS "user.name",
+			u.icon_url AS "user.icon_url",
+			u.bio AS "user.bio",
+			u.created_at AS "user.created_at",
+			u.updated_at AS "user.updated_at",
+			p.body,
+			COUNT(l.post_id) AS "likes_count",
+			CASE WHEN BOOL_OR(l.user_id = $2) THEN TRUE ELSE FALSE END AS "liked",
+			p.created_at,
+			p.updated_at
+		FROM
+			posts p
+			INNER JOIN users u ON p.user_id = u.id
+			LEFT OUTER JOIN replies r ON p.id = r.post_id
+			LEFT OUTER JOIN likes l ON p.id = l.post_id
+		WHERE
+			p.user_id = $1
+	`
+
+	if pagenation.NextCursor != "" {
+		statement = statement + `
+			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
+		`
+
+		queryArgs = append(queryArgs, pagenation.NextCursor)
+	}
+
+	statement = statement + `
+		GROUP BY p.id, r.parent_id, u.id
+		ORDER BY p.created_at DESC
+		LIMIT $3;
+	`
 
 	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
 		return nil, err

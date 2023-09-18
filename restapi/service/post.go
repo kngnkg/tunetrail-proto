@@ -66,8 +66,7 @@ func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.Us
 		userIds[i+1] = u.Id
 	}
 
-	// フィードを取得する
-	timeline, err := ps.Repo.GetPostsByUserIdsNext(ctx, ps.DB, userIds, pagenation)
+	timeline, err := ps.Repo.GetPostsByUserIds(ctx, ps.DB, userIds, signedInUserId, pagenation)
 
 	if err != nil {
 		return nil, err
@@ -76,13 +75,8 @@ func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.Us
 	return timeline, nil
 }
 
-func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
-	// ユーザーIDのスライスを作成する
-	userIds := make([]model.UserID, 1)
-	userIds[0] = userId
-
-	// フィードを取得する
-	timeline, err := ps.Repo.GetPostsByUserIdsNext(ctx, ps.DB, userIds, pagenation)
+func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error) {
+	timeline, err := ps.Repo.GetPostsByUserId(ctx, ps.DB, userId, signedInUserId, pagenation)
 
 	if err != nil {
 		return nil, err

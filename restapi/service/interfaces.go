@@ -43,7 +43,8 @@ type PostRepository interface {
 	AddPost(ctx context.Context, db store.Queryer, p *model.Post) (string, error)
 	GetPostById(ctx context.Context, db store.Queryer, postId string) (*model.Post, error)
 	GetFolloweesByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
-	GetPostsByUserIdsNext(ctx context.Context, db store.Queryer, userId []model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
+	GetPostsByUserIds(ctx context.Context, db store.Queryer, userIds []model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
+	GetPostsByUserId(ctx context.Context, db store.Queryer, userId model.UserID, signedInUserId model.UserID, pagenation *model.Pagenation) (*model.Timeline, error)
 	GetReplies(ctx context.Context, db store.Queryer, parentPostId string, pagenation *model.Pagenation) (*model.Timeline, error)
 	AddReplyRelation(ctx context.Context, db store.Execer, postId, parentId string) error
 	DeletePost(ctx context.Context, db store.Execer, postId string) error
