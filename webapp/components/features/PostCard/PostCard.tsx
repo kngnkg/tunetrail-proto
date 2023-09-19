@@ -16,11 +16,13 @@ import { UserAvatar } from "../UserAvatar/UserAvatar"
 
 interface PostCardProps extends React.HTMLAttributes<HTMLDivElement> {
   post: Post
+  mutatePost?: (post: Post) => void
   className?: string
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
   post,
+  mutatePost,
   className,
   ...props
 }) => {
@@ -45,12 +47,10 @@ export const PostCard: React.FC<PostCardProps> = ({
               className="text-sm text-gray-lightest"
             >{`@${post.user.userName}`}</Link>
           </div>
-          <div>
-            <TimeStamp
-              className="text-gray-lightest text-sm"
-              date={post.createdAt}
-            />
-          </div>
+          <TimeStamp
+            className="text-gray-lightest text-sm"
+            date={post.createdAt}
+          />
         </div>
         <div className="pb-2 pl-2 pr-3">
           <Link href={postPagePath}>
@@ -59,7 +59,11 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
         <CardHooter className="flex gap-6 items-center pb-1">
           <ReplyButton post={post} className={hooterIconClasses} />
-          <LikeButton post={post} className={hooterIconClasses} />
+          <LikeButton
+            post={post}
+            mutatePost={mutatePost}
+            className={hooterIconClasses}
+          />
         </CardHooter>
       </CardContent>
     </Card>
