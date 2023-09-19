@@ -1,5 +1,4 @@
 import Link from "next/link"
-import { ChatBubbleIcon } from "@radix-ui/react-icons"
 
 import { Post } from "@/types/post"
 import { mergeClasses } from "@/lib/utils"
@@ -9,6 +8,7 @@ import {
   CardHeader,
   CardHooter,
 } from "@/components/ui/Card/Card"
+import { TimeStamp } from "@/components/ui/TimeStamp/TimeStamp"
 
 import { LikeButton } from "../LikeButton/LikeButton"
 import { ReplyButton } from "../ReplyButton/ReplyButton"
@@ -16,11 +16,13 @@ import { UserAvatar } from "../UserAvatar/UserAvatar"
 
 interface PostCardProps extends React.HTMLAttributes<HTMLDivElement> {
   post: Post
+  mutatePost?: (post: Post) => void
   className?: string
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
   post,
+  mutatePost,
   className,
   ...props
 }) => {
@@ -37,12 +39,18 @@ export const PostCard: React.FC<PostCardProps> = ({
         </Link>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        <div className="flex flex-col gap-0">
-          <Link href={userPagePath}>{post.user.name}</Link>
-          <Link
-            href={userPagePath}
-            className="text-sm text-gray-lightest"
-          >{`@${post.user.userName}`}</Link>
+        <div className="flex gap-8 items-center">
+          <div className="flex flex-col gap-0">
+            <Link href={userPagePath}>{post.user.name}</Link>
+            <Link
+              href={userPagePath}
+              className="text-sm text-gray-lightest"
+            >{`@${post.user.userName}`}</Link>
+          </div>
+          <TimeStamp
+            className="text-gray-lightest text-sm"
+            date={post.createdAt}
+          />
         </div>
         <div className="pb-2 pl-2 pr-3">
           <Link href={postPagePath}>
@@ -51,7 +59,11 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
         <CardHooter className="flex gap-6 items-center pb-1">
           <ReplyButton post={post} className={hooterIconClasses} />
-          <LikeButton post={post} className={hooterIconClasses} />
+          <LikeButton
+            post={post}
+            mutatePost={mutatePost}
+            className={hooterIconClasses}
+          />
         </CardHooter>
       </CardContent>
     </Card>

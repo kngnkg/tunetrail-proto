@@ -12,12 +12,14 @@ export interface PostListProps extends React.HTMLAttributes<HTMLDivElement> {
   setSize: (
     size: number | ((size: number) => number)
   ) => Promise<any[] | undefined>
+  mutatePost?: (post: Post) => void
 }
 
 export const PostList: React.FC<PostListProps> = ({
   timelines,
   size,
   setSize,
+  mutatePost,
   ...props
 }) => {
   return (
@@ -28,7 +30,11 @@ export const PostList: React.FC<PostListProps> = ({
             {tl.posts.map((post: Post, postIdx: number) => {
               return (
                 <div key={postIdx}>
-                  <PostCard post={post} className="w-128" />
+                  <PostCard
+                    post={post}
+                    mutatePost={mutatePost}
+                    className="w-128"
+                  />
                 </div>
               )
             })}

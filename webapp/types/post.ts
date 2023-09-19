@@ -2,8 +2,12 @@ import { User } from "@/types/user"
 
 export type Post = {
   id: string
+  parentId: string
   user: User
   body: string
+  likesCount: number
+  liked: boolean
+  createdAt: Date
 }
 
 export type Pagination = {
