@@ -9,6 +9,7 @@ import { env } from "@/env.mjs"
 import { MESSAGE } from "@/config/messages"
 import { mergeClasses } from "@/lib/utils"
 import { postSchema } from "@/lib/validations/post.schema"
+import { useSignedInUser } from "@/hooks/auth/use-signedin-user"
 import { useTimeline } from "@/hooks/post/use-timeline"
 import { useToast } from "@/hooks/toast/use-toast"
 import { Button } from "@/components/ui/Button/Button"
@@ -18,6 +19,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/Dialog/Dialog"
 import { Input } from "@/components/ui/Input/Input"
+import { TextArea } from "@/components/ui/TextArea/TextArea"
+import { UserAvatar } from "@/components/features/UserAvatar/UserAvatar"
 
 export interface NewPostDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
@@ -31,13 +34,25 @@ export const NewPostDialog: React.FC<NewPostDialogProps> = ({
   children,
   ...props
 }) => {
-  const { register, handleSubmit, formState } = useForm<FormData>({
+  const { register, handleSubmit, formState, reset } = useForm<FormData>({
     resolver: zodResolver(postSchema),
   })
   const { error, addPost } = useTimeline(env.NEXT_PUBLIC_API_ROOT)
   const { showToast } = useToast()
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [open, setOpen] = React.useState<boolean>(false)
+  const signedInUser = useSignedInUser()
+
+  // アンマウント時にフォームをリセット
+  React.useEffect(() => {
+    if (!open) {
+      reset()
+    }
+  }, [open, reset])
+
+  if (!signedInUser) {
+    return null
+  }
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
@@ -70,22 +85,30 @@ export const NewPostDialog: React.FC<NewPostDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className={className} {...props}>
-        <h1>Post Dialog!</h1>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Input
-            id="body"
-            type="text"
-            placeholderText="投稿内容を入力する"
-            disabled={isLoading}
-            {...register("body")}
-          />
-          {formState.errors.body && (
-            <p className="px-1 text-xs text-red-500">
-              {formState.errors.body.message}
-            </p>
-          )}
-          <Button type="submit">Post</Button>
+      <DialogContent className={mergeClasses("", className)} {...props}>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col gap-12"
+        >
+          <div className="">
+            <TextArea
+              id="body"
+              placeholder="投稿内容"
+              disabled={isLoading}
+              {...register("body")}
+            />
+            {formState.errors.body && (
+              <p className="px-1 text-xs text-red-500">
+                {formState.errors.body.message}
+              </p>
+            )}
+          </div>
+          <div className="flex justify-between">
+            <UserAvatar user={signedInUser} />
+            <Button size="small" type="submit" className="h-10">
+              Post
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
