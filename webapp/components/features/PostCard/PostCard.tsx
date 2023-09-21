@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardHooter,
 } from "@/components/ui/Card/Card"
+import { PWithBreaks } from "@/components/ui/PWithBreaks/PWithBreaks"
 import { TimeStamp } from "@/components/ui/TimeStamp/TimeStamp"
 
 import { LikeButton } from "../LikeButton/LikeButton"
@@ -52,7 +53,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
         <div className="pb-2 pl-2 pr-3">
           <Link href={postPagePath}>
-            <p>{post.body}</p>
+            <PWithBreaks text={post.body} />
           </Link>
         </div>
         <CardHooter className="flex gap-6 items-center pb-1">
