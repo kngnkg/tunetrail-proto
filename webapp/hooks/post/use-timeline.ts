@@ -93,9 +93,14 @@ export const useTimeline = (
         }),
       })
 
+      const post: Post = {
+        ...res,
+        createdAt: new Date(res.createdAt),
+      }
+
       if (!data) {
         const tl: Timeline = {
-          posts: [res],
+          posts: [post],
           pagination: {
             nextCursor: "",
             previousCursor: "",
@@ -109,7 +114,7 @@ export const useTimeline = (
 
       const pagination = data[0].pagination
       const tl: Timeline = {
-        posts: [res],
+        posts: [post],
         pagination,
       }
 

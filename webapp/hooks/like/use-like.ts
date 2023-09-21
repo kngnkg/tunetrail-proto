@@ -12,12 +12,10 @@ export interface UseLikeProps {
 export const useLike = ({
   ...props
 }: UseLikeProps): {
-  //   liked: boolean
   error: null | string
   addLike: () => Promise<void>
   deleteLike: () => Promise<void>
 } => {
-  //   const [liked, setLiked] = React.useState(props.post.liked)
   const [error, setError] = React.useState<null | string>(null)
 
   const addLike = async (): Promise<void> => {
@@ -28,8 +26,6 @@ export const useLike = ({
           method: "POST",
         }
       )
-
-      //   setLiked(true)
     } catch (e) {
       if (e instanceof Error) {
         setError(e.message)
@@ -48,8 +44,6 @@ export const useLike = ({
           method: "DELETE",
         }
       )
-
-      //   setLiked(false)
     } catch (e) {
       if (e instanceof Error) {
         setError(e.message)
@@ -61,7 +55,6 @@ export const useLike = ({
   }
 
   return {
-    // liked,
     error,
     addLike,
     deleteLike,

@@ -6,22 +6,22 @@ import { Post } from "@/types/post"
 import { mergeClasses } from "@/lib/utils"
 import { useSignedInUser } from "@/hooks/auth/use-signedin-user"
 import { useLike } from "@/hooks/like/use-like"
+import { useTimeline } from "@/hooks/post/use-timeline"
 import { useToast } from "@/hooks/toast/use-toast"
 
 export interface LikeButtonProps
   extends React.HTMLAttributes<HTMLButtonElement> {
   post: Post
-  mutatePost?: (post: Post) => void
 }
 
 export const LikeButton: React.FC<LikeButtonProps> = ({
   className,
   post,
-  mutatePost,
   ...props
 }) => {
   const signedInUser = useSignedInUser()
   const { showToast } = useToast()
+  const { mutatePost } = useTimeline(env.NEXT_PUBLIC_API_ROOT)
   const { error, addLike, deleteLike } = useLike({
     apiRoot: env.NEXT_PUBLIC_API_ROOT,
     post,
@@ -43,9 +43,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
       likesCount: post.likesCount + 1,
     }
 
-    if (mutatePost) {
-      mutatePost(updated)
-    }
+    mutatePost(updated)
   }
 
   const deleteLikeInternal = async () => {
@@ -64,9 +62,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
       likesCount: post.likesCount - 1,
     }
 
-    if (mutatePost) {
-      mutatePost(updated)
-    }
+    mutatePost(updated)
   }
 
   const onClickToggleLike = async () => {

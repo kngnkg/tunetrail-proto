@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardHooter,
 } from "@/components/ui/Card/Card"
+import { PWithBreaks } from "@/components/ui/PWithBreaks/PWithBreaks"
 import { TimeStamp } from "@/components/ui/TimeStamp/TimeStamp"
 
 import { LikeButton } from "../LikeButton/LikeButton"
@@ -16,13 +17,11 @@ import { UserAvatar } from "../UserAvatar/UserAvatar"
 
 interface PostCardProps extends React.HTMLAttributes<HTMLDivElement> {
   post: Post
-  mutatePost?: (post: Post) => void
   className?: string
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
   post,
-  mutatePost,
   className,
   ...props
 }) => {
@@ -54,16 +53,12 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
         <div className="pb-2 pl-2 pr-3">
           <Link href={postPagePath}>
-            <p>{post.body}</p>
+            <PWithBreaks text={post.body} />
           </Link>
         </div>
         <CardHooter className="flex gap-6 items-center pb-1">
           <ReplyButton post={post} className={hooterIconClasses} />
-          <LikeButton
-            post={post}
-            mutatePost={mutatePost}
-            className={hooterIconClasses}
-          />
+          <LikeButton post={post} className={hooterIconClasses} />
         </CardHooter>
       </CardContent>
     </Card>

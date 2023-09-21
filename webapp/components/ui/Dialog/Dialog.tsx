@@ -29,18 +29,20 @@ export const DialogContent = React.forwardRef<
         <DialogPrimitive.Content
           ref={ref}
           className={mergeClasses(
-            "fixed z-50 grid w-full gap-4 rounded-b-lg border bg-background p-6 shadow-lg animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 sm:max-w-lg sm:rounded-lg sm:zoom-in-90 data-[state=open]:sm:slide-in-from-bottom-0",
+            "fixed z-50 flex flex-col w-full h-2/6 gap-4 rounded-b-lg border bg-gray-dark p-6 shadow-lg animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 sm:max-w-lg sm:rounded-lg sm:zoom-in-90 data-[state=open]:sm:slide-in-from-bottom-0",
             className
           )}
           {...props}
         >
           {/* 閉じるボタン */}
-          <DialogPrimitive.Close asChild>
-            <button className="IconButton" aria-label="Close">
-              <Cross2Icon />
-            </button>
-          </DialogPrimitive.Close>
-          {children}
+          <div className="">
+            <DialogPrimitive.Close asChild>
+              <button aria-label="Close">
+                <Cross2Icon className="h-6 w-6 hover:bg-gray-lightest" />
+              </button>
+            </DialogPrimitive.Close>
+          </div>
+          <div className="">{children}</div>
         </DialogPrimitive.Content>
       </div>
     </DialogPrimitive.Portal>
