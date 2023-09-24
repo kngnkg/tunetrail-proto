@@ -11,6 +11,17 @@ import (
 	"github.com/kngnkg/tunetrail/restapi/store"
 )
 
+type Auth interface {
+	SignUp(ctx context.Context, userId model.UserID, email, password string) error
+	ConfirmSignUp(ctx context.Context, userId model.UserID, code string) error
+	SignIn(ctx context.Context, userIdentifier, password string) (*model.Tokens, error)
+	RefreshToken(ctx context.Context, userIdentifier, refreshToken string) (*model.Tokens, error)
+}
+
+type JWTer interface {
+	ParseIdToken(ctx context.Context, idToken string) (*model.AuthInfo, error)
+}
+
 type AuthService struct {
 	DB    store.DBConnection
 	Repo  UserRepository

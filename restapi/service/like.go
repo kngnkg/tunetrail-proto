@@ -8,6 +8,12 @@ import (
 	"github.com/kngnkg/tunetrail/restapi/store"
 )
 
+type LikeRepository interface {
+	Transactioner
+	AddLike(ctx context.Context, db store.Execer, userId model.UserID, postId string) error
+	DeleteLike(ctx context.Context, db store.Execer, userId model.UserID, postId string) error
+}
+
 type LikeService struct {
 	DB   store.DBConnection
 	Repo LikeRepository

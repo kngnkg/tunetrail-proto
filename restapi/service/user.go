@@ -10,6 +10,21 @@ import (
 	"github.com/kngnkg/tunetrail/restapi/store"
 )
 
+type UserRepository interface {
+	Transactioner
+	RegisterUser(ctx context.Context, db store.Execer, u *model.User) error
+	UpdateUser(ctx context.Context, db store.Execer, u *model.User) error
+	DeleteUserByUserName(ctx context.Context, db store.Execer, userName string) error
+	GetUserByUserId(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error)
+	GetUserByUserName(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
+	GetUserByUserNameWithFollowInfo(ctx context.Context, db store.Queryer, userName string, signedInUserId model.UserID) (*model.User, error)
+	UserExistsByUserName(ctx context.Context, db store.Queryer, userName string) (bool, error)
+	AddFollow(ctx context.Context, db store.Execer, userId, follweeUserId model.UserID) error
+	DeleteFollow(ctx context.Context, db store.Execer, userId, follweeUserId model.UserID) error
+	GetFolloweesByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
+	GetFollowersByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
+}
+
 type UserService struct {
 	DB   store.DBConnection
 	Repo UserRepository

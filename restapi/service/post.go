@@ -8,6 +8,19 @@ import (
 	"github.com/kngnkg/tunetrail/restapi/store"
 )
 
+type PostRepository interface {
+	Transactioner
+	GetFolloweesByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
+	AddPost(ctx context.Context, db store.Queryer, p *model.Post) (string, error)
+	AddReplyRelation(ctx context.Context, db store.Execer, postId, parentId string) error
+	DeletePost(ctx context.Context, db store.Execer, postId string) error
+	GetPostById(ctx context.Context, db store.Queryer, postId string, signedInUserId model.UserID) (*model.Post, error)
+	GetPostsByUserId(ctx context.Context, db store.Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
+	GetPostsByUserIds(ctx context.Context, db store.Queryer, userIds []model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
+	GetLikedPostsByUserId(ctx context.Context, db store.Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
+	GetReplies(ctx context.Context, db store.Queryer, parentPostId string, pagination *model.Pagination) (*model.Timeline, error)
+}
+
 type PostService struct {
 	DB   store.DBConnection
 	Repo PostRepository
