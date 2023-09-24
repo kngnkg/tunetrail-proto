@@ -1,7 +1,32 @@
 import useSWRInfinite from "swr/infinite"
 
-import { Timeline } from "@/types/post"
+import { Post, Timeline } from "@/types/post"
 import { clientFetcher } from "@/lib/fetcher"
+
+const fetcher = async (
+  resource: RequestInfo,
+  init?: RequestInit
+): Promise<Timeline> => {
+  try {
+    const res = await clientFetcher(resource, init)
+
+    const posts: Post[] = res.posts.map((post: Post) => {
+      return {
+        ...post,
+        createdAt: new Date(post.createdAt),
+      }
+    })
+
+    const timeline: Timeline = {
+      posts,
+      pagination: res.pagination,
+    }
+
+    return timeline
+  } catch (e) {
+    throw e
+  }
+}
 
 export const useUserPosts = (apiRoot: string, userId: string) => {
   const getKey = (pageIndex: number, previousPageData: Timeline) => {
@@ -20,7 +45,7 @@ export const useUserPosts = (apiRoot: string, userId: string) => {
   }
 
   const { data, error, isLoading, isValidating, mutate, size, setSize } =
-    useSWRInfinite(getKey, clientFetcher)
+    useSWRInfinite(getKey, fetcher)
 
   if (isLoading) return { data: [], error: null, size, setSize }
 
