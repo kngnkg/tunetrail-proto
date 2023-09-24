@@ -85,10 +85,10 @@ func SetupRouter(cfg *config.Config) (*gin.Engine, func(), error) {
 			id.GET("/followees", uh.GetFollowees)
 			id.GET("/followers", uh.GetFollowers)
 
-			follow := id.Group("/follow")
+			follow := id.Group("/follows")
 			{
 				follow.POST("", uh.FollowUser)
-				follow.DELETE("", uh.UnfollowUser)
+				follow.DELETE("/:followee_user_id", uh.UnfollowUser)
 			}
 		}
 	}

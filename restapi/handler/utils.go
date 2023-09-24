@@ -15,6 +15,10 @@ func getUserIdFromPath(c *gin.Context) model.UserID {
 	return model.UserID(c.Param("user_id"))
 }
 
+func getFolloweeIdFromPath(c *gin.Context) model.UserID {
+	return model.UserID(c.Param("followee_user_id"))
+}
+
 func getPostIdFromPath(c *gin.Context) string {
 	return c.Param("post_id")
 }
