@@ -30,6 +30,7 @@ const fetcher = async (
 
 export interface PostParams {
   body: string
+  parentPost?: Post
 }
 
 // TODO: エンドポイントを引数に取って再利用できるようにする
@@ -43,6 +44,7 @@ export const useTimeline = (
   ) => Promise<any[] | undefined>
   error: null | string
   addPost: (param: PostParams) => Promise<void>
+  addReply: (param: PostParams) => Promise<void>
   mutatePost: (post: Post) => void
 } => {
   const getKey = (pageIndex: number, previousPageData: Timeline) => {
@@ -124,8 +126,40 @@ export const useTimeline = (
     }
   }
 
+  const addReply = async (param: PostParams): Promise<void> => {
+    if (!param.parentPost) return
+
+    try {
+      const res = await clientFetcher(`${apiRoot}/posts`, {
+        method: "POST",
+        body: JSON.stringify({
+          body: param.body,
+          parentId: param.parentPost.id,
+        }),
+      })
+
+      // const post: Post = {
+      //   ...res,
+      //   createdAt: new Date(res.createdAt),
+      // }
+
+      // TODO: 後で改修する
+      mutatePost(param.parentPost)
+    } catch (e) {
+      throw e
+    }
+  }
+
   if (isLoading)
-    return { data: [], error: null, size, setSize, addPost, mutatePost }
+    return {
+      data: [],
+      error: null,
+      size,
+      setSize,
+      addPost,
+      addReply,
+      mutatePost,
+    }
 
   if (error)
     return {
@@ -134,11 +168,20 @@ export const useTimeline = (
       size,
       setSize,
       addPost,
+      addReply,
       mutatePost,
     }
 
   if (!data)
-    return { data: [], error: null, size, setSize, addPost, mutatePost }
+    return {
+      data: [],
+      error: null,
+      size,
+      setSize,
+      addPost,
+      addReply,
+      mutatePost,
+    }
 
-  return { data, error, size, setSize, addPost, mutatePost }
+  return { data, error, size, setSize, addPost, addReply, mutatePost }
 }

@@ -72,7 +72,7 @@ func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId mo
 
 	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
-	queryArgs := []interface{}{userId, signedInUserId, limit}
+	queryArgs := []interface{}{signedInUserId, userId, limit}
 
 	statement := selectBasePostQuery + `
 		WHERE p.user_id = $2

@@ -1,13 +1,11 @@
-import { cookies } from "next/headers"
-import Link from "next/link"
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 import { getUser } from "@/services/user/get-user"
 
 import { env } from "@/env.mjs"
-import { Tokens } from "@/types/tokens"
 import { FollowButton } from "@/components/features/FollowButton/FollowButton"
 import { UserAvatar } from "@/components/features/UserAvatar/UserAvatar"
 import { UserPostList } from "@/components/features/UserPostList/UserPostList"
+import { getTokensFromCookie } from "@/components/utils"
 
 interface UserPageProps {
   params: { userName: string }
@@ -15,21 +13,7 @@ interface UserPageProps {
 
 // ユーザーページ
 export default async function UserPage({ params }: UserPageProps) {
-  const cookieStore = cookies()
-  const idCookie = cookieStore.get("idToken")
-  const accessCookie = cookieStore.get("accessToken")
-
-  if (idCookie === undefined || accessCookie === undefined) {
-    // 暫定としてサインインページにリダイレクト
-    redirect("/signin")
-  }
-
-  const tokens: Tokens = {
-    idToken: idCookie?.value,
-    accessToken: accessCookie?.value,
-    refreshToken: "",
-  }
-
+  const tokens = getTokensFromCookie()
   const user = await getUser(env.API_ROOT, tokens, params.userName)
 
   if (!user) {
