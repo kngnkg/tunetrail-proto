@@ -191,7 +191,13 @@ func (uh *UserHandler) GetFollowees(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, users)
+	var response struct {
+		Users []*model.User `json:"users"`
+	}
+
+	response.Users = users
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (uh *UserHandler) GetFollowers(c *gin.Context) {
@@ -210,5 +216,11 @@ func (uh *UserHandler) GetFollowers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, users)
+	var response struct {
+		Users []*model.User `json:"users"`
+	}
+
+	response.Users = users
+
+	c.JSON(http.StatusOK, response)
 }
