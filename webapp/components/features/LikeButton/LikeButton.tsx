@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { HeartFilledIcon, HeartIcon } from "@radix-ui/react-icons"
 

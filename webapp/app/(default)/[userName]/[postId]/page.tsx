@@ -1,12 +1,26 @@
+import { notFound } from "next/navigation"
+import { getPost } from "@/services/post/get-post"
+
+import { env } from "@/env.mjs"
+import { PostCard } from "@/components/features/PostCard/PostCard"
+import { getTokensFromCookie } from "@/components/utils"
+
 interface PostPageProps {
   params: { postId: string }
 }
 
-export default function PostPage({ params }: PostPageProps) {
+export default async function PostPage({ params }: PostPageProps) {
+  const tokens = getTokensFromCookie()
+
+  const post = await getPost(env.API_ROOT, tokens, params.postId)
+
+  if (!post) {
+    notFound()
+  }
+
   return (
     <div className="container mx-auto p-8">
-      <h1 className="text-3xl mb-8">Post Page</h1>
-      <p>{params.postId}</p>
+      <PostCard post={post} />
     </div>
   )
 }
