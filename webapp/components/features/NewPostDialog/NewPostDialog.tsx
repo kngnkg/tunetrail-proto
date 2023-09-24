@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 
 import { env } from "@/env.mjs"
+import { Post } from "@/types/post"
 import { MESSAGE } from "@/config/messages"
 import { mergeClasses } from "@/lib/utils"
 import { postSchema } from "@/lib/validations/post.schema"
@@ -18,13 +19,13 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/Dialog/Dialog"
-import { Input } from "@/components/ui/Input/Input"
 import { TextArea } from "@/components/ui/TextArea/TextArea"
 import { UserAvatar } from "@/components/features/UserAvatar/UserAvatar"
 
 export interface NewPostDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
   className?: string
+  parentPost?: Post
 }
 
 type FormData = z.infer<typeof postSchema>
@@ -37,7 +38,8 @@ export const NewPostDialog: React.FC<NewPostDialogProps> = ({
   const { register, handleSubmit, formState, reset } = useForm<FormData>({
     resolver: zodResolver(postSchema),
   })
-  const { error, addPost } = useTimeline(env.NEXT_PUBLIC_API_ROOT)
+  const { error, addPost, addReply } = useTimeline(env.NEXT_PUBLIC_API_ROOT)
+  // const { addReply } = useReply(env.NEXT_PUBLIC_API_ROOT)
   const { showToast } = useToast()
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [open, setOpen] = React.useState<boolean>(false)
@@ -58,7 +60,11 @@ export const NewPostDialog: React.FC<NewPostDialogProps> = ({
     setIsLoading(true)
 
     try {
-      await addPost(data)
+      if (props.parentPost) {
+        await addReply({ body: data.body, parentPost: props.parentPost })
+      } else {
+        await addPost(data)
+      }
 
       showToast({
         intent: "success",
