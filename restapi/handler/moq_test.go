@@ -88,7 +88,7 @@ var _ UserService = &UserServiceMock{}
 //			DeleteUserByUserNameFunc: func(ctx context.Context, userName string) error {
 //				panic("mock out the DeleteUserByUserName method")
 //			},
-//			FollowUserFunc: func(ctx context.Context, userId model.UserID, follweeUserId model.UserID) error {
+//			FollowUserFunc: func(ctx context.Context, userId model.UserID, follweeUserId model.UserID) (*model.User, error) {
 //				panic("mock out the FollowUser method")
 //			},
 //			GetFolloweesFunc: func(ctx context.Context, userId model.UserID) ([]*model.User, error) {
@@ -120,7 +120,7 @@ type UserServiceMock struct {
 	DeleteUserByUserNameFunc func(ctx context.Context, userName string) error
 
 	// FollowUserFunc mocks the FollowUser method.
-	FollowUserFunc func(ctx context.Context, userId model.UserID, follweeUserId model.UserID) error
+	FollowUserFunc func(ctx context.Context, userId model.UserID, follweeUserId model.UserID) (*model.User, error)
 
 	// GetFolloweesFunc mocks the GetFollowees method.
 	GetFolloweesFunc func(ctx context.Context, userId model.UserID) ([]*model.User, error)
@@ -252,7 +252,7 @@ func (mock *UserServiceMock) DeleteUserByUserNameCalls() []struct {
 }
 
 // FollowUser calls FollowUserFunc.
-func (mock *UserServiceMock) FollowUser(ctx context.Context, userId model.UserID, follweeUserId model.UserID) error {
+func (mock *UserServiceMock) FollowUser(ctx context.Context, userId model.UserID, follweeUserId model.UserID) (*model.User, error) {
 	if mock.FollowUserFunc == nil {
 		panic("UserServiceMock.FollowUserFunc: method is nil but UserService.FollowUser was just called")
 	}

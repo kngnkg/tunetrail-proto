@@ -16,7 +16,7 @@ type UserService interface {
 	GetUserByUserName(ctx context.Context, userName string, signedInUserId model.UserID) (*model.User, error)
 	UpdateUser(ctx context.Context, u *model.UserUpdateData) error
 	DeleteUserByUserName(ctx context.Context, userName string) error
-	FollowUser(ctx context.Context, userId, follweeUserId model.UserID) error
+	FollowUser(ctx context.Context, userId, follweeUserId model.UserID) (*model.User, error)
 	UnfollowUser(ctx context.Context, userId, follweeUserId model.UserID) error
 	GetFollowees(ctx context.Context, userId model.UserID) ([]*model.User, error)
 	GetFollowers(ctx context.Context, userId model.UserID) ([]*model.User, error)
@@ -139,7 +139,8 @@ func (uh *UserHandler) FollowUser(c *gin.Context) {
 		return
 	}
 
-	if err := uh.Service.FollowUser(c.Request.Context(), userId, model.UserID(b.FollweeUserId)); err != nil {
+	u, err := uh.Service.FollowUser(c.Request.Context(), userId, model.UserID(b.FollweeUserId))
+	if err != nil {
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
 			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
@@ -151,7 +152,7 @@ func (uh *UserHandler) FollowUser(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusCreated, u)
 }
 
 // ユーザーのフォローを解除する

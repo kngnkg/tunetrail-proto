@@ -128,7 +128,9 @@ func (us *UserService) DeleteUserByUserName(ctx context.Context, userName string
 }
 
 // FollowUserはユーザーをフォローする
-func (us *UserService) FollowUser(ctx context.Context, userId, follweeUserId model.UserID) error {
+func (us *UserService) FollowUser(ctx context.Context, userId, follweeUserId model.UserID) (*model.User, error) {
+	var u *model.User
+
 	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
 		if err := us.Repo.AddFollow(ctx, tx, userId, follweeUserId); err != nil {
 			if errors.Is(err, store.ErrUserNotFound) {
@@ -137,14 +139,22 @@ func (us *UserService) FollowUser(ctx context.Context, userId, follweeUserId mod
 			return err
 		}
 
+		got, err := us.Repo.GetUserByUserId(ctx, tx, follweeUserId)
+
+		if err != nil {
+			return err
+		}
+
+		u = got
+
 		return nil
 	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return u, nil
 }
 
 // UnfollowUserはユーザーのフォローを解除する
