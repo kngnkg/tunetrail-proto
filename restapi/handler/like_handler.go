@@ -9,7 +9,7 @@ import (
 )
 
 type LikeService interface {
-	AddLike(ctx context.Context, userId model.UserID, postId string) error
+	AddLike(ctx context.Context, userId model.UserID, postId string) (*model.Post, error)
 	DeleteLike(ctx context.Context, userId model.UserID, postId string) error
 }
 
@@ -21,14 +21,14 @@ func (h *LikeHandler) AddLike(c *gin.Context) {
 	signedInUserId := getSignedInUserId(c)
 	postId := getPostIdFromPath(c)
 
-	err := h.Service.AddLike(c.Request.Context(), signedInUserId, postId)
+	likedPost, err := h.Service.AddLike(c.Request.Context(), signedInUserId, postId)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusBadRequest, ServerErrorCode)
 		return
 	}
 
-	c.Status(http.StatusCreated)
+	c.JSON(http.StatusCreated, likedPost)
 }
 
 func (h *LikeHandler) DeleteLike(c *gin.Context) {

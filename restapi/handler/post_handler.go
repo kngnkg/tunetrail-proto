@@ -22,10 +22,9 @@ type PostHandler struct {
 	Service PostService
 }
 
-// POST /posts
 func (h *PostHandler) AddPost(c *gin.Context) {
 	var b struct {
-		ParentId string `json:"parent_id"`
+		ParentId string `json:"parentId"`
 		Body     string `json:"body" binding:"required"`
 	}
 
@@ -47,7 +46,6 @@ func (h *PostHandler) AddPost(c *gin.Context) {
 	c.JSON(http.StatusCreated, p)
 }
 
-// GET /users/timelines
 func (h *PostHandler) GetTimeline(c *gin.Context) {
 	signedInUserId := getSignedInUserId(c)
 
