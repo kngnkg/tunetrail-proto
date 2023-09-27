@@ -11,13 +11,7 @@ const selectBasePostQuery = `
 	SELECT
 		p.id,
 		COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
-		u.id AS "user.id",
-		u.user_name AS "user.user_name",
-		u.name AS "user.name",
-		u.icon_url AS "user.icon_url",
-		u.bio AS "user.bio",
-		u.created_at AS "user.created_at",
-		u.updated_at AS "user.updated_at",
+		p.user_id AS "user.id",
 		p.body,
 		COUNT(l.post_id) AS "likes_count",
 		CASE WHEN BOOL_OR(l.user_id = $1) THEN TRUE ELSE FALSE END AS "liked",
@@ -25,13 +19,12 @@ const selectBasePostQuery = `
 		p.updated_at
 	FROM
 		posts p
-		INNER JOIN users u ON p.user_id = u.id
 		LEFT OUTER JOIN replies r ON p.id = r.post_id
 		LEFT OUTER JOIN likes l ON p.id = l.post_id
 	`
 
 const selectBasePostQueryGroupBy = `
-	GROUP BY p.id, r.parent_id, u.id
+	GROUP BY p.id, r.parent_id
 	`
 
 func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds []model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {

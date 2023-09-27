@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/kngnkg/tunetrail/restapi/model"
 	"github.com/kngnkg/tunetrail/restapi/store"
+	"golang.org/x/sync/errgroup"
 )
 
 type PostRepository interface {
@@ -19,6 +20,7 @@ type PostRepository interface {
 	GetPostsByUserIds(ctx context.Context, db store.Queryer, userIds []model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
 	GetLikedPostsByUserId(ctx context.Context, db store.Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
 	GetReplies(ctx context.Context, db store.Queryer, parentPostId string, pagination *model.Pagination) (*model.Timeline, error)
+	GetUserByUserId(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error)
 }
 
 type PostService struct {
@@ -85,6 +87,14 @@ func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.Us
 		return nil, err
 	}
 
+	posts, err := ps.fillUserToPosts(ctx, timeline.Posts)
+
+	if err != nil {
+		return nil, err
+	}
+
+	timeline.Posts = posts
+
 	return timeline, nil
 }
 
@@ -94,6 +104,14 @@ func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID
 	if err != nil {
 		return nil, err
 	}
+
+	posts, err := ps.fillUserToPosts(ctx, timeline.Posts)
+
+	if err != nil {
+		return nil, err
+	}
+
+	timeline.Posts = posts
 
 	return timeline, nil
 }
@@ -105,6 +123,14 @@ func (ps *PostService) GetLikedPostsByUserId(ctx context.Context, userId model.U
 		return nil, err
 	}
 
+	posts, err := ps.fillUserToPosts(ctx, timeline.Posts)
+
+	if err != nil {
+		return nil, err
+	}
+
+	timeline.Posts = posts
+
 	return timeline, nil
 }
 
@@ -114,6 +140,15 @@ func (ps *PostService) GetPostById(ctx context.Context, postId string, signedInU
 	if err != nil {
 		return nil, err
 	}
+
+	// ユーザー情報を紐付ける
+	u, err := ps.Repo.GetUserByUserId(ctx, ps.DB, p.User.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	p.User = u
 
 	return p, nil
 }
@@ -153,4 +188,30 @@ func (ps *PostService) DeletePost(ctx context.Context, postId string) error {
 	}
 
 	return nil
+}
+
+// ユーザー情報を紐付ける
+func (ps *PostService) fillUserToPosts(ctx context.Context, posts []*model.Post) ([]*model.Post, error) {
+	eg, ctx := errgroup.WithContext(ctx)
+
+	for _, p := range posts {
+		post := p
+
+		eg.Go(func() error {
+			u, err := ps.Repo.GetUserByUserId(ctx, ps.DB, post.User.Id)
+
+			if err != nil {
+				return err
+			}
+
+			post.User = u
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
