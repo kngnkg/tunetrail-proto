@@ -20,8 +20,23 @@ const selectBasePostQuery = `
 		LEFT OUTER JOIN replies r ON p.id = r.post_id
 	`
 
-func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds []model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
-	var posts []*model.Post
+func handlePagination(posts []*model.Post, pagination *model.Pagination) ([]*model.Post, *model.Pagination) {
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+
+	if len(posts) == limit {
+		// 次のページがある場合は、次のページのためにカーソルをセットする
+		pagination.NextCursor = posts[limit-1].Id
+		posts = posts[:limit-1]
+
+		return posts, pagination
+	}
+
+	pagination.NextCursor = ""
+	return posts, pagination
+}
+
+func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds []model.UserID, pagination *model.Pagination) ([]*model.Post, *model.Pagination, error) {
+	var ps []*model.Post
 
 	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
@@ -44,17 +59,17 @@ func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds 
 		LIMIT $2;
 	`
 
-	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
-		return nil, err
+	if err := db.SelectContext(ctx, &ps, statement, queryArgs...); err != nil {
+		return nil, nil, err
 	}
 
-	tl := handlePagination(posts, pagination)
+	posts, pg := handlePagination(ps, pagination)
 
-	return tl, nil
+	return posts, pg, nil
 }
 
-func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
-	var posts []*model.Post
+func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, pagination *model.Pagination) ([]*model.Post, *model.Pagination, error) {
+	var ps []*model.Post
 
 	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
@@ -77,17 +92,17 @@ func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId mo
 		LIMIT $2;
 	`
 
-	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
-		return nil, err
+	if err := db.SelectContext(ctx, &ps, statement, queryArgs...); err != nil {
+		return nil, nil, err
 	}
 
-	tl := handlePagination(posts, pagination)
+	posts, pg := handlePagination(ps, pagination)
 
-	return tl, nil
+	return posts, pg, nil
 }
 
-func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
-	var posts []*model.Post
+func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, pagination *model.Pagination) ([]*model.Post, *model.Pagination, error) {
+	var ps []*model.Post
 
 	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
 
@@ -111,13 +126,13 @@ func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, user
 		LIMIT $2;
 	`
 
-	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
-		return nil, err
+	if err := db.SelectContext(ctx, &ps, statement, queryArgs...); err != nil {
+		return nil, nil, err
 	}
 
-	tl := handlePagination(posts, pagination)
+	posts, pg := handlePagination(ps, pagination)
 
-	return tl, nil
+	return posts, pg, nil
 }
 
 func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string) (*model.Post, error) {
@@ -133,8 +148,8 @@ func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string)
 }
 
 // 昇順で取得する
-func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId string, pagination *model.Pagination) (*model.Timeline, error) {
-	var posts []*model.Post
+func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId string, pagination *model.Pagination) ([]*model.Post, *model.Pagination, error) {
+	var ps []*model.Post
 
 	baseQuery := `
 	WITH RECURSIVE post_tree AS (
@@ -204,13 +219,13 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 		queryArgs = append(queryArgs, pagination.NextCursor)
 	}
 
-	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
-		return nil, err
+	if err := db.SelectContext(ctx, &ps, statement, queryArgs...); err != nil {
+		return nil, nil, err
 	}
 
-	tl := handlePagination(posts, pagination)
+	posts, pg := handlePagination(ps, pagination)
 
-	return tl, nil
+	return posts, pg, nil
 }
 
 func (r *Repository) AddPost(ctx context.Context, db Queryer, p *model.Post) (string, error) {
@@ -264,23 +279,4 @@ func (r *Repository) DeletePost(ctx context.Context, db Execer, postId string) e
 	}
 
 	return nil
-}
-
-func handlePagination(posts []*model.Post, pagination *model.Pagination) *model.Timeline {
-	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
-
-	if len(posts) == limit {
-		// 次のページがある場合は、次のページのためにカーソルをセットする
-		pagination.NextCursor = posts[limit-1].Id
-		posts = posts[:limit-1]
-	} else {
-		pagination.NextCursor = ""
-	}
-
-	tl := &model.Timeline{
-		Posts:      posts,
-		Pagination: pagination,
-	}
-
-	return tl
 }
