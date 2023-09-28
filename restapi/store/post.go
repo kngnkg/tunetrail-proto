@@ -11,51 +11,104 @@ const selectBasePostQuery = `
 	SELECT
 		p.id,
 		COALESCE(CAST(r.parent_id AS text), '') AS "parent_id", -- NULLの場合にGoのstring型にバインドできないため文字列に変換する
-		u.id AS "user.id",
-		u.user_name AS "user.user_name",
-		u.name AS "user.name",
-		u.icon_url AS "user.icon_url",
-		u.bio AS "user.bio",
-		u.created_at AS "user.created_at",
-		u.updated_at AS "user.updated_at",
+		p.user_id AS "user.id",
 		p.body,
-		COUNT(l.post_id) AS "likes_count",
-		CASE WHEN BOOL_OR(l.user_id = $1) THEN TRUE ELSE FALSE END AS "liked",
 		p.created_at,
 		p.updated_at
 	FROM
 		posts p
-		INNER JOIN users u ON p.user_id = u.id
 		LEFT OUTER JOIN replies r ON p.id = r.post_id
+	`
+
+func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds []model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
+	var posts []*model.Post
+
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+
+	queryArgs := []interface{}{pq.Array(userIds), limit}
+
+	statement := selectBasePostQuery + `
+		WHERE p.user_id = ANY ($1) AND r.parent_id IS NULL
+	`
+
+	if pagination.NextCursor != "" {
+		statement = statement + `
+			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $3)
+		`
+
+		queryArgs = append(queryArgs, pagination.NextCursor)
+	}
+
+	statement = statement + `
+		ORDER BY p.created_at DESC
+		LIMIT $2;
+	`
+
+	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
+		return nil, err
+	}
+
+	tl := handlePagination(posts, pagination)
+
+	return tl, nil
+}
+
+func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
+	var posts []*model.Post
+
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+
+	queryArgs := []interface{}{userId, limit}
+
+	statement := selectBasePostQuery + `
+		WHERE p.user_id = $1
+	`
+
+	if pagination.NextCursor != "" {
+		statement = statement + `
+			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $3)
+		`
+
+		queryArgs = append(queryArgs, pagination.NextCursor)
+	}
+
+	statement = statement + `
+		ORDER BY p.created_at DESC
+		LIMIT $2;
+	`
+
+	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
+		return nil, err
+	}
+
+	tl := handlePagination(posts, pagination)
+
+	return tl, nil
+}
+
+func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
+	var posts []*model.Post
+
+	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
+
+	queryArgs := []interface{}{userId, limit}
+
+	statement := selectBasePostQuery + `
 		LEFT OUTER JOIN likes l ON p.id = l.post_id
-	`
-
-const selectBasePostQueryGroupBy = `
-	GROUP BY p.id, r.parent_id, u.id
-	`
-
-func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds []model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
-	var posts []*model.Post
-
-	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
-
-	queryArgs := []interface{}{signedInUserId, pq.Array(userIds), limit}
-
-	statement := selectBasePostQuery + `
-		WHERE p.user_id = ANY ($2) AND r.parent_id IS NULL
+		WHERE l.user_id = $1
 	`
 
 	if pagination.NextCursor != "" {
 		statement = statement + `
-			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
+			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $3)
 		`
 
 		queryArgs = append(queryArgs, pagination.NextCursor)
 	}
 
-	statement = statement + selectBasePostQueryGroupBy + `
+	statement = statement + `
 		ORDER BY p.created_at DESC
-		LIMIT $3;
+		LIMIT $2;
 	`
 
 	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
@@ -67,78 +120,12 @@ func (r *Repository) GetPostsByUserIds(ctx context.Context, db Queryer, userIds 
 	return tl, nil
 }
 
-func (r *Repository) GetPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
-	var posts []*model.Post
-
-	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
-
-	queryArgs := []interface{}{signedInUserId, userId, limit}
-
-	statement := selectBasePostQuery + `
-		WHERE p.user_id = $2
-	`
-
-	if pagination.NextCursor != "" {
-		statement = statement + `
-			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
-		`
-
-		queryArgs = append(queryArgs, pagination.NextCursor)
-	}
-
-	statement = statement + selectBasePostQueryGroupBy + `
-		ORDER BY p.created_at DESC
-		LIMIT $3;
-	`
-
-	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
-		return nil, err
-	}
-
-	tl := handlePagination(posts, pagination)
-
-	return tl, nil
-}
-
-func (r *Repository) GetLikedPostsByUserId(ctx context.Context, db Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
-	var posts []*model.Post
-
-	limit := pagination.Limit + 1 // 次のページがあるかどうかを判定するために1件多く取得する
-
-	queryArgs := []interface{}{userId, signedInUserId, limit}
-
-	statement := selectBasePostQuery + `
-		WHERE l.user_id = $2
-	`
-
-	if pagination.NextCursor != "" {
-		statement = statement + `
-			AND p.created_at <= (SELECT created_at FROM posts WHERE id = $4)
-		`
-
-		queryArgs = append(queryArgs, pagination.NextCursor)
-	}
-
-	statement = statement + selectBasePostQueryGroupBy + `
-		ORDER BY p.created_at DESC
-		LIMIT $3;
-	`
-
-	if err := db.SelectContext(ctx, &posts, statement, queryArgs...); err != nil {
-		return nil, err
-	}
-
-	tl := handlePagination(posts, pagination)
-
-	return tl, nil
-}
-
-func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string, signedInUserId model.UserID) (*model.Post, error) {
+func (r *Repository) GetPostById(ctx context.Context, db Queryer, postId string) (*model.Post, error) {
 	p := &model.Post{}
 
-	statement := selectBasePostQuery + `WHERE p.id = $2` + selectBasePostQueryGroupBy + `;`
+	statement := selectBasePostQuery + `WHERE p.id = $1` + `;`
 
-	if err := db.GetContext(ctx, p, statement, signedInUserId, postId); err != nil {
+	if err := db.GetContext(ctx, p, statement, postId); err != nil {
 		return nil, err
 	}
 
@@ -156,20 +143,13 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 			r1.post_id AS "id",
 			r1.parent_id AS "parent_id",
 			r1.created_at AS "reply_created_at",
+			p.user_id AS "user_id",
 			p.body,
 			p.created_at,
-			p.updated_at,
-			u.id AS "user_id",
-			u.user_name AS "user_user_name",
-			u.name AS "user_name",
-			u.icon_url AS "user_icon_url",
-			u.bio AS "user_bio",
-			u.created_at AS "user_created_at",
-			u.updated_at AS "user_updated_at"
+			p.updated_at
 		FROM
 			replies r1 -- ツリー構造をたどるためにrepliesテーブルを左テーブルとして結合する
-		LEFT OUTER JOIN posts p ON r1.post_id = p.id -- 削除された投稿の場合はNULLになる
-		LEFT OUTER JOIN users u ON p.user_id = u.id
+			LEFT OUTER JOIN posts p ON r1.post_id = p.id -- 削除された投稿の場合はNULLになる
 	WHERE
 		r1.parent_id = $1 -- 最初のリプライを取得する
 
@@ -180,20 +160,13 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 		r2.post_id AS "id",
 		r2.parent_id AS "parent_id",
 		r2.created_at AS "reply_created_at",
+		p.user_id AS "user_id",
 		p.body,
 		p.created_at,
-		p.updated_at,
-		u.id AS "user_id",
-		u.user_name AS "user_user_name",
-		u.name AS "user_name",
-		u.icon_url AS "user_icon_url",
-		u.bio AS "user_bio",
-		u.created_at AS "user_created_at",
-		u.updated_at AS "user_updated_at"
+		p.updated_at
 	FROM
 		replies r2
 		LEFT OUTER JOIN posts p ON r2.post_id = p.id
-		LEFT OUTER JOIN users u ON p.user_id = u.id
 		INNER JOIN post_tree pt ON r2.parent_id = pt.id
 	)
 	SELECT
@@ -202,13 +175,7 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 		COALESCE(body, '') AS "body",
 		COALESCE(created_at, now()) AS "created_at",
 		COALESCE(updated_at, now()) AS "updated_at",
-		COALESCE(CAST(user_id AS text), '') AS "user.id",
-		COALESCE(user_user_name, '') AS "user.user_name",
-		COALESCE(user_name, '') AS "user.name",
-		COALESCE(user_icon_url, '') AS "user.icon_url",
-		COALESCE(user_bio, '') AS "user.bio",
-		COALESCE(user_created_at, now()) AS "user.created_at",
-		COALESCE(user_updated_at, now()) AS "user.updated_at"
+		COALESCE(CAST(user_id AS text), '') AS "user.id"
 	FROM
 		post_tree
 	`
