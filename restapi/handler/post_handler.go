@@ -11,11 +11,16 @@ import (
 type PostService interface {
 	AddPost(ctx context.Context, signedInUserId model.UserID, ParentId, body string) (*model.Post, error)
 	GetPostById(ctx context.Context, postId string, signedInUserId model.UserID) (*model.Post, error)
-	GetTimelines(ctx context.Context, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
-	GetPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
-	GetLikedPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
-	GetReplies(ctx context.Context, postId string, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
+	GetTimelines(ctx context.Context, signedInUserId model.UserID, pagination *model.Pagination) ([]*model.Post, *model.Pagination, error)
+	GetPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) ([]*model.Post, *model.Pagination, error)
+	GetLikedPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) ([]*model.Post, *model.Pagination, error)
+	GetReplies(ctx context.Context, postId string, signedInUserId model.UserID, pagination *model.Pagination) ([]*model.Post, *model.Pagination, error)
 	DeletePost(ctx context.Context, postId string) error
+}
+
+type postsResp struct {
+	Posts      []*model.Post     `json:"posts"`
+	Pagination *model.Pagination `json:"pagination"`
 }
 
 type PostHandler struct {
@@ -49,64 +54,96 @@ func (h *PostHandler) AddPost(c *gin.Context) {
 func (h *PostHandler) GetTimeline(c *gin.Context) {
 	signedInUserId := getSignedInUserId(c)
 
-	pagination, err := getPaginationFromQuery(c)
+	reqPagination, err := getPaginationFromQuery(c)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
 
-	timeline, err := h.Service.GetTimelines(c.Request.Context(), signedInUserId, pagination)
+	posts, pagination, err := h.Service.GetTimelines(c.Request.Context(), signedInUserId, reqPagination)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
 		return
 	}
 
-	c.JSON(http.StatusOK, timeline)
+	c.JSON(http.StatusOK, &postsResp{
+		Posts:      posts,
+		Pagination: pagination,
+	})
 }
 
 func (h *PostHandler) GetPostsByUserId(c *gin.Context) {
 	userId := getUserIdFromPath(c)
 	signedInUserId := getSignedInUserId(c)
 
-	pagination, err := getPaginationFromQuery(c)
+	reqPagination, err := getPaginationFromQuery(c)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
 
-	// TODO: Timeline構造体の名前を変える
-	timeline, err := h.Service.GetPostsByUserId(c.Request.Context(), userId, signedInUserId, pagination)
+	posts, pagination, err := h.Service.GetPostsByUserId(c.Request.Context(), userId, signedInUserId, reqPagination)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
 		return
 	}
 
-	c.JSON(http.StatusOK, timeline)
+	c.JSON(http.StatusOK, &postsResp{
+		Posts:      posts,
+		Pagination: pagination,
+	})
 }
 
 func (h *PostHandler) GetLikedPostsByUserId(c *gin.Context) {
 	userId := getUserIdFromPath(c)
 	signedInUserId := getSignedInUserId(c)
 
-	pagination, err := getPaginationFromQuery(c)
+	reqPagination, err := getPaginationFromQuery(c)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
 		return
 	}
 
-	timeline, err := h.Service.GetLikedPostsByUserId(c.Request.Context(), userId, signedInUserId, pagination)
+	posts, pagination, err := h.Service.GetLikedPostsByUserId(c.Request.Context(), userId, signedInUserId, reqPagination)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
 		return
 	}
 
-	c.JSON(http.StatusOK, timeline)
+	c.JSON(http.StatusOK, &postsResp{
+		Posts:      posts,
+		Pagination: pagination,
+	})
+}
+
+func (h *PostHandler) GetReplies(c *gin.Context) {
+	postId := getPostIdFromPath(c)
+	signInUserId := getSignedInUserId(c)
+
+	reqPagination, err := getPaginationFromQuery(c)
+	if err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
+		return
+	}
+
+	posts, pagination, err := h.Service.GetReplies(c.Request.Context(), postId, signInUserId, reqPagination)
+	if err != nil {
+		c.Error(err)
+		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
+		return
+	}
+
+	c.JSON(http.StatusOK, &postsResp{
+		Posts:      posts,
+		Pagination: pagination,
+	})
 }
 
 func (h *PostHandler) GetPostById(c *gin.Context) {
@@ -121,27 +158,6 @@ func (h *PostHandler) GetPostById(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, p)
-}
-
-func (h *PostHandler) GetReplies(c *gin.Context) {
-	postId := getPostIdFromPath(c)
-	signInUserId := getSignedInUserId(c)
-
-	pagination, err := getPaginationFromQuery(c)
-	if err != nil {
-		c.Error(err)
-		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
-		return
-	}
-
-	timeline, err := h.Service.GetReplies(c.Request.Context(), postId, signInUserId, pagination)
-	if err != nil {
-		c.Error(err)
-		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
-		return
-	}
-
-	c.JSON(http.StatusOK, timeline)
 }
 
 func (h *PostHandler) DeletePost(c *gin.Context) {

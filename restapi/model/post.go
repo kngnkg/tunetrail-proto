@@ -11,3 +11,9 @@ type Post struct {
 	CreatedAt time.Time `json:"createdAt" db:"created_at" binding:"required"`
 	UpdatedAt time.Time `json:"updatedAt" db:"updated_at" binding:"required"`
 }
+
+type Pagination struct {
+	NextCursor     string `json:"nextCursor"`     // 次のページのカーソル
+	PreviousCursor string `json:"previousCursor"` // 前のページのカーソル
+	Limit          int    `json:"limit"`          // 1ページあたりの件数
+}
