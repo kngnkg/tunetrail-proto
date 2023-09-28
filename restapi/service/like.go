@@ -12,7 +12,9 @@ type LikeRepository interface {
 	Transactioner
 	AddLike(ctx context.Context, db store.Execer, userId model.UserID, postId string) error
 	DeleteLike(ctx context.Context, db store.Execer, userId model.UserID, postId string) error
-	GetPostById(ctx context.Context, db store.Queryer, postId string, signedInUserId model.UserID) (*model.Post, error)
+	GetPostById(ctx context.Context, db store.Queryer, postId string) (*model.Post, error)
+	GetUserByUserId(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error)
+	GetLikeInfoByPostId(ctx context.Context, db store.Queryer, signedInUserId model.UserID, postId string) (*model.LikeInfo, error)
 }
 
 type LikeService struct {
@@ -21,8 +23,6 @@ type LikeService struct {
 }
 
 func (ls *LikeService) AddLike(ctx context.Context, userId model.UserID, postId string) (*model.Post, error) {
-	var p *model.Post
-
 	err := ls.Repo.WithTransaction(ctx, ls.DB, func(tx *sqlx.Tx) error {
 		err := ls.Repo.AddLike(ctx, tx, userId, postId)
 
@@ -30,13 +30,6 @@ func (ls *LikeService) AddLike(ctx context.Context, userId model.UserID, postId 
 			return err
 		}
 
-		likedPost, err := ls.Repo.GetPostById(ctx, ls.DB, postId, userId)
-
-		if err != nil {
-			return err
-		}
-
-		p = likedPost
 		return nil
 	})
 
@@ -44,7 +37,31 @@ func (ls *LikeService) AddLike(ctx context.Context, userId model.UserID, postId 
 		return nil, err
 	}
 
-	return p, nil
+	likedPost, err := ls.Repo.GetPostById(ctx, ls.DB, postId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// ユーザー情報を紐付ける
+	u, err := ls.Repo.GetUserByUserId(ctx, ls.DB, likedPost.User.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	likedPost.User = u
+
+	// いいね情報を紐付ける
+	likeInfo, err := ls.Repo.GetLikeInfoByPostId(ctx, ls.DB, userId, likedPost.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	likedPost.LikeInfo = *likeInfo
+
+	return likedPost, nil
 }
 
 func (ls *LikeService) DeleteLike(ctx context.Context, userId model.UserID, postId string) error {

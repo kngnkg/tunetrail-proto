@@ -14,7 +14,7 @@ type PostService interface {
 	GetTimelines(ctx context.Context, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
 	GetPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
 	GetLikedPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
-	GetReplies(ctx context.Context, postId string, pagination *model.Pagination) (*model.Timeline, error)
+	GetReplies(ctx context.Context, postId string, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
 	DeletePost(ctx context.Context, postId string) error
 }
 
@@ -125,6 +125,7 @@ func (h *PostHandler) GetPostById(c *gin.Context) {
 
 func (h *PostHandler) GetReplies(c *gin.Context) {
 	postId := getPostIdFromPath(c)
+	signInUserId := getSignedInUserId(c)
 
 	pagination, err := getPaginationFromQuery(c)
 	if err != nil {
@@ -133,7 +134,7 @@ func (h *PostHandler) GetReplies(c *gin.Context) {
 		return
 	}
 
-	timeline, err := h.Service.GetReplies(c.Request.Context(), postId, pagination)
+	timeline, err := h.Service.GetReplies(c.Request.Context(), postId, signInUserId, pagination)
 	if err != nil {
 		c.Error(err)
 		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)

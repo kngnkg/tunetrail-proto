@@ -15,12 +15,13 @@ type PostRepository interface {
 	AddPost(ctx context.Context, db store.Queryer, p *model.Post) (string, error)
 	AddReplyRelation(ctx context.Context, db store.Execer, postId, parentId string) error
 	DeletePost(ctx context.Context, db store.Execer, postId string) error
-	GetPostById(ctx context.Context, db store.Queryer, postId string, signedInUserId model.UserID) (*model.Post, error)
-	GetPostsByUserId(ctx context.Context, db store.Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
-	GetPostsByUserIds(ctx context.Context, db store.Queryer, userIds []model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
-	GetLikedPostsByUserId(ctx context.Context, db store.Queryer, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
+	GetPostById(ctx context.Context, db store.Queryer, postId string) (*model.Post, error)
+	GetPostsByUserId(ctx context.Context, db store.Queryer, userId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
+	GetPostsByUserIds(ctx context.Context, db store.Queryer, userIds []model.UserID, pagination *model.Pagination) (*model.Timeline, error)
+	GetLikedPostsByUserId(ctx context.Context, db store.Queryer, userId model.UserID, pagination *model.Pagination) (*model.Timeline, error)
 	GetReplies(ctx context.Context, db store.Queryer, parentPostId string, pagination *model.Pagination) (*model.Timeline, error)
 	GetUserByUserId(ctx context.Context, db store.Queryer, id model.UserID) (*model.User, error)
+	GetLikeInfoByPostId(ctx context.Context, db store.Queryer, signedInUserId model.UserID, postId string) (*model.LikeInfo, error)
 }
 
 type PostService struct {
@@ -49,7 +50,13 @@ func (ps *PostService) AddPost(ctx context.Context, signedInUserId model.UserID,
 			}
 		}
 
-		registered, err := ps.Repo.GetPostById(ctx, ps.DB, id, signedInUserId)
+		registered, err := ps.Repo.GetPostById(ctx, ps.DB, id)
+
+		if err != nil {
+			return err
+		}
+
+		registered, err = ps.fillPostInfo(ctx, registered, signedInUserId)
 
 		if err != nil {
 			return err
@@ -81,13 +88,13 @@ func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.Us
 		userIds[i+1] = u.Id
 	}
 
-	timeline, err := ps.Repo.GetPostsByUserIds(ctx, ps.DB, userIds, signedInUserId, pagination)
+	timeline, err := ps.Repo.GetPostsByUserIds(ctx, ps.DB, userIds, pagination)
 
 	if err != nil {
 		return nil, err
 	}
 
-	posts, err := ps.fillUserToPosts(ctx, timeline.Posts)
+	posts, err := ps.fillPostsInfo(ctx, timeline.Posts, signedInUserId)
 
 	if err != nil {
 		return nil, err
@@ -99,13 +106,13 @@ func (ps *PostService) GetTimelines(ctx context.Context, signedInUserId model.Us
 }
 
 func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
-	timeline, err := ps.Repo.GetPostsByUserId(ctx, ps.DB, userId, signedInUserId, pagination)
+	timeline, err := ps.Repo.GetPostsByUserId(ctx, ps.DB, userId, pagination)
 
 	if err != nil {
 		return nil, err
 	}
 
-	posts, err := ps.fillUserToPosts(ctx, timeline.Posts)
+	posts, err := ps.fillPostsInfo(ctx, timeline.Posts, signedInUserId)
 
 	if err != nil {
 		return nil, err
@@ -117,13 +124,13 @@ func (ps *PostService) GetPostsByUserId(ctx context.Context, userId model.UserID
 }
 
 func (ps *PostService) GetLikedPostsByUserId(ctx context.Context, userId model.UserID, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
-	timeline, err := ps.Repo.GetLikedPostsByUserId(ctx, ps.DB, userId, signedInUserId, pagination)
+	timeline, err := ps.Repo.GetLikedPostsByUserId(ctx, ps.DB, userId, pagination)
 
 	if err != nil {
 		return nil, err
 	}
 
-	posts, err := ps.fillUserToPosts(ctx, timeline.Posts)
+	posts, err := ps.fillPostsInfo(ctx, timeline.Posts, signedInUserId)
 
 	if err != nil {
 		return nil, err
@@ -135,25 +142,22 @@ func (ps *PostService) GetLikedPostsByUserId(ctx context.Context, userId model.U
 }
 
 func (ps *PostService) GetPostById(ctx context.Context, postId string, signedInUserId model.UserID) (*model.Post, error) {
-	p, err := ps.Repo.GetPostById(ctx, ps.DB, postId, signedInUserId)
+	p, err := ps.Repo.GetPostById(ctx, ps.DB, postId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// ユーザー情報を紐付ける
-	u, err := ps.Repo.GetUserByUserId(ctx, ps.DB, p.User.Id)
+	p, err = ps.fillPostInfo(ctx, p, signedInUserId)
 
 	if err != nil {
 		return nil, err
 	}
-
-	p.User = u
 
 	return p, nil
 }
 
-func (ps *PostService) GetReplies(ctx context.Context, postId string, pagination *model.Pagination) (*model.Timeline, error) {
+func (ps *PostService) GetReplies(ctx context.Context, postId string, signedInUserId model.UserID, pagination *model.Pagination) (*model.Timeline, error) {
 	timeline, err := ps.Repo.GetReplies(ctx, ps.DB, postId, pagination)
 
 	if err != nil {
@@ -168,6 +172,14 @@ func (ps *PostService) GetReplies(ctx context.Context, postId string, pagination
 		// 削除されたポストの場合
 		p.Body = "このポストは削除されました。"
 	}
+
+	posts, err := ps.fillPostsInfo(ctx, timeline.Posts, signedInUserId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	timeline.Posts = posts
 
 	return timeline, nil
 }
@@ -190,11 +202,54 @@ func (ps *PostService) DeletePost(ctx context.Context, postId string) error {
 	return nil
 }
 
+func (ps *PostService) fillPostInfo(ctx context.Context, post *model.Post, signedInUserId model.UserID) (*model.Post, error) {
+	// ユーザー情報を紐付ける
+	u, err := ps.Repo.GetUserByUserId(ctx, ps.DB, post.User.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	post.User = u
+
+	// いいね情報を紐付ける
+	likeInfo, err := ps.Repo.GetLikeInfoByPostId(ctx, ps.DB, signedInUserId, post.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	post.LikeInfo = *likeInfo
+
+	return post, nil
+}
+
+func (ps *PostService) fillPostsInfo(ctx context.Context, posts []*model.Post, signedInUserId model.UserID) ([]*model.Post, error) {
+	posts, err := ps.fillUserToPosts(ctx, posts)
+
+	if err != nil {
+		return nil, err
+	}
+
+	posts, err = ps.fillLikeInfoToPosts(ctx, posts, signedInUserId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
 // ユーザー情報を紐付ける
 func (ps *PostService) fillUserToPosts(ctx context.Context, posts []*model.Post) ([]*model.Post, error) {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	for _, p := range posts {
+		// 削除されたポストの場合はスキップ
+		if p.User.Id == "" {
+			continue
+		}
+
 		post := p
 
 		eg.Go(func() error {
@@ -205,6 +260,32 @@ func (ps *PostService) fillUserToPosts(ctx context.Context, posts []*model.Post)
 			}
 
 			post.User = u
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
+// いいね情報を紐付ける
+func (ps *PostService) fillLikeInfoToPosts(ctx context.Context, posts []*model.Post, signedInUserId model.UserID) ([]*model.Post, error) {
+	eg, ctx := errgroup.WithContext(ctx)
+
+	for _, p := range posts {
+		post := p
+
+		eg.Go(func() error {
+			likeInfo, err := ps.Repo.GetLikeInfoByPostId(ctx, ps.DB, signedInUserId, post.Id)
+
+			if err != nil {
+				return err
+			}
+
+			post.LikeInfo = *likeInfo
 			return nil
 		})
 	}
