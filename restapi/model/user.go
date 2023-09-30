@@ -14,17 +14,16 @@ func NewUserId() UserID {
 }
 
 type User struct {
-	Id          UserID    `json:"id" db:"id" binding:"required,uuid4"`
-	UserName    string    `json:"userName" db:"user_name" binding:"required,min=3,max=20"`
-	Name        string    `json:"name" db:"name" binding:"required,min=3,max=20"`
-	IconUrl     string    `json:"iconUrl" db:"icon_url" binding:"required,url"`
-	Bio         string    `json:"bio" db:"bio" binding:"required,max=1000"`
-	Password    string    `json:"password" binding:"password"`
-	Email       string    `json:"email" binding:"email"`
-	IsFollowing bool      `json:"isFollowing" db:"is_following"`
-	IsFollowed  bool      `json:"isFollowed" db:"is_followed"`
-	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
-	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
+	Id       UserID `json:"id" db:"id" binding:"required,uuid4"`
+	UserName string `json:"userName" db:"user_name" binding:"required,min=3,max=20"`
+	Name     string `json:"name" db:"name" binding:"required,min=3,max=20"`
+	IconUrl  string `json:"iconUrl" db:"icon_url" binding:"required,url"`
+	Bio      string `json:"bio" db:"bio" binding:"required,max=1000"`
+	Password string `json:"password" binding:"password"`
+	Email    string `json:"email" binding:"email"`
+	FollowInfo
+	CreatedAt time.Time `json:"createdAt" db:"created_at"`
+	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
 }
 
 type AuthInfo struct {
