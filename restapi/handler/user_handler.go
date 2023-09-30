@@ -16,8 +16,6 @@ type UserService interface {
 	GetUserByUserName(ctx context.Context, userName string, signedInUserId model.UserID) (*model.User, error)
 	UpdateUser(ctx context.Context, u *model.UserUpdateData) error
 	DeleteUserByUserName(ctx context.Context, userName string) error
-	FollowUser(ctx context.Context, userId, follweeUserId model.UserID) (*model.User, error)
-	UnfollowUser(ctx context.Context, userId, follweeUserId model.UserID) error
 	GetFollowees(ctx context.Context, userId model.UserID) ([]*model.User, error)
 	GetFollowers(ctx context.Context, userId model.UserID) ([]*model.User, error)
 }
@@ -111,56 +109,6 @@ func (uh *UserHandler) DeleteUserByUserName(c *gin.Context) {
 	userName := c.Param("user_name")
 	err := uh.Service.DeleteUserByUserName(c.Request.Context(), userName)
 	if err != nil {
-		// ユーザーが存在しない場合
-		if errors.Is(err, service.ErrUserNotFound) {
-			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
-			return
-		}
-
-		c.Error(err)
-		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-}
-
-// ユーザーをフォローする
-func (uh *UserHandler) FollowUser(c *gin.Context) {
-	userId := getUserIdFromPath(c)
-
-	var b struct {
-		FollweeUserId string `json:"followee_user_id"`
-	}
-
-	if err := c.ShouldBindJSON(&b); err != nil {
-		c.Error(err)
-		errorResponse(c, http.StatusBadRequest, InvalidParameterCode)
-		return
-	}
-
-	u, err := uh.Service.FollowUser(c.Request.Context(), userId, model.UserID(b.FollweeUserId))
-	if err != nil {
-		// ユーザーが存在しない場合
-		if errors.Is(err, service.ErrUserNotFound) {
-			errorResponse(c, http.StatusNotFound, UserNotFoundCode)
-			return
-		}
-
-		c.Error(err)
-		errorResponse(c, http.StatusInternalServerError, ServerErrorCode)
-		return
-	}
-
-	c.JSON(http.StatusCreated, u)
-}
-
-// ユーザーのフォローを解除する
-func (uh *UserHandler) UnfollowUser(c *gin.Context) {
-	userId := getUserIdFromPath(c)
-	followeeId := getFolloweeIdFromPath(c)
-
-	if err := uh.Service.UnfollowUser(c.Request.Context(), userId, followeeId); err != nil {
 		// ユーザーが存在しない場合
 		if errors.Is(err, service.ErrUserNotFound) {
 			errorResponse(c, http.StatusNotFound, UserNotFoundCode)

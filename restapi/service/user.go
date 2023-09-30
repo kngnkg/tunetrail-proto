@@ -19,8 +19,6 @@ type UserRepository interface {
 	GetUserByUserName(ctx context.Context, db store.Queryer, userName string) (*model.User, error)
 	GetUserByUserNameWithFollowInfo(ctx context.Context, db store.Queryer, userName string, signedInUserId model.UserID) (*model.User, error)
 	UserExistsByUserName(ctx context.Context, db store.Queryer, userName string) (bool, error)
-	AddFollow(ctx context.Context, db store.Execer, userId, follweeUserId model.UserID) error
-	DeleteFollow(ctx context.Context, db store.Execer, userId, follweeUserId model.UserID) error
 	GetFolloweesByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
 	GetFollowersByUserId(ctx context.Context, db store.Queryer, signedInUserId model.UserID) ([]*model.User, error)
 }
@@ -124,56 +122,6 @@ func (us *UserService) DeleteUserByUserName(ctx context.Context, userName string
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-// FollowUserはユーザーをフォローする
-func (us *UserService) FollowUser(ctx context.Context, userId, follweeUserId model.UserID) (*model.User, error) {
-	var u *model.User
-
-	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
-		if err := us.Repo.AddFollow(ctx, tx, userId, follweeUserId); err != nil {
-			if errors.Is(err, store.ErrUserNotFound) {
-				return fmt.Errorf("%w: userId=%v: %w", ErrUserNotFound, userId, err)
-			}
-			return err
-		}
-
-		got, err := us.Repo.GetUserByUserId(ctx, tx, follweeUserId)
-
-		if err != nil {
-			return err
-		}
-
-		u = got
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return u, nil
-}
-
-// UnfollowUserはユーザーのフォローを解除する
-func (us *UserService) UnfollowUser(ctx context.Context, userId, follweeUserId model.UserID) error {
-	err := us.Repo.WithTransaction(ctx, us.DB, func(tx *sqlx.Tx) error {
-		if err := us.Repo.DeleteFollow(ctx, tx, userId, follweeUserId); err != nil {
-			if errors.Is(err, store.ErrUserNotFound) {
-				return fmt.Errorf("%w: userId=%v: %w", ErrUserNotFound, userId, err)
-			}
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

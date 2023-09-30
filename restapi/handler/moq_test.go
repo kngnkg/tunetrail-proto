@@ -88,9 +88,6 @@ var _ UserService = &UserServiceMock{}
 //			DeleteUserByUserNameFunc: func(ctx context.Context, userName string) error {
 //				panic("mock out the DeleteUserByUserName method")
 //			},
-//			FollowUserFunc: func(ctx context.Context, userId model.UserID, follweeUserId model.UserID) (*model.User, error) {
-//				panic("mock out the FollowUser method")
-//			},
 //			GetFolloweesFunc: func(ctx context.Context, userId model.UserID) ([]*model.User, error) {
 //				panic("mock out the GetFollowees method")
 //			},
@@ -102,9 +99,6 @@ var _ UserService = &UserServiceMock{}
 //			},
 //			GetUserByUserNameFunc: func(ctx context.Context, userName string, signedInUserId model.UserID) (*model.User, error) {
 //				panic("mock out the GetUserByUserName method")
-//			},
-//			UnfollowUserFunc: func(ctx context.Context, userId model.UserID, follweeUserId model.UserID) error {
-//				panic("mock out the UnfollowUser method")
 //			},
 //			UpdateUserFunc: func(ctx context.Context, u *model.UserUpdateData) error {
 //				panic("mock out the UpdateUser method")
@@ -119,9 +113,6 @@ type UserServiceMock struct {
 	// DeleteUserByUserNameFunc mocks the DeleteUserByUserName method.
 	DeleteUserByUserNameFunc func(ctx context.Context, userName string) error
 
-	// FollowUserFunc mocks the FollowUser method.
-	FollowUserFunc func(ctx context.Context, userId model.UserID, follweeUserId model.UserID) (*model.User, error)
-
 	// GetFolloweesFunc mocks the GetFollowees method.
 	GetFolloweesFunc func(ctx context.Context, userId model.UserID) ([]*model.User, error)
 
@@ -134,9 +125,6 @@ type UserServiceMock struct {
 	// GetUserByUserNameFunc mocks the GetUserByUserName method.
 	GetUserByUserNameFunc func(ctx context.Context, userName string, signedInUserId model.UserID) (*model.User, error)
 
-	// UnfollowUserFunc mocks the UnfollowUser method.
-	UnfollowUserFunc func(ctx context.Context, userId model.UserID, follweeUserId model.UserID) error
-
 	// UpdateUserFunc mocks the UpdateUser method.
 	UpdateUserFunc func(ctx context.Context, u *model.UserUpdateData) error
 
@@ -148,15 +136,6 @@ type UserServiceMock struct {
 			Ctx context.Context
 			// UserName is the userName argument value.
 			UserName string
-		}
-		// FollowUser holds details about calls to the FollowUser method.
-		FollowUser []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// UserId is the userId argument value.
-			UserId model.UserID
-			// FollweeUserId is the follweeUserId argument value.
-			FollweeUserId model.UserID
 		}
 		// GetFollowees holds details about calls to the GetFollowees method.
 		GetFollowees []struct {
@@ -188,15 +167,6 @@ type UserServiceMock struct {
 			// SignedInUserId is the signedInUserId argument value.
 			SignedInUserId model.UserID
 		}
-		// UnfollowUser holds details about calls to the UnfollowUser method.
-		UnfollowUser []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// UserId is the userId argument value.
-			UserId model.UserID
-			// FollweeUserId is the follweeUserId argument value.
-			FollweeUserId model.UserID
-		}
 		// UpdateUser holds details about calls to the UpdateUser method.
 		UpdateUser []struct {
 			// Ctx is the ctx argument value.
@@ -206,12 +176,10 @@ type UserServiceMock struct {
 		}
 	}
 	lockDeleteUserByUserName sync.RWMutex
-	lockFollowUser           sync.RWMutex
 	lockGetFollowees         sync.RWMutex
 	lockGetFollowers         sync.RWMutex
 	lockGetSignedInUser      sync.RWMutex
 	lockGetUserByUserName    sync.RWMutex
-	lockUnfollowUser         sync.RWMutex
 	lockUpdateUser           sync.RWMutex
 }
 
@@ -248,46 +216,6 @@ func (mock *UserServiceMock) DeleteUserByUserNameCalls() []struct {
 	mock.lockDeleteUserByUserName.RLock()
 	calls = mock.calls.DeleteUserByUserName
 	mock.lockDeleteUserByUserName.RUnlock()
-	return calls
-}
-
-// FollowUser calls FollowUserFunc.
-func (mock *UserServiceMock) FollowUser(ctx context.Context, userId model.UserID, follweeUserId model.UserID) (*model.User, error) {
-	if mock.FollowUserFunc == nil {
-		panic("UserServiceMock.FollowUserFunc: method is nil but UserService.FollowUser was just called")
-	}
-	callInfo := struct {
-		Ctx           context.Context
-		UserId        model.UserID
-		FollweeUserId model.UserID
-	}{
-		Ctx:           ctx,
-		UserId:        userId,
-		FollweeUserId: follweeUserId,
-	}
-	mock.lockFollowUser.Lock()
-	mock.calls.FollowUser = append(mock.calls.FollowUser, callInfo)
-	mock.lockFollowUser.Unlock()
-	return mock.FollowUserFunc(ctx, userId, follweeUserId)
-}
-
-// FollowUserCalls gets all the calls that were made to FollowUser.
-// Check the length with:
-//
-//	len(mockedUserService.FollowUserCalls())
-func (mock *UserServiceMock) FollowUserCalls() []struct {
-	Ctx           context.Context
-	UserId        model.UserID
-	FollweeUserId model.UserID
-} {
-	var calls []struct {
-		Ctx           context.Context
-		UserId        model.UserID
-		FollweeUserId model.UserID
-	}
-	mock.lockFollowUser.RLock()
-	calls = mock.calls.FollowUser
-	mock.lockFollowUser.RUnlock()
 	return calls
 }
 
@@ -436,46 +364,6 @@ func (mock *UserServiceMock) GetUserByUserNameCalls() []struct {
 	mock.lockGetUserByUserName.RLock()
 	calls = mock.calls.GetUserByUserName
 	mock.lockGetUserByUserName.RUnlock()
-	return calls
-}
-
-// UnfollowUser calls UnfollowUserFunc.
-func (mock *UserServiceMock) UnfollowUser(ctx context.Context, userId model.UserID, follweeUserId model.UserID) error {
-	if mock.UnfollowUserFunc == nil {
-		panic("UserServiceMock.UnfollowUserFunc: method is nil but UserService.UnfollowUser was just called")
-	}
-	callInfo := struct {
-		Ctx           context.Context
-		UserId        model.UserID
-		FollweeUserId model.UserID
-	}{
-		Ctx:           ctx,
-		UserId:        userId,
-		FollweeUserId: follweeUserId,
-	}
-	mock.lockUnfollowUser.Lock()
-	mock.calls.UnfollowUser = append(mock.calls.UnfollowUser, callInfo)
-	mock.lockUnfollowUser.Unlock()
-	return mock.UnfollowUserFunc(ctx, userId, follweeUserId)
-}
-
-// UnfollowUserCalls gets all the calls that were made to UnfollowUser.
-// Check the length with:
-//
-//	len(mockedUserService.UnfollowUserCalls())
-func (mock *UserServiceMock) UnfollowUserCalls() []struct {
-	Ctx           context.Context
-	UserId        model.UserID
-	FollweeUserId model.UserID
-} {
-	var calls []struct {
-		Ctx           context.Context
-		UserId        model.UserID
-		FollweeUserId model.UserID
-	}
-	mock.lockUnfollowUser.RLock()
-	calls = mock.calls.UnfollowUser
-	mock.lockUnfollowUser.RUnlock()
 	return calls
 }
 
