@@ -20,8 +20,6 @@ func User(u *model.User) *model.User {
 		Name:      "test" + random,
 		IconUrl:   "test" + random,
 		Bio:       "test" + random,
-		Email:     "test" + random + "@example.com",
-		Password:  "test" + random,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -45,12 +43,6 @@ func User(u *model.User) *model.User {
 	}
 	if u.Bio != "" {
 		result.Bio = u.Bio
-	}
-	if u.Email != "" {
-		result.Email = u.Email
-	}
-	if u.Password != "" {
-		result.Password = u.Password
 	}
 	if !u.CreatedAt.IsZero() {
 		result.CreatedAt = u.CreatedAt
