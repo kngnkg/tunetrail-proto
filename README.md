@@ -43,16 +43,6 @@ users {
     timestamp created_at
     timestamp updated_at
 }
-deleted_users {
-    UUID id PK
-    string user_name
-    string name
-    string icon_url
-    string bio
-    timestamp created_at
-    timestamp updated_at
-    timestamp deleted_at
-}
 follows {
     UUID user_id PK,FK
     UUID followee_id PK,FK
