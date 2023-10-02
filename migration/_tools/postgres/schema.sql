@@ -8,59 +8,73 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
  * ユーザー
  */
 CREATE TABLE users (
-    id UUID PRIMARY KEY,
+    id UUID,
     user_name VARCHAR(100) UNIQUE,
     name VARCHAR(100),
     icon_url VARCHAR(100),
     bio VARCHAR(1000),
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 
 /*
  * フォロー
  */
 CREATE TABLE follows (
-    user_id UUID NOT NULL REFERENCES users(id),
-    followee_id UUID NOT NULL REFERENCES users(id),
+    user_id UUID NOT NULL,
+    followee_id UUID NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    PRIMARY KEY (user_id, followee_id)
+    CONSTRAINT follows_pkey PRIMARY KEY (user_id, followee_id),
+    CONSTRAINT follows_user_id_fkey FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT follows_followee_id_fkey FOREIGN KEY (followee_id)
+        REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE INDEX follows_user_id_followee_id_idx ON follows (user_id, followee_id);
 
 /*
  * 投稿
  */
 CREATE TABLE posts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id),
+    id UUID DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
     body VARCHAR(1000),
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT posts_pkey PRIMARY KEY (id),
+    CONSTRAINT posts_user_id_fkey FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE INDEX posts_user_id_idx ON posts (user_id);
 
 /*
  * リプライのツリー構造を表すテーブル
- * ある投稿に対して、別の投稿がリプライされたことを表す
- * 削除された投稿に対するリプライはアプリケーション側で制御する
+ * 削除された投稿についても、リプライのツリー構造だけは保持する
  */
 CREATE TABLE reply_relations (
-    post_id UUID NOT NULL,
+    post_id UUID NOT NULL, -- 削除された投稿のIDも保持したいので参照制約は設けない
     parent_id UUID NOT NULL,
     created_at TIMESTAMP NOT NULL,
-    PRIMARY KEY (post_id, parent_id)
+    CONSTRAINT reply_relations_pkey PRIMARY KEY (post_id, parent_id)
 );
 
 /*
  * いいね
  */
 CREATE TABLE likes (
-    post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id),
+    post_id UUID NOT NULL,
+    user_id UUID NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    PRIMARY KEY (user_id, post_id)
+    CONSTRAINT likes_pkey PRIMARY KEY (post_id, user_id),
+    CONSTRAINT likes_post_id_fkey FOREIGN KEY (post_id)
+        REFERENCES posts(id) ON DELETE CASCADE,
+    CONSTRAINT likes_user_id_fkey FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- /*
