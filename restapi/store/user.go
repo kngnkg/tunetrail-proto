@@ -18,10 +18,11 @@ const (
 // GetUserByUserId はユーザーIDからユーザーを取得する
 func (r *Repository) GetUserByUserId(ctx context.Context, db Queryer, id model.UserID) (*model.User, error) {
 	u := &model.User{}
-	query := `SELECT id, user_name, name, icon_url, bio, created_at, updated_at
-			FROM users
-			WHERE is_deleted = false
-			AND id = $1;`
+	query := `
+		SELECT id, user_name, name, icon_url, bio, created_at, updated_at
+		FROM users
+		WHERE id = $1;
+	`
 
 	if err := db.GetContext(ctx, u, query, string(id)); err != nil {
 		// ユーザーが存在しない場合はエラーをラップして返す
@@ -30,19 +31,19 @@ func (r *Repository) GetUserByUserId(ctx context.Context, db Queryer, id model.U
 		}
 		return nil, err
 	}
-	// UTCに変換
-	u.CreatedAt = u.CreatedAt.UTC()
-	u.UpdatedAt = u.UpdatedAt.UTC()
+
+	formatToUTC(u)
 	return u, nil
 }
 
 // GetUserByUserName はユーザー名からユーザーを取得する
 func (r *Repository) GetUserByUserName(ctx context.Context, db Queryer, userName string) (*model.User, error) {
 	u := &model.User{}
-	query := `SELECT id, user_name, name, icon_url, bio, created_at, updated_at
-			FROM users
-			WHERE is_deleted = false
-			AND user_name = $1;`
+	query := `
+		SELECT id, user_name, name, icon_url, bio, created_at, updated_at
+		FROM users
+		WHERE user_name = $1;
+	`
 
 	if err := db.GetContext(ctx, u, query, userName); err != nil {
 		// ユーザーが存在しない場合はエラーをラップして返す
@@ -51,9 +52,8 @@ func (r *Repository) GetUserByUserName(ctx context.Context, db Queryer, userName
 		}
 		return nil, err
 	}
-	// UTCに変換
-	u.CreatedAt = u.CreatedAt.UTC()
-	u.UpdatedAt = u.UpdatedAt.UTC()
+
+	formatToUTC(u)
 	return u, nil
 }
 
@@ -65,21 +65,20 @@ func (r *Repository) GetUserByUserNameWithFollowInfo(ctx context.Context, db Que
 	// f1: ログインユーザーがフォローしている
 	// f2: ログインユーザーがフォローされている
 	query := `
-	SELECT
-		u.id,
-		u.user_name,
-		u.name,
-		u.icon_url,
-		u.bio,
-		CASE WHEN f1.user_id IS NULL THEN false ELSE true END AS is_following,
-		CASE WHEN f2.followee_id IS NULL THEN false ELSE true END AS is_followed,
-		u.created_at,
-		u.updated_at
-	FROM users u
-	LEFT OUTER JOIN follows f1 ON u.id = f1.followee_id AND f1.user_id = $2
-	LEFT OUTER JOIN follows f2 ON u.id = f2.user_id AND f2.followee_id = $2
-	WHERE u.user_name = $1
-	AND u.is_deleted = false
+		SELECT
+			u.id,
+			u.user_name,
+			u.name,
+			u.icon_url,
+			u.bio,
+			CASE WHEN f1.user_id IS NULL THEN false ELSE true END AS is_following,
+			CASE WHEN f2.followee_id IS NULL THEN false ELSE true END AS is_followed,
+			u.created_at,
+			u.updated_at
+		FROM users u
+		LEFT OUTER JOIN follows f1 ON u.id = f1.followee_id AND f1.user_id = $2
+		LEFT OUTER JOIN follows f2 ON u.id = f2.user_id AND f2.followee_id = $2
+		WHERE u.user_name = $1
 	`
 
 	if err := db.GetContext(ctx, u, query, userName, signedInUserId); err != nil {
@@ -89,19 +88,16 @@ func (r *Repository) GetUserByUserNameWithFollowInfo(ctx context.Context, db Que
 		}
 		return nil, err
 	}
-	// UTCに変換
-	u.CreatedAt = u.CreatedAt.UTC()
-	u.UpdatedAt = u.UpdatedAt.UTC()
+
+	formatToUTC(u)
 	return u, nil
 }
 
 // UserExistsByUserName はユーザー名が既に存在するかどうかを返す
 func (r *Repository) UserExistsByUserName(ctx context.Context, db Queryer, userName string) (bool, error) {
-	query := `SELECT EXISTS(
-			SELECT 1 FROM users
-			WHERE is_deleted = false
-			AND user_name = $1
-			);`
+	query := `
+		SELECT EXISTS(SELECT 1 FROM users WHERE user_name = $1);
+	`
 
 	var exists bool
 	err := db.QueryRowxContext(ctx, query, userName).Scan(&exists)
@@ -115,8 +111,10 @@ func (r *Repository) UserExistsByUserName(ctx context.Context, db Queryer, userN
 func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User) error {
 	u.CreatedAt = r.Clocker.Now()
 	u.UpdatedAt = r.Clocker.Now()
-	query := `INSERT INTO users (id, user_name, name, icon_url, bio, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7);`
+	query := `
+		INSERT INTO users (id, user_name, name, icon_url, bio, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7);
+	`
 
 	_, err := db.ExecContext(ctx, query, u.Id, u.UserName, u.Name, u.IconUrl, u.Bio, u.CreatedAt, u.UpdatedAt)
 	if err != nil {
@@ -136,10 +134,11 @@ func (r *Repository) RegisterUser(ctx context.Context, db Execer, u *model.User)
 // UpdateUser はユーザーを更新する
 func (r *Repository) UpdateUser(ctx context.Context, db Execer, u *model.User) error {
 	u.UpdatedAt = r.Clocker.Now()
-	query := `UPDATE users
-			SET user_name = $2, name = $3, icon_url = $4, bio = $5, updated_at = $6
-			WHERE is_deleted = false
-			AND id = $1;`
+	query := `
+		UPDATE users
+		SET user_name = $2, name = $3, icon_url = $4, bio = $5, updated_at = $6
+		WHERE id = $1;
+	`
 
 	row, err := db.ExecContext(ctx, query, u.Id, u.UserName, u.Name, u.IconUrl, u.Bio, u.UpdatedAt)
 	if err != nil {
@@ -163,18 +162,15 @@ func (r *Repository) UpdateUser(ctx context.Context, db Execer, u *model.User) e
 		return ErrUserNotFound
 	}
 
-	// UTCに変換
-	u.CreatedAt = u.CreatedAt.UTC()
-	u.UpdatedAt = u.UpdatedAt.UTC()
+	formatToUTC(u)
 	return nil
 }
 
-// DeleteUserByUserName はユーザー名からユーザーを論理削除する
+// DeleteUserByUserName はユーザー名からユーザーを削除する
 func (r *Repository) DeleteUserByUserName(ctx context.Context, db Execer, userName string) error {
-	query := `UPDATE users
-			SET is_deleted = true
-			WHERE is_deleted = false
-			AND user_name = $1;`
+	query := `
+		DELETE from users WHERE user_name = $1;
+	`
 
 	row, err := db.ExecContext(ctx, query, userName)
 	if err != nil {
@@ -195,27 +191,17 @@ func (r *Repository) DeleteUserByUserName(ctx context.Context, db Execer, userNa
 func (r *Repository) GetFolloweesByUserId(ctx context.Context, db Queryer, userId model.UserID) ([]*model.User, error) {
 	var users []*model.User
 	query := `
-		SELECT
-			u.id,
-			u.user_name,
-			u.name,
-			u.icon_url,
-			u.bio,
-			u.created_at,
-			u.updated_at
+		SELECT u.id, u.user_name, u.name, u.icon_url, u.bio, u.created_at, u.updated_at
 		FROM users u
-		INNER JOIN follows f ON u.id = f.followee_id AND f.user_id = $1
-		WHERE u.is_deleted = false;
+		INNER JOIN follows f ON u.id = f.followee_id AND f.user_id = $1;
 	`
 
 	if err := db.SelectContext(ctx, &users, query, userId); err != nil {
 		return nil, err
 	}
 
-	// UTCに変換
 	for _, u := range users {
-		u.CreatedAt = u.CreatedAt.UTC()
-		u.UpdatedAt = u.UpdatedAt.UTC()
+		formatToUTC(u)
 	}
 
 	return users, nil
@@ -223,30 +209,25 @@ func (r *Repository) GetFolloweesByUserId(ctx context.Context, db Queryer, userI
 
 func (r *Repository) GetFollowersByUserId(ctx context.Context, db Queryer, userId model.UserID) ([]*model.User, error) {
 	var users []*model.User
-
 	query := `
-		SELECT
-			u.id,
-			u.user_name,
-			u.name,
-			u.icon_url,
-			u.bio,
-			u.created_at,
-			u.updated_at
+		SELECT u.id, u.user_name, u.name, u.icon_url, u.bio, u.created_at, u.updated_at
 		FROM users u
-		INNER JOIN follows f ON u.id = f.user_id AND f.followee_id = $1
-		WHERE u.is_deleted = false;
+		INNER JOIN follows f ON u.id = f.user_id AND f.followee_id = $1;
 	`
 
 	if err := db.SelectContext(ctx, &users, query, userId); err != nil {
 		return nil, err
 	}
 
-	// UTCに変換
 	for _, u := range users {
-		u.CreatedAt = u.CreatedAt.UTC()
-		u.UpdatedAt = u.UpdatedAt.UTC()
+		formatToUTC(u)
 	}
 
 	return users, nil
+}
+
+// formatToUTC はユーザーの作成日時と更新日時をUTCに変換する
+func formatToUTC(u *model.User) {
+	u.CreatedAt = u.CreatedAt.UTC()
+	u.UpdatedAt = u.UpdatedAt.UTC()
 }
