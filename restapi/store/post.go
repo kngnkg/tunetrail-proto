@@ -17,7 +17,7 @@ const selectBasePostQuery = `
 		p.updated_at
 	FROM
 		posts p
-		LEFT OUTER JOIN replies r ON p.id = r.post_id
+		LEFT OUTER JOIN reply_relations r ON p.id = r.post_id
 	`
 
 func handlePagination(posts []*model.Post, pagination *model.Pagination) ([]*model.Post, *model.Pagination) {
@@ -163,7 +163,7 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 			p.created_at,
 			p.updated_at
 		FROM
-			replies r1 -- ツリー構造をたどるためにrepliesテーブルを左テーブルとして結合する
+			reply_relations r1 -- ツリー構造をたどるためにreply_relationsテーブルを左テーブルとして結合する
 			LEFT OUTER JOIN posts p ON r1.post_id = p.id -- 削除された投稿の場合はNULLになる
 	WHERE
 		r1.parent_id = $1 -- 最初のリプライを取得する
@@ -180,7 +180,7 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 		p.created_at,
 		p.updated_at
 	FROM
-		replies r2
+		reply_relations r2
 		LEFT OUTER JOIN posts p ON r2.post_id = p.id
 		INNER JOIN post_tree pt ON r2.parent_id = pt.id
 	)
@@ -210,7 +210,7 @@ func (r *Repository) GetReplies(ctx context.Context, db Queryer, parentPostId st
 		statement = baseQuery + `
 			AND reply_created_at <= (
 				SELECT created_at
-				FROM replies
+				FROM reply_relations
 				WHERE post_id = $3)
 			ORDER BY reply_created_at ASC
 			LIMIT $2;
@@ -252,7 +252,7 @@ func (r *Repository) AddPost(ctx context.Context, db Queryer, p *model.Post) (st
 
 func (r *Repository) AddReplyRelation(ctx context.Context, db Execer, postId, parentId string) error {
 	statement := `
-			INSERT INTO replies (post_id, parent_id, created_at)
+			INSERT INTO reply_relations (post_id, parent_id, created_at)
 			VALUES($1, $2, $3);
 		`
 

@@ -29,37 +29,54 @@
 ```mermaid
 erDiagram
 
+users ||--o{ posts : "1人のユーザーは0以上の投稿を持つ"
+users ||--o{ follows : "1人のユーザーは0以上のフォローを持つ"
+posts ||--o| reply_relations : "リプライのツリー構造"
+posts ||--o{ likes : "1つのポストは0以上のいいねを持つ"
+
 users {
     UUID id PK
-    string user_name "ユーザーネーム"
-    string name "名前"
-    string icon_url "アイコンのURL"
-    string bio "プロフィール"
-    bool is_deleted "削除済みかどうか"
+    string user_name
+    string name
+    string icon_url
+    string bio
     timestamp created_at
     timestamp updated_at
 }
-
+deleted_users {
+    UUID id PK
+    string user_name
+    string name
+    string icon_url
+    string bio
+    timestamp created_at
+    timestamp updated_at
+    timestamp deleted_at
+}
 follows {
-    UUID user_id PK,FK "フォローしたユーザーのID"
-    UUID followee_id PK,FK "フォローされたユーザーのID"
+    UUID user_id PK,FK
+    UUID followee_id PK,FK
     timestamp created_at
     timestamp updated_at
 }
-
 posts {
-    int id PK
-    UUID user_id "投稿したユーザーのID"
-    string body "本文"
+    UUID id PK
+    UUID user_id
+    string body
     timestamp created_at
     timestamp updated_at
 }
-
-
-users ||--o{ posts : "1人のユーザーは0以上の投稿を持つ"
-users ||--o{ follows : "1人のユーザーは0以上のフォロイーを持つ"
-follows }o--|| users : "1人のユーザーは0以上のフォロワーを持つ"
-
+reply_relations {
+    UUID post_id PK,FK
+    UUID parent_id PK,FK
+    timestamp created_at
+}
+likes {
+    UUID post_id PK,FK
+    UUID user_id PK,FK
+    timestamp created_at
+    timestamp updated_at
+}
 ```
 
 ## 環境構築

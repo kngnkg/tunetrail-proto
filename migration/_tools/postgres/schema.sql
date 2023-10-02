@@ -41,11 +41,11 @@ CREATE TABLE posts (
 );
 
 /*
- * リプライ
+ * リプライのツリー構造を表すテーブル
  * ある投稿に対して、別の投稿がリプライされたことを表す
  * 削除された投稿に対するリプライはアプリケーション側で制御する
  */
-CREATE TABLE replies (
+CREATE TABLE reply_relations (
     post_id UUID NOT NULL,
     parent_id UUID NOT NULL,
     created_at TIMESTAMP NOT NULL,
